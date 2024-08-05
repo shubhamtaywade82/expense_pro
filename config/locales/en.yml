@@ -28,4 +28,6 @@
 #       enabled: "ON"
 
 en:
-  hello: "Hello world"
+  errors:
+    messages:
+      mobile_invalid: "must be 10 digits"

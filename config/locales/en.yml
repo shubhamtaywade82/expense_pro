@@ -27,7 +27,34 @@
 #       "yes": yup
 #       enabled: "ON"
 
+# config/locales/en.yml
 en:
+  activerecord:
+    models:
+      income: "Income"
+      expense: "Expense"
+    attributes:
+      income:
+        source: "Source"
+        description: "Description"
+        amount: "Amount"
+        frequency: "Frequency"
+      expense:
+        category: "Category"
+        description: "Description"
+        amount: "Amount"
+        payment_method: "Payment Method"
+        expense_type: "Expense Type"
   errors:
     messages:
       mobile_invalid: "must be 10 digits"
+  income:
+    flash:
+      created: "Income was successfully created."
+      updated: "Income was successfully updated."
+      destroyed: "Income was successfully destroyed."
+  expense:
+    flash:
+      created: "Expense was successfully created."
+      updated: "Expense was successfully updated."
+      destroyed: "Expense was successfully destroyed."

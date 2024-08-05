@@ -1,0 +1,39 @@
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h3 class="card-title"><%= @credit_card.name %></h3>
+      <div class="card-subtitle text-muted"><%= @credit_card.expiry_date.strftime("%m/%y") %></div>
+    </div>
+    <div class="card-body">
+      <dl class="row">
+        <dt class="col-sm-3">Payment Status:</dt>
+        <dd class="col-sm-9"><%= @credit_card.payment_status %></dd>
+
+        <dt class="col-sm-3">Due Amount:</dt>
+        <dd class="col-sm-9"><%= number_to_currency(0) %></dd>
+
+        <dt class="col-sm-3">Outstanding:</dt>
+        <dd class="col-sm-9"><%= number_to_currency(0) %></dd>
+
+        <dt class="col-sm-3">Statement Date:</dt>
+        <dd class="col-sm-9"><%= @credit_card.statement_date %> (<%= (Date.today - @credit_card.statement_date).to_i %> days)</dd>
+
+        <dt class="col-sm-3">Due Date:</dt>
+        <dd class="col-sm-9"><%= @credit_card.payment_due_date %> (<%= (Date.today - @credit_card.payment_due_date).to_i %> days)</dd>
+
+        <dt class="col-sm-3">Closing Date:</dt>
+        <dd class="col-sm-9"><%= @credit_card.closing_date %> (<%= (Date.today - @credit_card.closing_date).to_i %> days)</dd>
+
+        <dt class="col-sm-3">Cutoff Date:</dt>
+        <dd class="col-sm-9"><%= @credit_card.cutoff_date %> (<%= (Date.today - @credit_card.cutoff_date).to_i %> days)</dd>
+
+        <dt class="col-sm-3">Next Due Date:</dt>
+        <dd class="col-sm-9"><%= @credit_card.next_due_date %> (<%= (Date.today - @credit_card.next_due_date).to_i %> days)</dd>
+      </dl>
+      <div class="d-flex justify-content-between mt-3">
+        <%= link_to 'Edit', edit_credit_card_path(@credit_card), class: "btn btn-primary" %>
+        <%= link_to 'Back', credit_cards_path, class: "btn btn-secondary" %>
+      </div>
+    </div>
+  </div>
+</div>

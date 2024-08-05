@@ -1,0 +1,42 @@
+<div class="container mt-4">
+  <%= form_with(model: income, local: true, class: "card") do |form| %>
+    <% if income.errors.any? %>
+      <div class="card-body">
+        <div class="alert alert-danger">
+          <h4 class="alert-heading"><%= pluralize(income.errors.count, "error") %> prohibited this income from being saved:</h4>
+          <ul>
+            <% income.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="card-body">
+      <div class="form-group">
+        <%= form.label :source, 'Source' %>
+        <%= form.text_field :source, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :description, 'Description' %>
+        <%= form.text_area :description, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :amount, 'Amount' %>
+        <%= form.number_field :amount, class: "form-control" %>
+      </div>
+
+      <div class="form-group">
+        <%= form.label :frequency, 'Frequency' %>
+        <%= form.select :frequency, options_for_select(['monthly', 'bi-weekly', 'annually', 'irregularly'], income.frequency), {}, class: "form-control" %>
+      </div>
+    </div>
+
+    <div class="card-footer text-right">
+      <%= form.submit class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

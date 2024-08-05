@@ -1,0 +1,27 @@
+<h1>Credit Cards</h1>
+<%= link_to 'New Credit Card', new_credit_card_path, class: "btn btn-primary mb-3" %>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Expiry Date</th>
+      <th>Last 4 Digits</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @credit_cards.each do |credit_card| %>
+      <tr>
+        <td><%= credit_card.name %></td>
+        <td><%= credit_card.card_type %></td>
+        <td><%= credit_card.expiry_date.strftime("%m/%y") %></td>
+        <td><%= credit_card.last_four_digits %></td>
+        <td><%= link_to 'Show', credit_card %></td>
+        <td><%= link_to 'Edit', edit_credit_card_path(credit_card) %></td>
+        <td><%= link_to 'Destroy', credit_card, method: :delete, data: { confirm: 'Are you sure?' }, class: "btn btn-danger" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

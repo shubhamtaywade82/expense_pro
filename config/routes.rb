@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  resources :credit_cards
   get 'dashboard/index'
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -13,4 +12,7 @@ Rails.application.routes.draw do
 
   resources :incomes
   resources :expenses
+  resources :credit_cards
+
+  patch '/update_currency', to: 'users#update_currency', as: :update_currency
 end

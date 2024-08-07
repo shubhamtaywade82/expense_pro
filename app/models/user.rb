@@ -15,4 +15,17 @@ class User < ApplicationRecord
             presence: true,
             format: { with: /\A\d{10}\z/,
                       message: I18n.t("errors.messages.mobile_invalid") }
+
+  validates :country, presence: true
+  validates :currency, presence: true
+
+  before_validation :set_default_currency
+
+  private
+
+  def set_default_currency
+    return if country.blank?
+
+    self.currency ||= ISO3166::Country[country].currency.iso_code
+  end
 end

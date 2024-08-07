@@ -1,10 +1,18 @@
 <div class="container mt-4">
+  <%= form_with model: current_user, url: update_currency_path, method: :patch, local: true do |form| %>
+    <div class="form-group">
+      <%= form.label :currency, 'Change Currency' %>
+      <%= form.text_field :currency, class: "form-control" %>
+    </div>
+    <%= form.submit 'Update Currency', class: "btn btn-primary" %>
+  <% end %>
+
   <div class="row">
     <div class="col-md-4">
       <div class="card text-white bg-success mb-3">
         <div class="card-header">Total Income</div>
         <div class="card-body">
-          <h5 class="card-title"><%= number_to_currency(@total_income) %></h5>
+          <h5 class="card-title"><%= formatted_amount(@total_income) %></h5>
         </div>
       </div>
     </div>
@@ -12,7 +20,7 @@
       <div class="card text-white bg-danger mb-3">
         <div class="card-header">Total Expense</div>
         <div class="card-body">
-          <h5 class="card-title"><%= number_to_currency(@total_expense) %></h5>
+          <h5 class="card-title"><%= formatted_amount(@total_expense) %></h5>
         </div>
       </div>
     </div>
@@ -20,7 +28,7 @@
       <div class="card text-white bg-info mb-3">
         <div class="card-header">Balance</div>
         <div class="card-body">
-          <h5 class="card-title"><%= number_to_currency(@balance) %></h5>
+          <h5 class="card-title"><%= formatted_amount(@balance) %></h5>
         </div>
       </div>
     </div>
@@ -41,7 +49,7 @@
           <% @recent_incomes.each do |income| %>
             <tr>
               <td><%= income.source %></td>
-              <td><%= number_to_currency(income.amount) %></td>
+              <td><%= formatted_amount(income.amount) %></td>
               <td><%= income.frequency %></td>
             </tr>
           <% end %>
@@ -62,7 +70,7 @@
           <% @recent_expenses.each do |expense| %>
             <tr>
               <td><%= expense.category %></td>
-              <td><%= number_to_currency(expense.amount) %></td>
+              <td><%= formatted_amount(expense.amount) %></td>
               <td><%= expense.payment_method %></td>
             </tr>
           <% end %>

@@ -26,4 +26,6 @@ group :development do
   gem "web-console"
 end
 
+gem "countries"
 gem "devise", "~> 4.9"
+gem "money-rails"

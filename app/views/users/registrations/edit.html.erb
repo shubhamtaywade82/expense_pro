@@ -24,6 +24,16 @@
   </div>
 
   <div class="form-group">
+    <%= f.label :country %><br />
+    <%= f.select :country, ISO3166::Country.all.map { |c| [c.iso_short_name, c.alpha2] }, { prompt: "Select your country" }, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :currency %><br />
+    <%= f.text_field :currency, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
     <%= f.label :email %><br />
     <%= f.email_field :email, class: "form-control" %>
   </div>

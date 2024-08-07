@@ -1,5 +1,7 @@
 class CreditCard < ApplicationRecord
   belongs_to :user
+  has_many :transactions, dependent: :destroy
+  has_many :custom_fields, dependent: :destroy
 
   validates :name, presence: true
   validates :card_type, presence: true, inclusion: { in: %w[Visa MasterCard RuPay] }
@@ -9,7 +11,11 @@ class CreditCard < ApplicationRecord
   validates :last_four_digits, presence: true, length: { is: 4 }
 
   def payment_status
-    Time.zone.today > payment_due_date ? "Overdue" : "Not settled"
+    if Time.zone.today > payment_due_date
+      "Overdue"
+    else
+      "Not settled"
+    end
   end
 
   def closing_date

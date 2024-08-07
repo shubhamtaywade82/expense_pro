@@ -38,6 +38,16 @@
         <%= form.label :expense_type, 'Expense Type' %>
         <%= form.select :expense_type, options_for_select(['fixed', 'variable', 'periodic', 'unforeseen'], expense.expense_type), {}, class: "form-control" %>
       </div>
+
+      <div class="form-group">
+        <%= form.label :payment_type, 'Payment Type' %>
+        <%= form.select :payment_type, options_for_select(['cash', 'debit_card', 'credit_card'], expense.payment_type), {}, class: "form-control", id: "payment_type_select" %>
+      </div>
+
+      <div class="form-group" id="credit_card_select_group" style="display: none;">
+        <%= form.label :credit_card_id, 'Credit Card' %>
+        <%= form.collection_select :credit_card_id, @credit_cards, :id, :name, { prompt: 'Select a Credit Card' }, class: "form-control" %>
+      </div>
     </div>
 
     <div class="card-footer text-right">
@@ -45,3 +55,21 @@
     </div>
   <% end %>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const paymentTypeSelect = document.getElementById('payment_type_select');
+    const creditCardSelectGroup = document.getElementById('credit_card_select_group');
+
+    function toggleCreditCardSelect() {
+      if (paymentTypeSelect.value === 'credit_card') {
+        creditCardSelectGroup.style.display = 'block';
+      } else {
+        creditCardSelectGroup.style.display = 'none';
+      }
+    }
+
+    paymentTypeSelect.addEventListener('change', toggleCreditCardSelect);
+    toggleCreditCardSelect();
+  });
+</script>

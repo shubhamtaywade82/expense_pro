@@ -10,7 +10,7 @@
         <dd class="col-sm-9"><%= @credit_card.payment_status %></dd>
 
         <dt class="col-sm-3">Due Amount:</dt>
-        <dd class="col-sm-9"><%= number_to_currency(0) %></dd>
+        <dd class="col-sm-9"><%= number_to_currency(@credit_card.transactions ? 0 : @credit_card.transactions.sum(:amount)) %></dd>
 
         <dt class="col-sm-3">Outstanding:</dt>
         <dd class="col-sm-9"><%= number_to_currency(0) %></dd>
@@ -34,6 +34,34 @@
         <%= link_to 'Edit', edit_credit_card_path(@credit_card), class: "btn btn-primary" %>
         <%= link_to 'Back', credit_cards_path, class: "btn btn-secondary" %>
       </div>
+    </div>
+  </div>
+
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3 class="card-title">Transactions</h3>
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @credit_card.transactions.each do |transaction| %>
+            <tr>
+              <td><%= transaction.category %></td>
+              <td><%= number_to_currency(transaction.amount) %></td>
+              <td><%= transaction.date %></td>
+              <td><%= transaction.notes %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

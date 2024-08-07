@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_08_05_130859) do
+ActiveRecord::Schema[7.1].define(version: 2024_08_05_132021) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,9 @@ ActiveRecord::Schema[7.1].define(version: 2024_08_05_130859) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "payment_type"
+    t.bigint "credit_card_id", null: false
+    t.index ["credit_card_id"], name: "index_expenses_on_credit_card_id"
     t.index ["user_id"], name: "index_expenses_on_user_id"
   end
 
@@ -52,6 +55,17 @@ ActiveRecord::Schema[7.1].define(version: 2024_08_05_130859) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_incomes_on_user_id"
+  end
+
+  create_table "transactions", force: :cascade do |t|
+    t.bigint "credit_card_id", null: false
+    t.decimal "amount"
+    t.string "category"
+    t.date "date"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["credit_card_id"], name: "index_transactions_on_credit_card_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -73,6 +87,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_08_05_130859) do
   end
 
   add_foreign_key "credit_cards", "users"
+  add_foreign_key "expenses", "credit_cards"
   add_foreign_key "expenses", "users"
   add_foreign_key "incomes", "users"
+  add_foreign_key "transactions", "credit_cards"
 end

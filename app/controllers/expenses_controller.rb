@@ -10,15 +10,19 @@ class ExpensesController < ApplicationController
 
   def new
     @expense = current_user.expenses.new
+    @credit_cards = current_user.credit_cards
   end
 
-  def edit; end
+  def edit
+    @credit_cards = current_user.credit_cards
+  end
 
   def create
     @expense = current_user.expenses.new(expense_params)
     if @expense.save
       redirect_to @expense, notice: t("expense.flash.created")
     else
+      @credit_cards = current_user.credit_cards
       render :new
     end
   end
@@ -27,6 +31,7 @@ class ExpensesController < ApplicationController
     if @expense.update(expense_params)
       redirect_to @expense, notice: t("expense.flash.updated")
     else
+      @credit_cards = current_user.credit_cards
       render :edit
     end
   end
@@ -44,6 +49,6 @@ class ExpensesController < ApplicationController
 
   def expense_params
     params.require(:expense).permit(:category, :description, :amount, :payment_method,
-                                    :expense_type)
+                                    :expense_type, :payment_type, :credit_card_id)
   end
 end

@@ -1,24 +1,24 @@
-<div class="container mt-4">
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h3 class="card-title"><%= @expense.category %></h3>
-      <div class="card-subtitle text-muted"><%= number_to_currency(@expense.amount) %></div>
-    </div>
-    <div class="card-body">
-      <dl class="row">
-        <dt class="col-sm-3">Description:</dt>
-        <dd class="col-sm-9"><%= @expense.description %></dd>
+<p>
+  <strong>Date:</strong>
+  <%= @expense.incurred_on %>
+</p>
 
-        <dt class="col-sm-3">Payment Method:</dt>
-        <dd class="col-sm-9"><%= @expense.payment_method %></dd>
+<p>
+  <strong>Category:</strong>
+  <%= @expense.category %>
+</p>
 
-        <dt class="col-sm-3">Expense Type:</dt>
-        <dd class="col-sm-9"><%= @expense.expense_type %></dd>
-      </dl>
-      <div class="d-flex justify-content-between mt-3">
-        <%= link_to 'Edit', edit_expense_path(@expense), class: "btn btn-primary" %>
-        <%= link_to 'Back', expenses_path, class: "btn btn-secondary" %>
-      </div>
-    </div>
-  </div>
-</div>
+<p>
+  <strong>Amount:</strong>
+  <%= formatted_amount(@expense.amount) %>
+</p>
+
+<% if @expense.notes.present? %>
+  <p>
+    <strong>Notes:</strong>
+    <%= @expense.notes %>
+  </p>
+<% end %>
+
+<%= link_to 'Edit', edit_expense_path(@expense), class: 'btn btn-primary' %> |
+<%= link_to 'Back', expenses_path, class: 'btn btn-secondary' %>

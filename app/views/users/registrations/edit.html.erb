@@ -4,57 +4,38 @@
   <%= devise_error_messages! %>
 
   <div class="form-group">
-    <%= f.label :first_name %><br />
-    <%= f.text_field :first_name, autofocus: true, class: "form-control" %>
+    <%= f.label :full_name %><br />
+    <%= f.text_field :full_name, autofocus: true, class: "form-control" %>
   </div>
 
   <div class="form-group">
-    <%= f.label :last_name %><br />
-    <%= f.text_field :last_name, class: "form-control" %>
+    <%= f.label :time_zone %><br />
+    <%= f.select :time_zone, ActiveSupport::TimeZone.all.map { |tz| [tz.name, tz.tzinfo.name] }, {}, class: "form-control" %>
   </div>
 
   <div class="form-group">
-    <%= f.label :username %><br />
-    <%= f.text_field :username, class: "form-control" %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :mobile %><br />
-    <%= f.text_field :mobile, class: "form-control" %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :country %><br />
-    <%= f.select :country, ISO3166::Country.all.map { |c| [c.iso_short_name, c.alpha2] }, { prompt: "Select your country" }, class: "form-control" %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :currency %><br />
-    <%= f.text_field :currency, class: "form-control" %>
+    <%= f.label :monthly_income, 'Monthly Income (₹)' %><br />
+    <%= f.number_field :monthly_income, step: 0.01, class: "form-control" %>
   </div>
 
   <div class="form-group">
     <%= f.label :email %><br />
-    <%= f.email_field :email, class: "form-control" %>
+    <%= f.email_field :email, class: "form-control", autocomplete: "email" %>
   </div>
 
   <div class="form-group">
     <%= f.label :password %> <i>(leave blank if you don't want to change it)</i><br />
-    <%= f.password_field :password, class: "form-control", autocomplete: "off" %>
-    <% if @minimum_password_length %>
-      <br />
-      <em>(<%= @minimum_password_length %> characters minimum)</em>
-    <% end %>
+    <%= f.password_field :password, class: "form-control", autocomplete: "new-password" %>
   </div>
 
   <div class="form-group">
     <%= f.label :password_confirmation %><br />
-    <%= f.password_field :password_confirmation, class: "form-control", autocomplete: "off" %>
+    <%= f.password_field :password_confirmation, class: "form-control", autocomplete: "new-password" %>
   </div>
 
   <div class="form-group">
     <%= f.label :current_password %> <i>(we need your current password to confirm your changes)</i><br />
-    <%= f.password_field :current_password, class: "form-control", autocomplete: "off" %>
+    <%= f.password_field :current_password, class: "form-control", autocomplete: "current-password" %>
   </div>
 
   <div class="form-group">
@@ -62,6 +43,8 @@
   </div>
 <% end %>
 
-<%= link_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-danger" %><br />
+<h3>Cancel my account</h3>
 
-<%= link_to "Back", :back %>
+<p>Unhappy? <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?" }, method: :delete, class: "btn btn-danger" %></p>
+
+<%= link_to "Back", root_path, class: "btn btn-secondary" %>

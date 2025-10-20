@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "3.2.4"
+ruby "3.4.4"
 gem "bootsnap", require: false
 gem "cssbundling-rails"
 gem "jbuilder"
@@ -28,4 +28,3 @@ end
 
 gem "countries"
 gem "devise", "~> 4.9"
-gem "money-rails"

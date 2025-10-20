@@ -1,6 +1,9 @@
+# frozen_string_literal: true
+
 module ApplicationHelper
+  # @param amount [BigDecimal, Numeric, nil] amount stored in rupees.
+  # @return [String] formatted INR value.
   def formatted_amount(amount)
-    user_currency = current_user.currency
-    Money.new(amount * 100, user_currency).format
+    number_to_currency(amount || 0, unit: "₹")
   end
 end

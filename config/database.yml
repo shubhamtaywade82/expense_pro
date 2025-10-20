@@ -19,6 +19,7 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
+
 development:
   <<: *default
   database: expense_pro_development
@@ -27,10 +28,10 @@ development:
   # To create additional roles in PostgreSQL see `$ createuser --help`.
   # When left blank, PostgreSQL will use the default role. This is
   # the same name as the operating system user running Rails.
-  # username: postgres
+  #username: expense_pro
 
   # The password associated with the PostgreSQL role (username).
-  # password: password
+  #password:
 
   # Connect on a TCP socket. Omitted by default since the client uses a
   # domain socket that doesn't need configuration. Windows does not have
@@ -78,7 +79,20 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  <<: *default
-  database: expense_pro_production
-  username: expense_pro
-  password: <%= ENV["EXPENSE_PRO_DATABASE_PASSWORD"] %>
+  primary: &primary_production
+    <<: *default
+    database: expense_pro_production
+    username: expense_pro
+    password: <%= ENV["EXPENSE_PRO_DATABASE_PASSWORD"] %>
+  cache:
+    <<: *primary_production
+    database: expense_pro_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: expense_pro_production_queue
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_production
+    database: expense_pro_production_cable
+    migrations_paths: db/cable_migrate

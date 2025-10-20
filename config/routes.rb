@@ -10,9 +10,5 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root 'dashboard#index'
 
-  resources :incomes
   resources :expenses
-  resources :credit_cards
-
-  patch '/update_currency', to: 'users#update_currency', as: :update_currency
 end

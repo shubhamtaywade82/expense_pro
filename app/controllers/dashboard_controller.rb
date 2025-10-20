@@ -1,11 +1,21 @@
+# frozen_string_literal: true
+
 class DashboardController < ApplicationController
   before_action :authenticate_user!
 
+  PERIODS = %i[day week month all].freeze
+
   def index
-    @total_income = current_user.incomes.sum(:amount)
-    @total_expense = current_user.expenses.sum(:amount)
-    @balance = @total_income - @total_expense
-    @recent_incomes = current_user.incomes.order(created_at: :desc).limit(5)
-    @recent_expenses = current_user.expenses.order(created_at: :desc).limit(5)
+    @periods = PERIODS
+    @due_totals = totals_for(:total_due_in_period)
+    @paid_totals = totals_for(:total_paid_in_period)
+    @expense_totals = totals_for(:total_expenses_in_period)
+    @card_utilization_ratio = current_user.card_utilization_ratio
+  end
+
+  private
+
+  def totals_for(method_name)
+    PERIODS.index_with { |period| current_user.public_send(method_name, period) }
   end
 end

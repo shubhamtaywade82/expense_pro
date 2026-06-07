@@ -47,7 +47,13 @@ class AiChatService
       - Total Expenses: ₹#{dashboard.dig(:expenses, :total)}
       - Monthly Bills: ₹#{dashboard.dig(:bills, :total)} total (#{dashboard.dig(:bills, :paid)} paid, #{dashboard.dig(:bills, :unpaid)} pending)
       - Loan EMIs: ₹#{dashboard.dig(:emis, :total)}
-      - Net Savings: ₹#{calculate_net_savings(dashboard)}
+      - Net Savings (This Month): ₹#{calculate_net_savings(dashboard)}
+
+      Overall / Life-to-Date Metrics:
+      - Total Income to Date: ₹#{dashboard.dig(:overall, :totalIncome)}
+      - Total Expenses to Date: ₹#{dashboard.dig(:overall, :totalExpense)}
+      - Total Loan EMIs Paid: ₹#{dashboard.dig(:overall, :totalEmiPaid)}
+      - Net Balance (Life-to-Date Savings): ₹#{dashboard.dig(:overall, :netBalance)}
 
       Active Categories:
       #{@user.categories.map { |c| "- #{c.name} (#{c.category_type})" }.join("\n")}

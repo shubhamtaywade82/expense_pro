@@ -14,6 +14,7 @@ import {
   TrendingUp,
   AlertCircle,
   IndianRupee,
+  Sparkles,
 } from "lucide-react";
 import {
   BarChart,
@@ -92,6 +93,26 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Overall Summary Bar */}
+      {!isLoading && data?.overall && (
+        <Card className="bg-muted/30 border-dashed border-indigo-200">
+          <CardContent className="py-4 px-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-indigo-500" />
+              <span className="text-sm font-semibold text-indigo-900">Life-to-Date Savings:</span>
+              <span className={`text-lg font-bold ${parseFloat(data.overall.netBalance) >= 0 ? "text-green-700" : "text-red-700"}`}>
+                {formatCurrency(data.overall.netBalance)}
+              </span>
+            </div>
+            <div className="flex gap-6 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              <div>Total Income: <span className="text-foreground ml-1">{formatCurrency(data.overall.totalIncome)}</span></div>
+              <div>Total Spent: <span className="text-foreground ml-1">{formatCurrency(parseFloat(data.overall.totalExpense) + parseFloat(data.overall.totalEmiPaid))}</span></div>
+              <div>EMI Paid: <span className="text-foreground ml-1">{formatCurrency(data.overall.totalEmiPaid)}</span></div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Month Selector */}
       <div className="flex items-center justify-between">
         <div>

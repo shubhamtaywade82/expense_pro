@@ -17,7 +17,7 @@ type ChatMessage = {
 const SUGGESTIONS = [
   "How are my savings doing this month?",
   "Log an expense: 450 on dining out paid via upi today.",
-  "Is my Salary recurring every month?",
+  "What is my total net balance to date?",
   "What is the status of my Rent bill?"
 ];
 

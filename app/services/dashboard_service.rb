@@ -13,6 +13,7 @@ class DashboardService
       bills: bill_summary,
       emis: emi_summary,
       loans: loan_summary,
+      overall: overall_summary,
       monthlyTrend: monthly_trend,
       categoryBreakdown: category_breakdown,
       recentExpenses: recent_expenses
@@ -22,6 +23,22 @@ class DashboardService
   private
 
   attr_reader :user, :month, :year, :period
+
+  def overall_summary
+    first_record = user.incomes.order(:income_date).first&.income_date || Date.current
+    all_incomes = IncomeProjectionService.new(user, first_record, Date.current).call
+    
+    total_income = all_incomes.sum(&:amount)
+    total_expense = user.expenses.sum(:amount)
+    total_emi_paid = user.emi_payments.where(is_paid: true).sum(:amount)
+    
+    {
+      totalIncome: total_income.to_s,
+      totalExpense: total_expense.to_s,
+      totalEmiPaid: total_emi_paid.to_s,
+      netBalance: (total_income - total_expense - total_emi_paid).to_s
+    }
+  end
 
   def expense_summary
     scope = user.expenses.where(expense_date: period)

@@ -127,6 +127,11 @@ export const api = {
       get<DashboardOverview>(`/dashboard/overview${buildQuery(params)}`),
   },
 
+  ai: {
+    chat: (data: { message: string; history?: { role: string; content: string }[] }) =>
+      post<{ role: string; content: string }>("/ai/chat", data),
+  },
+
   reports: {
     monthly: (params: { month: number; year: number }) => get<MonthlyReport>(`/reports/monthly${buildQuery(params)}`),
     financialYear: (params: { year: number }) =>

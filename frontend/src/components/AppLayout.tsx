@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   IndianRupee,
+  Sparkles,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +30,7 @@ const navItems = [
   { path: "/budget", label: "Budget", icon: PiggyBank },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/categories", label: "Categories", icon: Tags },
+  { path: "/ai-assistant", label: "AI Assistant", icon: Sparkles },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {

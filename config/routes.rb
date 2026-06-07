@@ -32,6 +32,7 @@ Rails.application.routes.draw do
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"
       get "reports/financial_year", to: "reports#financial_year"
+      post "ai/chat", to: "ai#chat"
     end
   end
 

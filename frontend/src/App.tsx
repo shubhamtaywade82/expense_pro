@@ -9,6 +9,7 @@ import Income from "./pages/Income";
 import Budget from "./pages/Budget";
 import Reports from "./pages/Reports";
 import Categories from "./pages/Categories";
+import AiAssistant from "./pages/AiAssistant";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -85,6 +86,14 @@ export default function App() {
         element={
           <LayoutWrapper>
             <Categories />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/ai-assistant"
+        element={
+          <LayoutWrapper>
+            <AiAssistant />
           </LayoutWrapper>
         }
       />

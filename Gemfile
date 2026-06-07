@@ -63,3 +63,5 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "ollama-client", path: "/home/nemesis/project/ai-workspace/ollama-client/ollama-client"

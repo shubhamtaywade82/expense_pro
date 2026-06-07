@@ -1,14 +1,37 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
-
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+  namespace :api do
+    namespace :v1 do
+      resource :session, only: [ :show, :create, :destroy ]
+      resources :registrations, only: [ :create ]
 
-  # Defines the root path route ("/")
-  root "onboarding#show"
+      resources :categories, except: [ :show ]
+      resources :expenses, except: [ :show ]
+      resources :incomes, except: [ :show ] do
+        collection do
+          get :summary
+        end
+      end
+      resources :budgets, except: [ :show ]
+
+      resources :bills, except: [ :show ] do
+        member do
+          patch :toggle_paid
+        end
+      end
+
+      resources :loans, only: [ :index, :show, :create, :destroy ]
+      patch "emi_payments/:id/pay", to: "emi_payments#pay", as: :pay_emi
+
+      get "dashboard/overview", to: "dashboard#overview"
+      get "reports/monthly", to: "reports#monthly"
+      get "reports/financial_year", to: "reports#financial_year"
+    end
+  end
+
+  root to: "frontend#index"
+  get "*path", to: "frontend#index", constraints: ->(req) { !req.path.start_with?("/api") && !req.path.start_with?("/rails") }
 end

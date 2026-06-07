@@ -7,9 +7,8 @@ module Api
         user = User.new(registration_params)
 
         if user.save
-          reset_session
-          session[:user_id] = user.id
-          render json: { id: user.id, name: user.name, email: user.email }, status: :created
+          token = JWT.encode({ user_id: user.id, exp: 24.hours.from_now.to_i }, Rails.application.credentials.secret_key_base || 'secret', 'HS256')
+          render json: { id: user.id, name: user.name, email: user.email, token: token }, status: :created
         else
           render json: { error: user.errors.full_messages.to_sentence }, status: :unprocessable_entity
         end

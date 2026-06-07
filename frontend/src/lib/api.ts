@@ -20,12 +20,15 @@ const BASE_URL = "/api/v1";
 export class ApiError extends Error {}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem("jwt");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers ?? {}),
+  };
+
   const response = await fetch(`${BASE_URL}${path}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
-    },
+    headers,
     ...options,
   });
 
@@ -69,10 +72,19 @@ const del = <T>(path: string) => request<T>(path, { method: "DELETE" });
 export const api = {
   auth: {
     me: () => get<User>("/session"),
-    login: (email: string, password: string) => post<User>("/session", { email, password }),
-    logout: () => del<void>("/session"),
-    register: (data: { name: string; email: string; password: string }) =>
-      post<User>("/registrations", { user: data }),
+    login: async (email: string, password: string) => {
+      const data = await post<User & { token: string }>("/session", { email, password });
+      if (data.token) localStorage.setItem("jwt", data.token);
+      return data;
+    },
+    logout: async () => {
+      localStorage.removeItem("jwt");
+    },
+    register: async (data: { name: string; email: string; password: string }) => {
+      const res = await post<User & { token: string }>("/registrations", { user: data });
+      if (res.token) localStorage.setItem("jwt", res.token);
+      return res;
+    },
   },
 
   categories: {

@@ -3,6 +3,8 @@ module Api
     class ExpensesController < BaseController
       before_action :set_expense, only: [ :update, :destroy ]
 
+      include Pagy::Backend
+
       def index
         scope = current_user.expenses.includes(:category).recent_first
 
@@ -13,18 +15,27 @@ module Api
         scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
         scope = scope.search(params[:search]) if params[:search].present?
 
-        render json: scope.map { |expense| serialize(expense) }
+        @pagy, @expenses = pagy(scope)
+        
+        render json: {
+          data: ExpenseBlueprint.render_as_hash(@expenses),
+          meta: {
+            current_page: @pagy.page,
+            total_pages: @pagy.pages,
+            total_count: @pagy.count
+          }
+        }
       end
 
       def create
         expense = current_user.expenses.build(expense_params)
         expense.save!
-        render json: serialize(expense), status: :created
+        render json: ExpenseBlueprint.render_as_hash(expense), status: :created
       end
 
       def update
         @expense.update!(expense_params)
-        render json: serialize(@expense)
+        render json: ExpenseBlueprint.render_as_hash(@expense)
       end
 
       def destroy
@@ -40,14 +51,6 @@ module Api
 
       def expense_params
         params.permit(:category_id, :amount, :description, :expense_date, :payment_method, :is_recurring)
-      end
-
-      def serialize(expense)
-        expense.as_json.merge(
-          "categoryName" => expense.category.name,
-          "categoryColor" => expense.category.color,
-          "categoryIcon" => expense.category.icon
-        )
       end
     end
   end

@@ -1,4 +1,5 @@
 class Loan < ApplicationRecord
+  has_paper_trail
   TYPES = %w[home car personal education business gold other].freeze
 
   belongs_to :user

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/utils";
 import type { Expense } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,13 +68,31 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: api.expenses.create,
+    onMutate: async (newExpensePayload) => {
+      await queryClient.cancelQueries({ queryKey: ["expenses"] });
+      const previousExpenses = queryClient.getQueryData(["expenses", { month, year, categoryId: categoryFilter, search }]);
+      
+      queryClient.setQueryData(["expenses", { month, year, categoryId: categoryFilter, search }], (old: any) => {
+        const optimisticExpense = {
+          id: Date.now(),
+          ...newExpensePayload,
+          categoryName: categories?.find((c) => c.id === newExpensePayload.categoryId)?.name || "Unknown",
+        };
+        return old ? [optimisticExpense, ...old] : [optimisticExpense];
+      });
+
+      return { previousExpenses };
+    },
+    onError: (error: any, newExp, context) => {
+      queryClient.setQueryData(["expenses", { month, year, categoryId: categoryFilter, search }], context?.previousExpenses);
+      toast.error(error.message || "Failed to create expense");
+    },
+    onSettled: () => {
+      invalidate();
+    },
     onSuccess: () => {
       toast.success("Expense created successfully");
-      invalidate();
       resetForm();
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create expense");
     }
   });
 
@@ -150,14 +169,7 @@ export default function Expenses() {
     setDialogOpen(true);
   };
 
-  const formatCurrency = (val: string | number) => {
-    const num = typeof val === "string" ? parseFloat(val) : val;
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 2,
-    }).format(num);
-  };
+  const formatCurrencyLocal = formatCurrency;
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -236,7 +248,7 @@ export default function Expenses() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Total: {formatCurrency(totalAmount)}</CardTitle>
+          <CardTitle>Total: {formatCurrencyLocal(totalAmount)}</CardTitle>
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
@@ -279,7 +291,7 @@ export default function Expenses() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-red-600">{formatCurrency(exp.amount)}</span>
+                    <span className="text-sm font-semibold text-red-600">{formatCurrencyLocal(exp.amount)}</span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(exp)}><Pencil className="w-3.5 h-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteMutation.mutate(exp.id)}><Trash2 className="w-3.5 h-3.5" /></Button>

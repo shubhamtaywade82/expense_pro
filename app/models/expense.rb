@@ -1,4 +1,5 @@
 class Expense < ApplicationRecord
+  has_paper_trail
   PAYMENT_METHODS = %w[cash credit_card debit_card upi net_banking other].freeze
 
   belongs_to :user

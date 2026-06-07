@@ -15,20 +15,22 @@ module Api
         user = User.find_by(email: params.require(:email).to_s.downcase.strip)
 
         if user&.authenticate(params.require(:password))
-          reset_session
-          session[:user_id] = user.id
-          render json: serialize(user)
+          token = generate_token(user.id)
+          render json: serialize(user).merge(token: token)
         else
           render json: { error: "Invalid email or password" }, status: :unauthorized
         end
       end
 
       def destroy
-        reset_session
         head :no_content
       end
 
       private
+
+      def generate_token(user_id)
+        JWT.encode({ user_id: user_id, exp: 24.hours.from_now.to_i }, Rails.application.credentials.secret_key_base || 'secret', 'HS256')
+      end
 
       def serialize(user)
         { id: user.id, name: user.name, email: user.email }

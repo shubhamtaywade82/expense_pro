@@ -49,6 +49,10 @@ module.exports = {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      fontFamily: {
+        sans: ["'Plus Jakarta Sans'", "sans-serif"],
+        display: ["'Outfit'", "sans-serif"],
+      },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
@@ -58,6 +62,10 @@ module.exports = {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+        "glass-light": "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        glow: "0 0 20px rgba(99, 102, 241, 0.15)",
+        "glow-emerald": "0 0 20px rgba(16, 185, 129, 0.15)",
       },
       keyframes: {
         "accordion-down": {

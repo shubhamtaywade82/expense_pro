@@ -20,7 +20,18 @@ module Api
       end
 
       def current_user
-        @current_user ||= User.find_by(id: session[:user_id])
+        return @current_user if @current_user
+
+        header = request.headers['Authorization']
+        return nil unless header.present?
+
+        token = header.split(' ').last
+        begin
+          decoded = JWT.decode(token, Rails.application.credentials.secret_key_base || 'secret', true, { algorithm: 'HS256' })
+          @current_user = User.find_by(id: decoded[0]['user_id'])
+        rescue JWT::DecodeError
+          nil
+        end
       end
 
       def authenticate_user!

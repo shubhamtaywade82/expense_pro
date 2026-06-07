@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, User, Send, Trash2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -13,9 +15,9 @@ type ChatMessage = {
 };
 
 const SUGGESTIONS = [
-  "Give me a summary of my net savings this month.",
+  "How are my savings doing this month?",
   "Log an expense: 450 on dining out paid via upi today.",
-  "What are my upcoming bills?",
+  "Is my Salary recurring every month?",
   "What is the status of my Rent bill?"
 ];
 
@@ -32,7 +34,7 @@ export default function AiAssistant() {
   const chatMutation = useMutation({
     mutationFn: api.ai.chat,
     onSuccess: (data) => {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.content }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.content || "I'm sorry, I couldn't process that request." }]);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to get response from AI");
@@ -115,17 +117,15 @@ export default function AiAssistant() {
                   {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                 </div>
                 <div
-                  className={`p-3 rounded-2xl shadow-sm text-sm leading-relaxed ${
+                  className={`p-3 rounded-2xl shadow-sm text-sm leading-relaxed prose prose-sm max-w-none ${
                     msg.role === "user"
-                      ? "bg-indigo-600 text-white rounded-tr-none"
+                      ? "bg-indigo-600 text-white rounded-tr-none prose-invert"
                       : "bg-card border border-muted rounded-tl-none text-foreground"
                   }`}
                 >
-                  {msg.content.split("\n").map((line, lIdx) => (
-                    <p key={lIdx} className={lIdx > 0 ? "mt-2" : ""}>
-                      {line}
-                    </p>
-                  ))}
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.content}
+                  </ReactMarkdown>
                 </div>
               </div>
             ))}

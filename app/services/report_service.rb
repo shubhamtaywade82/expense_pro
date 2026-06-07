@@ -64,13 +64,17 @@ class ReportService
   attr_reader :user
 
   def category_expenses(expenses)
-    grouped = expenses.joins(:category).group("categories.id", "categories.name", "categories.color")
-
-    sums = grouped.sum(:amount)
-    counts = grouped.count
-
-    sums
-      .map { |(_id, name, color), total| { categoryName: name, categoryColor: color, total: total.to_s, count: counts[[ _id, name, color ]] } }
+    expenses.joins(:category)
+      .group("categories.id", "categories.name", "categories.color")
+      .select("categories.name, categories.color, SUM(expenses.amount) AS total_amount, COUNT(expenses.id) AS expense_count")
+      .map do |row|
+        {
+          categoryName: row.name,
+          categoryColor: row.color,
+          total: row.total_amount.to_s,
+          count: row.expense_count
+        }
+      end
       .sort_by { |row| -row[:total].to_f }
   end
 

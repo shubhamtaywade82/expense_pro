@@ -29,7 +29,12 @@ class Loan < ApplicationRecord
   end
 
   def outstanding_principal
-    principal_amount.to_d - emi_payments.where(is_paid: true).sum(:principal_amount)
+    paid_emi_sum = if emi_payments.loaded?
+      emi_payments.select(&:is_paid).sum(&:principal_amount)
+    else
+      emi_payments.where(is_paid: true).sum(:principal_amount)
+    end
+    principal_amount.to_d - paid_emi_sum
   end
 
   private

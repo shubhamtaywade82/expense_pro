@@ -43,11 +43,11 @@ class AiChatService
       Current Local Time: #{Time.current.strftime("%A, %B %d, %Y, %I:%M %p")}
 
       User's Current Financial Data (#{Time.current.strftime("%B %Y")}):
-      - Total Income: ₹#{dashboard.dig(:income, :total)}
+      - Total Income: ₹#{dashboard.dig(:income, :total)} (#{dashboard.dig(:income, :received)} received, #{dashboard.dig(:income, :expected)} expected/projected)
       - Total Expenses: ₹#{dashboard.dig(:expenses, :total)}
       - Monthly Bills: ₹#{dashboard.dig(:bills, :total)} total (#{dashboard.dig(:bills, :paid)} paid, #{dashboard.dig(:bills, :unpaid)} pending)
       - Loan EMIs: ₹#{dashboard.dig(:emis, :total)}
-      - Net Savings: ₹#{net_savings}
+      - Net Savings: ₹#{calculate_net_savings(dashboard)}
 
       Active Categories:
       #{@user.categories.map { |c| "- #{c.name} (#{c.category_type})" }.join("\n")}
@@ -62,7 +62,8 @@ class AiChatService
       1. Use 'create_expense' for spending.
       2. Use 'pay_bill' with the correct ID for paying specific bills.
       3. Do NOT hallucinate tools. All finance data is provided here; answer questions directly.
-      4. Only call 'pay_bill' if explicitly asked to mark it as paid.
+      4. DO NOT call tools like 'get_net_savings', 'get_income', 'get_expenses', or 'get_bills'. This information is ALREADY in this prompt.
+      5. Only call 'pay_bill' if explicitly asked to mark it as paid.
     SYSTEM
   end
 
@@ -176,9 +177,12 @@ class AiChatService
 
   def needs_tools?(message)
     msg = message.to_s.downcase
-    return false unless %w[spent log buy bought expense paid pay payed mark cost purchase].any? { |w| msg.include?(w) }
-    return false if msg.include?("?") || msg.start_with?("have", "did", "is", "what", "how", "when", "can", "please check")
-
-    true
+    # Keywords that suggest an action is needed
+    is_action = %w[spent log buy bought expense paid pay payed mark cost purchase].any? { |w| msg.include?(w) }
+    # Keywords that suggest a question is being asked
+    is_question = msg.include?("?") || msg.start_with?("have", "did", "is", "what", "how", "when", "please check")
+    
+    # If it's an action and NOT a simple data question, enable tools
+    is_action && !is_question
   end
 end

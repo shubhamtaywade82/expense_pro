@@ -30,31 +30,38 @@ class DashboardService
 
   def income_summary
     incomes = IncomeProjectionService.new(user, period.first, period.last).call
-    { total: incomes.sum(&:amount).to_s, count: incomes.count }
+    { 
+      total: incomes.sum(&:amount).to_s, 
+      count: incomes.count,
+      received: incomes.count(&:is_received),
+      expected: incomes.count { |inc| !inc.is_received }
+    }
   end
 
   def bill_summary
     scope = user.monthly_bills.active
+    stats = scope.select("SUM(amount) AS total_amount, COUNT(CASE WHEN is_paid = true THEN 1 END) AS paid_count, COUNT(CASE WHEN is_paid = false THEN 1 END) AS unpaid_count").take
     {
-      total: scope.sum(:amount).to_s,
-      paid: scope.where(is_paid: true).count,
-      unpaid: scope.where(is_paid: false).count
+      total: (stats.total_amount || 0).to_s,
+      paid: stats.paid_count || 0,
+      unpaid: stats.unpaid_count || 0
     }
   end
 
   def emi_summary
     scope = user.emi_payments.where(due_date: period)
+    stats = scope.select("SUM(amount) AS total_amount, COUNT(CASE WHEN is_paid = true THEN 1 END) AS paid_count, COUNT(*) AS total_count").take
     {
-      total: scope.sum(:amount).to_s,
-      paid: scope.where(is_paid: true).count,
-      totalCount: scope.count
+      total: (stats.total_amount || 0).to_s,
+      paid: stats.paid_count || 0,
+      totalCount: stats.total_count || 0
     }
   end
 
   def loan_summary
-    loans = user.loans.includes(:emi_payments)
+    loans = user.loans.includes(:emi_payments).to_a
     {
-      activeCount: loans.count,
+      activeCount: loans.size,
       outstandingTotal: loans.sum(&:outstanding_principal).to_s,
       totalEMI: loans.sum(&:emi_amount).to_s
     }

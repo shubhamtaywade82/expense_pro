@@ -9,7 +9,9 @@ class IncomeProjectionService
 
   def call
     real_incomes = @user.incomes.where(income_date: @start_date..@end_date).to_a
-    templates = @user.incomes.templates.where("income_date <= ?", @end_date)
+    templates = @user.incomes.templates
+                      .where("income_date <= ?", @end_date)
+                      .where("end_date IS NULL OR end_date >= ?", @start_date)
 
     projections = []
     templates.each do |template|
@@ -17,7 +19,10 @@ class IncomeProjectionService
         next unless occurs_in_month?(template, month_start)
         next if already_exists?(template, real_incomes, month_start)
 
-        projections << build_projection(template, month_start)
+        projection = build_projection(template, month_start)
+        next if template.end_date.present? && projection.income_date > template.end_date
+
+        projections << projection
       end
     end
 

@@ -41,7 +41,8 @@ export default function Income() {
     frequency: "monthly" as string, 
     notes: "",
     parentId: null as number | null,
-    isReceived: true
+    isReceived: true,
+    endDate: ""
   });
 
   const queryClient = useQueryClient();
@@ -84,7 +85,8 @@ export default function Income() {
       frequency: "monthly", 
       notes: "",
       parentId: null,
-      isReceived: true
+      isReceived: true,
+      endDate: ""
     }); 
     setEditingId(null); 
     setDialogOpen(false); 
@@ -101,7 +103,8 @@ export default function Income() {
       frequency: form.frequency as "monthly" | "quarterly" | "yearly" | "one_time", 
       notes: form.notes || undefined,
       parentId: form.parentId,
-      isReceived: form.isReceived
+      isReceived: form.isReceived,
+      endDate: form.isRecurring && form.endDate ? form.endDate : null
     };
     if (editingId) updateMutation.mutate({ id: editingId, ...payload });
     else createMutation.mutate(payload);
@@ -117,7 +120,8 @@ export default function Income() {
       frequency: inc.frequency, 
       notes: inc.notes || "",
       parentId: inc.parentId || null,
-      isReceived: inc.isReceived
+      isReceived: inc.isReceived,
+      endDate: inc.endDate ? format(new Date(inc.endDate), "yyyy-MM-dd") : ""
     });
     setDialogOpen(true);
   };
@@ -162,6 +166,12 @@ export default function Income() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-2"><Switch checked={form.isRecurring} onCheckedChange={(v) => setForm({ ...form, isRecurring: v })} /><Label>Recurring</Label></div>
+                {form.isRecurring && (
+                  <div>
+                    <Label>End Date (Optional)</Label>
+                    <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+                  </div>
+                )}
                 <div className="flex items-center gap-2"><Switch checked={form.isReceived} onCheckedChange={(v) => setForm({ ...form, isReceived: v })} /><Label>Received</Label></div>
                 <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional" /></div>
                 <DialogFooter>
@@ -196,6 +206,11 @@ export default function Income() {
                         <span>{inc.incomeDate ? format(new Date(inc.incomeDate), "dd MMM yyyy") : ""}</span>
                         <Badge variant="outline" className="text-[10px] h-4">{inc.frequency}</Badge>
                         {inc.isRecurring && <Badge variant="secondary" className="text-[10px] h-4">Recurring</Badge>}
+                        {inc.isRecurring && inc.endDate && (
+                          <Badge variant="outline" className="text-[10px] h-4 text-rose-600 border-rose-200 bg-rose-50/50">
+                            Ends: {format(new Date(inc.endDate), "dd MMM yyyy")}
+                          </Badge>
+                        )}
                         {inc.id === null && <Badge variant="outline" className="text-[10px] h-4 border-dashed">Projected</Badge>}
                         {inc.isReceived ? (
                           <Badge variant="secondary" className="text-[10px] h-4 bg-green-100 text-green-700 hover:bg-green-100 border-green-200">Received</Badge>

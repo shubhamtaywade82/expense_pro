@@ -43,6 +43,7 @@ export type Income = {
   notes: string | null;
   isReceived: boolean;
   parentId?: number | null;
+  endDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -134,6 +135,12 @@ export type DashboardOverview = {
     categoryName: string;
     categoryColor: string;
   }[];
+  overall?: {
+    totalIncome: string;
+    totalExpense: string;
+    totalEmiPaid: string;
+    netBalance: string;
+  };
 };
 
 export type MonthlyReport = {

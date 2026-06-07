@@ -29,8 +29,8 @@ class DashboardService
   end
 
   def income_summary
-    scope = user.incomes.where(income_date: period)
-    { total: scope.sum(:amount).to_s, count: scope.count }
+    incomes = IncomeProjectionService.new(user, month, year).call
+    { total: incomes.sum(&:amount).to_s, count: incomes.count }
   end
 
   def bill_summary
@@ -69,10 +69,12 @@ class DashboardService
       .group("to_char(expense_date, 'YYYY-MM')")
       .sum(:amount)
 
-    income_by_month = user.incomes
-      .where(income_date: range_start..range_end)
-      .group("to_char(income_date, 'YYYY-MM')")
-      .sum(:amount)
+    income_by_month = {}
+    (0...months_back).each do |offset|
+      m_date = range_start.advance(months: offset)
+      incomes = IncomeProjectionService.new(user, m_date.month, m_date.year).call
+      income_by_month[m_date.strftime("%Y-%m")] = incomes.sum(&:amount)
+    end
 
     (0...months_back).map do |offset|
       key = range_start.advance(months: offset).strftime("%Y-%m")

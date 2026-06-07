@@ -1,24 +1,24 @@
 module Api
   module V1
     class IncomesController < BaseController
-      before_action :set_income, only: [ :update, :destroy ]
+      before_action :set_income, only: [ :update, :destroy, :toggle_received ]
 
       def index
-        scope = current_user.incomes.recent_first
-
         if params[:month].present? && params[:year].present?
-          scope = scope.for_month(params[:month].to_i, params[:year].to_i)
+          incomes = IncomeProjectionService.new(current_user, params[:month], params[:year]).call
+          render json: incomes
+        else
+          render json: current_user.incomes.recent_first
         end
-
-        render json: scope
       end
 
       def summary
         month = params[:month].to_i
         year = params[:year].to_i
-        scope = current_user.incomes.for_month(month, year)
+        incomes = IncomeProjectionService.new(current_user, month, year).call
 
-        render json: { total: scope.sum(:amount).to_s, count: scope.count }
+        total = incomes.sum { |inc| inc.amount.to_f }
+        render json: { total: total.to_s, count: incomes.count }
       end
 
       def create
@@ -37,6 +37,11 @@ module Api
         head :no_content
       end
 
+      def toggle_received
+        @income.update!(is_received: !@income.is_received)
+        render json: @income
+      end
+
       private
 
       def set_income
@@ -44,7 +49,7 @@ module Api
       end
 
       def income_params
-        params.permit(:source, :amount, :income_date, :is_recurring, :frequency, :notes)
+        params.permit(:source, :amount, :income_date, :is_recurring, :frequency, :notes, :parent_id, :is_received)
       end
     end
   end

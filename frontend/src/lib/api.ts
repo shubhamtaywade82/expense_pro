@@ -95,6 +95,7 @@ export const api = {
     create: (data: Record<string, unknown>) => post<Income>("/incomes", data),
     update: ({ id, ...data }: { id: number } & Record<string, unknown>) => patch<Income>(`/incomes/${id}`, data),
     delete: (id: number) => del<void>(`/incomes/${id}`),
+    toggleReceived: (id: number) => patch<Income>(`/incomes/${id}/toggle_received`),
   },
 
   bills: {

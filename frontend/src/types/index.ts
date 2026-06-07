@@ -33,7 +33,7 @@ export type Expense = {
 };
 
 export type Income = {
-  id: number;
+  id: number | null;
   userId: number;
   source: string;
   amount: string;
@@ -41,8 +41,10 @@ export type Income = {
   isRecurring: boolean;
   frequency: string;
   notes: string | null;
-  createdAt: string;
-  updatedAt: string;
+  isReceived: boolean;
+  parentId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type MonthlyBill = {

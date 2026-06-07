@@ -10,7 +10,8 @@ class ReportService
     emis = user.emi_payments.includes(:loan).where(due_date: period)
 
     total_expense = expenses.sum(:amount)
-    total_income = user.incomes.where(income_date: period).sum(:amount)
+    incomes = IncomeProjectionService.new(user, month, year).call
+    total_income = incomes.sum(&:amount)
     total_bills = bills.sum(:amount)
     total_emi = emis.sum(:amount)
 
@@ -40,7 +41,10 @@ class ReportService
     bills = user.monthly_bills.active
 
     total_expense = expenses.sum(:amount)
-    total_income = incomes.sum(:amount)
+    total_income = (0..11).sum do |offset|
+      m_date = fy_start.advance(months: offset)
+      IncomeProjectionService.new(user, m_date.month, m_date.year).call.sum(&:amount)
+    end
     total_bills_yearly = bills.sum(:amount) * 12
     total_emi = emis.sum(:amount)
 
@@ -82,15 +86,16 @@ class ReportService
     bills_total = bills.sum(:amount)
 
     expenses_by_month = expenses.group("to_char(expense_date, 'YYYY-MM')").sum(:amount)
-    income_by_month = incomes.group("to_char(income_date, 'YYYY-MM')").sum(:amount)
     emis_by_month = emis.group("to_char(due_date, 'YYYY-MM')").sum(:amount)
 
     (0..11).map do |offset|
-      key = fy_start.advance(months: offset).strftime("%Y-%m")
+      m_date = fy_start.advance(months: offset)
+      key = m_date.strftime("%Y-%m")
+      incomes = IncomeProjectionService.new(user, m_date.month, m_date.year).call
       {
         month: key,
         expenses: (expenses_by_month[key] || 0).to_s,
-        income: (income_by_month[key] || 0).to_s,
+        income: incomes.sum(&:amount).to_s,
         bills: bills_total.to_s,
         emis: (emis_by_month[key] || 0).to_s
       }

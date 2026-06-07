@@ -24,7 +24,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, TrendingUp, Wallet } from "lucide-react";
+import { Plus, Pencil, Trash2, TrendingUp, Wallet, Check } from "lucide-react";
 import { format } from "date-fns";
 
 export default function Income() {
@@ -33,7 +33,16 @@ export default function Income() {
   const [year, setYear] = useState(now.getFullYear());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ source: "", amount: "", incomeDate: format(now, "yyyy-MM-dd"), isRecurring: false, frequency: "monthly" as string, notes: "" });
+  const [form, setForm] = useState({ 
+    source: "", 
+    amount: "", 
+    incomeDate: format(now, "yyyy-MM-dd"), 
+    isRecurring: false, 
+    frequency: "monthly" as string, 
+    notes: "",
+    parentId: null as number | null,
+    isReceived: true
+  });
 
   const queryClient = useQueryClient();
   const { data: incomes, isLoading } = useQuery({ queryKey: ["incomes", { month, year }], queryFn: () => api.incomes.list({ month, year }) });
@@ -47,20 +56,69 @@ export default function Income() {
   const createMutation = useMutation({ mutationFn: api.incomes.create, onSuccess: () => { invalidate(); resetForm(); } });
   const updateMutation = useMutation({ mutationFn: api.incomes.update, onSuccess: () => { invalidate(); resetForm(); } });
   const deleteMutation = useMutation({ mutationFn: api.incomes.delete, onSuccess: invalidate });
+  const toggleReceivedMutation = useMutation({ mutationFn: api.incomes.toggleReceived, onSuccess: invalidate });
 
-  const resetForm = () => { setForm({ source: "", amount: "", incomeDate: format(new Date(), "yyyy-MM-dd"), isRecurring: false, frequency: "monthly", notes: "" }); setEditingId(null); setDialogOpen(false); };
+  const handleToggleReceived = (inc: IncomeType) => {
+    if (inc.id) {
+      toggleReceivedMutation.mutate(inc.id);
+    } else {
+      createMutation.mutate({
+        source: inc.source,
+        amount: inc.amount,
+        incomeDate: inc.incomeDate,
+        isRecurring: false,
+        frequency: inc.frequency,
+        notes: inc.notes,
+        parentId: inc.parentId,
+        isReceived: true
+      });
+    }
+  };
+
+  const resetForm = () => { 
+    setForm({ 
+      source: "", 
+      amount: "", 
+      incomeDate: format(new Date(), "yyyy-MM-dd"), 
+      isRecurring: false, 
+      frequency: "monthly", 
+      notes: "",
+      parentId: null,
+      isReceived: true
+    }); 
+    setEditingId(null); 
+    setDialogOpen(false); 
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.source || !form.amount) return;
-    const payload = { source: form.source, amount: form.amount, incomeDate: form.incomeDate, isRecurring: form.isRecurring, frequency: form.frequency as "monthly" | "quarterly" | "yearly" | "one_time", notes: form.notes || undefined };
+    const payload = { 
+      source: form.source, 
+      amount: form.amount, 
+      incomeDate: form.incomeDate, 
+      isRecurring: form.isRecurring, 
+      frequency: form.frequency as "monthly" | "quarterly" | "yearly" | "one_time", 
+      notes: form.notes || undefined,
+      parentId: form.parentId,
+      isReceived: form.isReceived
+    };
     if (editingId) updateMutation.mutate({ id: editingId, ...payload });
     else createMutation.mutate(payload);
   };
 
   const handleEdit = (inc: IncomeType) => {
     setEditingId(inc.id);
-    setForm({ source: inc.source, amount: String(inc.amount), incomeDate: inc.incomeDate ? format(new Date(inc.incomeDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"), isRecurring: inc.isRecurring, frequency: inc.frequency, notes: inc.notes || "" });
+    setForm({ 
+      source: inc.source, 
+      amount: String(inc.amount), 
+      incomeDate: inc.incomeDate ? format(new Date(inc.incomeDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"), 
+      isRecurring: inc.isRecurring, 
+      frequency: inc.frequency, 
+      notes: inc.notes || "",
+      parentId: inc.parentId || null,
+      isReceived: inc.isReceived
+    });
     setDialogOpen(true);
   };
 
@@ -104,6 +162,7 @@ export default function Income() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-2"><Switch checked={form.isRecurring} onCheckedChange={(v) => setForm({ ...form, isRecurring: v })} /><Label>Recurring</Label></div>
+                <div className="flex items-center gap-2"><Switch checked={form.isReceived} onCheckedChange={(v) => setForm({ ...form, isReceived: v })} /><Label>Received</Label></div>
                 <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Optional" /></div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
@@ -137,14 +196,25 @@ export default function Income() {
                         <span>{inc.incomeDate ? format(new Date(inc.incomeDate), "dd MMM yyyy") : ""}</span>
                         <Badge variant="outline" className="text-[10px] h-4">{inc.frequency}</Badge>
                         {inc.isRecurring && <Badge variant="secondary" className="text-[10px] h-4">Recurring</Badge>}
+                        {inc.id === null && <Badge variant="outline" className="text-[10px] h-4 border-dashed">Projected</Badge>}
+                        {inc.isReceived ? (
+                          <Badge variant="secondary" className="text-[10px] h-4 bg-green-100 text-green-700 hover:bg-green-100 border-green-200">Received</Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px] h-4 bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200">Expected</Badge>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-green-600">+{formatCurrency(inc.amount)}</span>
                     <div className="flex gap-1">
+                      {!inc.isReceived && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => handleToggleReceived(inc)} title="Mark as Received"><Check className="w-3.5 h-3.5" /></Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(inc)}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteMutation.mutate(inc.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                      {inc.id !== null && (
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => deleteMutation.mutate(inc.id!)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                      )}
                     </div>
                   </div>
                 </div>

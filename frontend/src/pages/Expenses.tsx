@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Pencil, Trash2, Filter } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const paymentMethods = [
   { value: "cash", label: "Cash" },
@@ -66,17 +67,37 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: api.expenses.create,
-    onSuccess: () => { invalidate(); resetForm(); },
+    onSuccess: () => {
+      toast.success("Expense created successfully");
+      invalidate();
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create expense");
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: api.expenses.update,
-    onSuccess: () => { invalidate(); resetForm(); },
+    onSuccess: () => {
+      toast.success("Expense updated successfully");
+      invalidate();
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update expense");
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: api.expenses.delete,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      toast.success("Expense deleted successfully");
+      invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete expense");
+    }
   });
 
   const expenseCategories = categories?.filter((c) => c.type === "expense") ?? [];

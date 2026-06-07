@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Bills() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,10 +48,48 @@ export default function Bills() {
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
-  const createMutation = useMutation({ mutationFn: api.bills.create, onSuccess: () => { invalidate(); resetForm(); } });
-  const updateMutation = useMutation({ mutationFn: api.bills.update, onSuccess: () => { invalidate(); resetForm(); } });
-  const deleteMutation = useMutation({ mutationFn: api.bills.delete, onSuccess: invalidate });
-  const toggleMutation = useMutation({ mutationFn: api.bills.togglePaid, onSuccess: invalidate });
+  const createMutation = useMutation({
+    mutationFn: api.bills.create,
+    onSuccess: () => {
+      toast.success("Bill created successfully");
+      invalidate();
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create bill");
+    }
+  });
+  const updateMutation = useMutation({
+    mutationFn: api.bills.update,
+    onSuccess: () => {
+      toast.success("Bill updated successfully");
+      invalidate();
+      resetForm();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update bill");
+    }
+  });
+  const deleteMutation = useMutation({
+    mutationFn: api.bills.delete,
+    onSuccess: () => {
+      toast.success("Bill deleted successfully");
+      invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete bill");
+    }
+  });
+  const toggleMutation = useMutation({
+    mutationFn: api.bills.togglePaid,
+    onSuccess: (updatedBill) => {
+      toast.success(`Bill marked as ${updatedBill.isPaid ? "paid" : "unpaid"}`);
+      invalidate();
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update bill status");
+    }
+  });
 
   const billCategories = categories?.filter((c) => c.type === "bill") ?? [];
 
@@ -136,7 +175,12 @@ export default function Bills() {
                 return (
                   <div key={bill.id} className={`flex items-center justify-between p-4 rounded-lg border ${isOverdue ? "border-red-200 bg-red-50" : bill.isPaid ? "border-green-200 bg-green-50" : "hover:bg-muted/50"} transition-colors`}>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => toggleMutation.mutate(bill.id)} className="flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleMutation.mutate(bill.id)}
+                        disabled={toggleMutation.isPending}
+                        className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary rounded-full disabled:opacity-50 transition-opacity"
+                      >
                         {bill.isPaid ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : isOverdue ? <AlertTriangle className="w-6 h-6 text-red-500" /> : <XCircle className="w-6 h-6 text-muted-foreground" />}
                       </button>
                       <div>

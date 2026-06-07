@@ -14,6 +14,9 @@ Rails.application.routes.draw do
         collection do
           get :summary
         end
+        member do
+          patch :toggle_received
+        end
       end
       resources :budgets, except: [ :show ]
 

@@ -1,6 +1,7 @@
 import type {
   Budget,
   Category,
+  CreatePayload,
   DashboardOverview,
   EmiPayment,
   Expense,
@@ -10,6 +11,7 @@ import type {
   LoanDetail,
   MonthlyBill,
   MonthlyReport,
+  UpdatePayload,
   User,
 } from "@/types";
 
@@ -45,7 +47,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return (await response.json()) as T;
 }
 
-function buildQuery(params: Record<string, unknown>): string {
+function buildQuery(params: Record<string, string | number | boolean | undefined | null>): string {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -75,33 +77,33 @@ export const api = {
 
   categories: {
     list: () => get<Category[]>("/categories"),
-    create: (data: Partial<Category>) => post<Category>("/categories", data),
-    update: ({ id, ...data }: Partial<Category> & { id: number }) => patch<Category>(`/categories/${id}`, data),
+    create: (data: CreatePayload<Category>) => post<Category>("/categories", data),
+    update: (data: UpdatePayload<Category>) => patch<Category>(`/categories/${data.id}`, data),
     delete: (id: number) => del<void>(`/categories/${id}`),
   },
 
   expenses: {
     list: (params: { month?: number; year?: number; categoryId?: number; search?: string } = {}) =>
       get<Expense[]>(`/expenses${buildQuery(params)}`),
-    create: (data: Record<string, unknown>) => post<Expense>("/expenses", data),
-    update: ({ id, ...data }: { id: number } & Record<string, unknown>) => patch<Expense>(`/expenses/${id}`, data),
+    create: (data: CreatePayload<Expense>) => post<Expense>("/expenses", data),
+    update: (data: UpdatePayload<Expense>) => patch<Expense>(`/expenses/${data.id}`, data),
     delete: (id: number) => del<void>(`/expenses/${id}`),
   },
 
   incomes: {
     list: (params: { month: number; year: number }) => get<Income[]>(`/incomes${buildQuery(params)}`),
     summary: (params: { month: number; year: number }) =>
-      get<{ total: string; count: number }>(`/incomes/summary${buildQuery(params)}`),
-    create: (data: Record<string, unknown>) => post<Income>("/incomes", data),
-    update: ({ id, ...data }: { id: number } & Record<string, unknown>) => patch<Income>(`/incomes/${id}`, data),
+      get<{ total: string; count: number; received: number; expected: number }>(`/incomes/summary${buildQuery(params)}`),
+    create: (data: CreatePayload<Income>) => post<Income>("/incomes", data),
+    update: (data: UpdatePayload<Income>) => patch<Income>(`/incomes/${data.id}`, data),
     delete: (id: number) => del<void>(`/incomes/${id}`),
     toggleReceived: (id: number) => patch<Income>(`/incomes/${id}/toggle_received`),
   },
 
   bills: {
     list: () => get<MonthlyBill[]>("/bills"),
-    create: (data: Record<string, unknown>) => post<MonthlyBill>("/bills", data),
-    update: ({ id, ...data }: { id: number } & Record<string, unknown>) => patch<MonthlyBill>(`/bills/${id}`, data),
+    create: (data: CreatePayload<MonthlyBill>) => post<MonthlyBill>("/bills", data),
+    update: (data: UpdatePayload<MonthlyBill>) => patch<MonthlyBill>(`/bills/${data.id}`, data),
     delete: (id: number) => del<void>(`/bills/${id}`),
     togglePaid: (id: number) => patch<MonthlyBill>(`/bills/${id}/toggle_paid`),
   },
@@ -109,7 +111,7 @@ export const api = {
   loans: {
     list: () => get<Loan[]>("/loans"),
     byId: (id: number) => get<LoanDetail>(`/loans/${id}`),
-    create: (data: Record<string, unknown>) => post<Loan>("/loans", data),
+    create: (data: CreatePayload<Loan>) => post<Loan>("/loans", data),
     delete: (id: number) => del<void>(`/loans/${id}`),
     payEmi: ({ emiId, paidDate }: { emiId: number; paidDate?: string }) =>
       patch<EmiPayment>(`/emi_payments/${emiId}/pay`, { paidDate }),
@@ -117,8 +119,8 @@ export const api = {
 
   budgets: {
     list: (params: { month: number; year: number }) => get<Budget[]>(`/budgets${buildQuery(params)}`),
-    create: (data: Record<string, unknown>) => post<Budget>("/budgets", data),
-    update: ({ id, ...data }: { id: number } & Record<string, unknown>) => patch<Budget>(`/budgets/${id}`, data),
+    create: (data: CreatePayload<Budget>) => post<Budget>("/budgets", data),
+    update: (data: UpdatePayload<Budget>) => patch<Budget>(`/budgets/${data.id}`, data),
     delete: (id: number) => del<void>(`/budgets/${id}`),
   },
 

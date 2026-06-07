@@ -108,9 +108,28 @@ export type Budget = CommonFields & {
   remaining: number;
 };
 
+export type User = {
+  id: number;
+  name: string;
+  email: string;
+};
+
 // Generic Create/Update Payloads
-export type CreatePayload<T> = Omit<T, keyof CommonFields | "categoryName" | "categoryColor" | "categoryIcon" | "spent" | "percentage" | "remaining">;
-export type UpdatePayload<T> = Partial<CreatePayload<T>> & { id: number };
+// We omit internal server fields and derived UI fields, then make everything else optional
+// to allow server-side defaults, while maintaining type awareness.
+export type CreatePayload<T> = Partial<
+  Omit<
+    T,
+    | keyof CommonFields
+    | "categoryName"
+    | "categoryColor"
+    | "categoryIcon"
+    | "spent"
+    | "percentage"
+    | "remaining"
+  >
+>;
+export type UpdatePayload<T> = CreatePayload<T> & { id: number };
 
 export type DashboardOverview = {
   expenses: { total: string; count: number };

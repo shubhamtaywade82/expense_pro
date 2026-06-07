@@ -76,85 +76,92 @@ class AiChatService
     formatted_messages << { role: "user", content: message }
 
     # 4. Call Ollama chat
-    if needs_tools?(message)
-      # Define tools
-      tools = [
-        {
-          type: "function",
-          function: {
-            name: "create_expense",
-            description: "Log a new expense record in the database. Use this when the user mentions spending money, buying something, or paying for an expense.",
-            parameters: {
-              type: "object",
-              properties: {
-                amount: { type: "number", description: "The amount spent in INR (rupees)." },
-                category_name: { type: "string", description: "The category name. Must match one of the active categories (e.g. Groceries, Travel, Dining Out, Entertainment, Health, Shopping, Rent, Other)." },
-                payment_method: { type: "string", enum: ["cash", "credit_card", "debit_card", "upi", "net_banking", "other"], description: "The payment method used." },
-                expense_date: { type: "string", description: "The date when the expense occurred in YYYY-MM-DD format. Default is today's date if not specified." },
-                description: { type: "string", description: "A brief description of what was purchased." }
-              },
-              required: ["amount", "category_name", "payment_method", "description"]
-            }
-          }
-        },
-        {
-          type: "function",
-          function: {
-            name: "pay_bill",
-            description: "Mark an active monthly bill as paid in the database.",
-            parameters: {
-              type: "object",
-              properties: {
-                bill_id: { type: "integer", description: "The database ID of the bill to pay. Retrieve this from the system prompt's list of active bills." }
-              },
-              required: ["bill_id"]
-            }
-          }
-        }
-      ]
-
-      response = @client.chat(messages: formatted_messages, tools: tools)
-      
-      # Check for tool calls
-      if response.message.tool_calls&.any?
-        # Capture tool calls execution
-        tool_calls_data = response.message.tool_calls.map do |tc|
+    begin
+      if needs_tools?(message)
+        # Define tools
+        tools = [
           {
-            id: tc.id,
             type: "function",
-            function: { name: tc.name, arguments: tc.arguments.to_json }
+            function: {
+              name: "create_expense",
+              description: "Log a new expense record in the database. Use this when the user mentions spending money, buying something, or paying for an expense.",
+              parameters: {
+                type: "object",
+                properties: {
+                  amount: { type: "number", description: "The amount spent in INR (rupees)." },
+                  category_name: { type: "string", description: "The category name. Must match one of the active categories (e.g. Groceries, Travel, Dining Out, Entertainment, Health, Shopping, Rent, Other)." },
+                  payment_method: { type: "string", enum: ["cash", "credit_card", "debit_card", "upi", "net_banking", "other"], description: "The payment method used." },
+                  expense_date: { type: "string", description: "The date when the expense occurred in YYYY-MM-DD format. Default is today's date if not specified." },
+                  description: { type: "string", description: "A brief description of what was purchased." }
+                },
+                required: ["amount", "category_name", "payment_method", "description"]
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
+              name: "pay_bill",
+              description: "Mark an active monthly bill as paid in the database.",
+              parameters: {
+                type: "object",
+                properties: {
+                  bill_id: { type: "integer", description: "The database ID of the bill to pay. Retrieve this from the system prompt's list of active bills." }
+                },
+                required: ["bill_id"]
+              }
+            }
           }
-        end
+        ]
 
-        # Add assistant message with tool calls to history
-        formatted_messages << {
-          role: "assistant",
-          content: response.message.content || "",
-          tool_calls: tool_calls_data
-        }
+        response = @client.chat(messages: formatted_messages, tools: tools)
+        
+        # Check for tool calls
+        if response.message.tool_calls&.any?
+          # Capture tool calls execution for assistant message
+          tool_calls_data = response.message.tool_calls.map do |tc|
+            {
+              id: tc.id,
+              type: "function",
+              function: { name: tc.name, arguments: tc.arguments.to_json }
+            }
+          end
 
-        # Execute each tool and append tool response
-        response.message.tool_calls.each do |tool_call|
-          result = execute_tool(tool_call)
+          # Add assistant message with tool calls to history
           formatted_messages << {
-            role: "tool",
-            name: tool_call.name,
-            content: result.to_json
+            role: "assistant",
+            content: response.message.content || "",
+            tool_calls: tool_calls_data
           }
-        end
 
-        # Call the model again with the tool response context
+          # Execute each tool and append tool response
+          response.message.tool_calls.each do |tool_call|
+            Rails.logger.info "[AiChatService] Executing tool: #{tool_call.name} with args: #{tool_call.arguments}"
+            result = execute_tool(tool_call)
+            formatted_messages << {
+              role: "tool",
+              tool_call_id: tool_call.id,
+              name: tool_call.name,
+              content: result.to_json
+            }
+          end
+
+          # Call the model again with the tool response context
+          response = @client.chat(messages: formatted_messages, tools: tools)
+        end
+      else
+        # If no tools are needed, call chat without tools to prevent hallucinations
         response = @client.chat(messages: formatted_messages)
       end
-    else
-      # If no tools are needed, call chat without tools to prevent hallucinations
-      response = @client.chat(messages: formatted_messages)
-    end
 
-    {
-      role: "assistant",
-      content: response.message.content
-    }
+      {
+        role: "assistant",
+        content: response.message.content
+      }
+    rescue => e
+      Rails.logger.error "[AiChatService] Error in chat: #{e.message}\n#{e.backtrace.first(10).join("\n")}"
+      raise e
+    end
   end
 
   private

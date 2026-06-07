@@ -63,7 +63,8 @@ class IncomeProjectionService
     projected_date = Date.new(@year, @month, day)
 
     # Return a non-persisted record
-    income = @user.incomes.build(
+    Income.new(
+      user: @user,
       source: template.source,
       amount: template.amount,
       income_date: projected_date,
@@ -73,9 +74,5 @@ class IncomeProjectionService
       parent_id: template.id,
       is_received: false
     )
-    
-    # We add a virtual attribute to help the frontend
-    income.define_singleton_method(:id) { nil }
-    income
   end
 end

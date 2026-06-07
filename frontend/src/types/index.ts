@@ -1,56 +1,51 @@
-export type User = {
-  id: number;
-  name: string;
-  email: string;
-};
+export type ISOString = string; // Future: Use template literals if specific format needed
+export type DateString = string; // e.g. "YYYY-MM-DD"
 
-export type Category = {
+export type CommonFields = {
   id: number;
   userId: number;
+  createdAt: ISOString;
+  updatedAt: ISOString;
+};
+
+export type CategoryType = "expense" | "income" | "bill" | "loan" | "emi";
+
+export type Category = CommonFields & {
   name: string;
-  type: "expense" | "income" | "bill" | "loan" | "emi";
+  type: CategoryType;
   icon: string;
   color: string;
   isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
 };
 
-export type Expense = {
-  id: number;
-  userId: number;
+export type Expense = CommonFields & {
   categoryId: number;
   amount: string;
   description: string | null;
-  expenseDate: string;
+  expenseDate: DateString;
   paymentMethod: string;
   isRecurring: boolean;
   categoryName: string;
   categoryColor: string;
   categoryIcon: string;
-  createdAt: string;
-  updatedAt: string;
 };
 
-export type Income = {
-  id: number | null;
-  userId: number;
+export type IncomeFrequency = "weekly" | "monthly" | "quarterly" | "yearly" | "one_time";
+
+export type Income = Omit<CommonFields, "id"> & {
+  id: number | null; // Projected incomes have null id
   source: string;
   amount: string;
-  incomeDate: string;
+  incomeDate: DateString;
   isRecurring: boolean;
-  frequency: string;
+  frequency: IncomeFrequency;
   notes: string | null;
   isReceived: boolean;
   parentId?: number | null;
   endDate?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
 };
 
-export type MonthlyBill = {
-  id: number;
-  userId: number;
+export type MonthlyBill = CommonFields & {
   categoryId: number;
   name: string;
   amount: string;
@@ -60,34 +55,30 @@ export type MonthlyBill = {
   isPaid: boolean;
   isActive: boolean;
   categoryName: string;
-  createdAt: string;
-  updatedAt: string;
 };
 
-export type EmiPayment = {
-  id: number;
-  userId: number;
+export type EmiPayment = Omit<CommonFields, "createdAt" | "updatedAt"> & {
   loanId: number;
   emiNumber: number;
-  dueDate: string;
+  dueDate: DateString;
   amount: string;
   principalAmount: string;
   interestAmount: string;
   isPaid: boolean;
-  paidDate: string | null;
+  paidDate: DateString | null;
 };
 
-export type Loan = {
-  id: number;
-  userId: number;
+export type LoanType = "home" | "car" | "personal" | "education" | "business" | "gold" | "other";
+
+export type Loan = CommonFields & {
   categoryId: number;
   name: string;
   lender: string | null;
   principalAmount: string;
   interestRate: string;
   tenureMonths: number;
-  startDate: string;
-  loanType: string;
+  startDate: DateString;
+  loanType: LoanType | string;
   notes: string | null;
   categoryName: string;
   categoryColor: string;
@@ -104,9 +95,7 @@ export type LoanDetail = Loan & {
   emis: EmiPayment[];
 };
 
-export type Budget = {
-  id: number;
-  userId: number;
+export type Budget = CommonFields & {
   categoryId: number;
   month: number;
   year: number;
@@ -119,22 +108,19 @@ export type Budget = {
   remaining: number;
 };
 
+// Generic Create/Update Payloads
+export type CreatePayload<T> = Omit<T, keyof CommonFields | "categoryName" | "categoryColor" | "categoryIcon" | "spent" | "percentage" | "remaining">;
+export type UpdatePayload<T> = Partial<CreatePayload<T>> & { id: number };
+
 export type DashboardOverview = {
   expenses: { total: string; count: number };
-  income: { total: string; count: number };
+  income: { total: string; count: number; received: number; expected: number };
   bills: { total: string; paid: number; unpaid: number };
   emis: { total: string; paid: number; totalCount: number };
   loans: { activeCount: number; outstandingTotal: string; totalEMI: string };
   monthlyTrend: { month: string; expenses: string; income: string }[];
   categoryBreakdown: { categoryName: string; categoryColor: string; total: string }[];
-  recentExpenses: {
-    id: number;
-    description: string | null;
-    amount: string;
-    expenseDate: string;
-    categoryName: string;
-    categoryColor: string;
-  }[];
+  recentExpenses: Pick<Expense, "id" | "description" | "amount" | "expenseDate" | "categoryName" | "categoryColor">[];
   overall?: {
     totalIncome: string;
     totalExpense: string;
@@ -152,7 +138,7 @@ export type MonthlyReport = {
     netSavings: string;
   };
   categoryExpenses: { categoryName: string; categoryColor: string; total: string; count: number }[];
-  dailyExpenses: { date: string; total: string }[];
+  dailyExpenses: { date: DateString; total: string }[];
   billsSummary: { name: string; amount: string; isPaid: boolean }[];
   emiSummary: { loanName: string; emiAmount: string; isPaid: boolean }[];
 };
@@ -161,13 +147,5 @@ export type FinancialYearReport = {
   summary: MonthlyReport["summary"];
   monthlyData: { month: string; expenses: string; income: string; bills: string; emis: string }[];
   categoryYearly: { categoryName: string; categoryColor: string; total: string }[];
-  loanSummary: {
-    name: string;
-    isActive: boolean;
-    principalAmount: string;
-    emiAmount: string;
-    outstandingPrincipal: string;
-    paidEmiCount: number;
-    remainingEmiCount: number;
-  }[];
+  loanSummary: Pick<Loan, "name" | "isActive" | "principalAmount" | "emiAmount" | "outstandingPrincipal" | "paidEmiCount" | "remainingEmiCount">[];
 };

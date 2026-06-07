@@ -29,7 +29,7 @@ class DashboardService
   end
 
   def income_summary
-    incomes = IncomeProjectionService.new(user, month, year).call
+    incomes = IncomeProjectionService.new(user, period.first, period.last).call
     { total: incomes.sum(&:amount).to_s, count: incomes.count }
   end
 
@@ -69,12 +69,9 @@ class DashboardService
       .group("to_char(expense_date, 'YYYY-MM')")
       .sum(:amount)
 
-    income_by_month = {}
-    (0...months_back).each do |offset|
-      m_date = range_start.advance(months: offset)
-      incomes = IncomeProjectionService.new(user, m_date.month, m_date.year).call
-      income_by_month[m_date.strftime("%Y-%m")] = incomes.sum(&:amount)
-    end
+    all_incomes = IncomeProjectionService.new(user, range_start, range_end).call
+    income_by_month = all_incomes.group_by { |i| i.income_date.strftime("%Y-%m") }
+                                .transform_values { |incs| incs.sum(&:amount) }
 
     (0...months_back).map do |offset|
       key = range_start.advance(months: offset).strftime("%Y-%m")

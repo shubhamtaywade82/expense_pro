@@ -1,10 +1,10 @@
+# frozen_string_literal: true
+
 class IncomeProjectionService
-  def initialize(user, month, year)
+  def initialize(user, start_date, end_date)
     @user = user
-    @month = month.to_i
-    @year = year.to_i
-    @start_date = Date.new(@year, @month, 1)
-    @end_date = @start_date.end_of_month
+    @start_date = start_date.to_date
+    @end_date = end_date.to_date
   end
 
   def call
@@ -12,57 +12,56 @@ class IncomeProjectionService
     templates = @user.incomes.templates.where("income_date <= ?", @end_date)
 
     projections = []
-
     templates.each do |template|
-      # Check if this template should have an entry this month
-      # For now, we handle monthly, quarterly, and yearly.
-      # Weekly is skipped or handled as monthly for simplicity unless requested.
-      next unless occurs_in_month?(template)
+      months_in_range.each do |month_start|
+        next unless occurs_in_month?(template, month_start)
+        next if already_exists?(template, real_incomes, month_start)
 
-      # Check if there's already an instance for this month
-      # An instance is a record with parent_id = template.id 
-      # OR a record with same source and is_recurring = false (if we want to be loose, but parent_id is better)
-      has_instance = real_incomes.any? { |inc| inc.parent_id == template.id }
-      next if has_instance
-
-      # Also check if the template itself is in this month
-      # If the template record's income_date is in this month, we don't need a projection
-      # because the template record IS the record for this month.
-      next if template.income_date >= @start_date && template.income_date <= @end_date
-
-      projections << build_projection(template)
+        projections << build_projection(template, month_start)
+      end
     end
 
-    (real_incomes + projections).sort_by { |inc| [inc.income_date, inc.id || 0] }.reverse
+    (real_incomes + projections).sort_by { |inc| [ inc.income_date, inc.id || 0 ] }.reverse
   end
 
   private
 
-  def occurs_in_month?(template)
-    return false if template.income_date > @end_date
+  def months_in_range
+    (@start_date.beginning_of_month..@end_date.beginning_of_month).select { |d| d.day == 1 }.uniq
+  end
+
+  def already_exists?(template, real_incomes, month_start)
+    month_end = month_start.end_of_month
     
+    # Check if template record itself is in this month
+    return true if template.income_date >= month_start && template.income_date <= month_end
+    
+    # Check if there is an instance for this template in this month
+    real_incomes.any? { |inc| inc.parent_id == template.id && inc.income_date >= month_start && inc.income_date <= month_end }
+  end
+
+  def occurs_in_month?(template, month_start)
+    return false if template.income_date > month_start.end_of_month
+
     case template.frequency
-    when 'monthly'
+    when "monthly"
       true
-    when 'quarterly'
-      months_diff = (@year * 12 + @month) - (template.income_date.year * 12 + template.income_date.month)
-      months_diff >= 0 && months_diff % 3 == 0
-    when 'yearly'
-      template.income_date.month == @month
-    when 'weekly'
-      # For weekly, we could have multiple. For now, let's just show it if any week lands here.
-      # To keep it simple and fulfill "Salary" (monthly) focus, we'll just return true.
+    when "quarterly"
+      months_diff = (month_start.year * 12 + month_start.month) - (template.income_date.year * 12 + template.income_date.month)
+      months_diff >= 0 && (months_diff % 3).zero?
+    when "yearly"
+      template.income_date.month == month_start.month
+    when "weekly"
       true
     else
       false
     end
   end
 
-  def build_projection(template)
-    day = [template.income_date.day, @end_date.day].min
-    projected_date = Date.new(@year, @month, day)
+  def build_projection(template, month_start)
+    day = [ template.income_date.day, month_start.end_of_month.day ].min
+    projected_date = month_start.change(day: day)
 
-    # Return a non-persisted record
     Income.new(
       user: @user,
       source: template.source,

@@ -5,7 +5,8 @@ module Api
 
       def index
         if params[:month].present? && params[:year].present?
-          incomes = IncomeProjectionService.new(current_user, params[:month], params[:year]).call
+          start_date = Date.new(params[:year].to_i, params[:month].to_i, 1)
+          incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month).call
           render json: incomes
         else
           render json: current_user.incomes.recent_first
@@ -13,9 +14,8 @@ module Api
       end
 
       def summary
-        month = params[:month].to_i
-        year = params[:year].to_i
-        incomes = IncomeProjectionService.new(current_user, month, year).call
+        start_date = Date.new(params[:year].to_i, params[:month].to_i, 1)
+        incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month).call
 
         total = incomes.sum { |inc| inc.amount.to_f }
         render json: { total: total.to_s, count: incomes.count }

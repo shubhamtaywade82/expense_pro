@@ -10,7 +10,7 @@ class ReportService
     emis = user.emi_payments.includes(:loan).where(due_date: period)
 
     total_expense = expenses.sum(:amount)
-    incomes = IncomeProjectionService.new(user, month, year).call
+    incomes = IncomeProjectionService.new(user, period.first, period.last).call
     total_income = incomes.sum(&:amount)
     total_bills = bills.sum(:amount)
     total_emi = emis.sum(:amount)
@@ -36,15 +36,12 @@ class ReportService
     period = fy_start..fy_end
 
     expenses = user.expenses.where(expense_date: period)
-    incomes = user.incomes.where(income_date: period)
     emis = user.emi_payments.where(due_date: period)
     bills = user.monthly_bills.active
 
     total_expense = expenses.sum(:amount)
-    total_income = (0..11).sum do |offset|
-      m_date = fy_start.advance(months: offset)
-      IncomeProjectionService.new(user, m_date.month, m_date.year).call.sum(&:amount)
-    end
+    all_incomes = IncomeProjectionService.new(user, fy_start, fy_end).call
+    total_income = all_incomes.sum(&:amount)
     total_bills_yearly = bills.sum(:amount) * 12
     total_emi = emis.sum(:amount)
 
@@ -56,7 +53,7 @@ class ReportService
         totalEMI: total_emi.to_s,
         netSavings: (total_income - total_expense - total_bills_yearly - total_emi).to_s
       },
-      monthlyData: monthly_breakdown(fy_start, expenses, incomes, bills, emis),
+      monthlyData: monthly_breakdown(fy_start, expenses, all_incomes, bills, emis),
       categoryYearly: category_expenses(expenses),
       loanSummary: loan_summary
     }
@@ -82,20 +79,20 @@ class ReportService
     period.map { |date| { date: date, total: (totals[date] || 0).to_s } }
   end
 
-  def monthly_breakdown(fy_start, expenses, incomes, bills, emis)
+  def monthly_breakdown(fy_start, expenses, all_incomes, bills, emis)
     bills_total = bills.sum(:amount)
 
     expenses_by_month = expenses.group("to_char(expense_date, 'YYYY-MM')").sum(:amount)
     emis_by_month = emis.group("to_char(due_date, 'YYYY-MM')").sum(:amount)
+    income_by_month = all_incomes.group_by { |i| i.income_date.strftime("%Y-%m") }
+                                .transform_values { |incs| incs.sum(&:amount) }
 
     (0..11).map do |offset|
-      m_date = fy_start.advance(months: offset)
-      key = m_date.strftime("%Y-%m")
-      incomes = IncomeProjectionService.new(user, m_date.month, m_date.year).call
+      key = fy_start.advance(months: offset).strftime("%Y-%m")
       {
         month: key,
         expenses: (expenses_by_month[key] || 0).to_s,
-        income: incomes.sum(&:amount).to_s,
+        income: (income_by_month[key] || 0).to_s,
         bills: bills_total.to_s,
         emis: (emis_by_month[key] || 0).to_s
       }

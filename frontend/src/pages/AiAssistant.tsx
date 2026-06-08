@@ -28,7 +28,7 @@ export default function AiAssistant() {
     }
   ]);
   const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const chatMutation = useMutation({
     mutationFn: api.ai.chat,
@@ -45,7 +45,12 @@ export default function AiAssistant() {
   });
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
   };
 
   useEffect(() => {
@@ -78,7 +83,7 @@ export default function AiAssistant() {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto space-y-4 animate-stagger-fade" style={{ animationDelay: "0ms" }}>
+    <div className="flex flex-col flex-1 min-h-0 max-w-4xl mx-auto space-y-4 animate-stagger-fade w-full" style={{ animationDelay: "0ms" }}>
       <div className="flex-shrink-0 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold font-display tracking-tight flex items-center gap-2 text-foreground">
@@ -105,7 +110,10 @@ export default function AiAssistant() {
             </div>
             <span className="text-[10px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full border border-primary/10 font-display">v1.2-Ollama</span>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-transparent">
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-transparent scroll-smooth"
+          >
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -146,7 +154,6 @@ export default function AiAssistant() {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Chat Input form */}

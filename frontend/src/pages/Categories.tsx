@@ -97,58 +97,60 @@ export default function Categories() {
   const incomeCats = categories?.filter((c) => c.type === "income") ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Categories</h2>
-          <p className="text-muted-foreground">Manage expense, bill, and income categories</p>
+    <div className="flex-1 overflow-y-auto pr-1 -mr-1">
+      <div className="space-y-6 pb-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Categories</h2>
+            <p className="text-muted-foreground">Manage expense, bill, and income categories</p>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={() => { resetForm(); setDialogOpen(true); }}><Plus className="w-4 h-4 mr-1" /> Add Category</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>{editingId ? "Edit Category" : "Add Category"}</DialogTitle></DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Category name" /></div>
+                {!editingId && (
+                  <div><Label>Type</Label>
+                    <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="expense">Expense</SelectItem>
+                        <SelectItem value="bill">Bill</SelectItem>
+                        <SelectItem value="emi">EMI</SelectItem>
+                        <SelectItem value="income">Income</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div><Label>Icon Name</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="e.g., shopping-cart" /></div>
+                <div><Label>Color</Label><div className="flex items-center gap-2"><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-16 h-10" /><span className="text-sm text-muted-foreground">{form.color}</span></div></div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
+                  <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingId ? "Update" : "Add"}</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" onClick={() => { resetForm(); setDialogOpen(true); }}><Plus className="w-4 h-4 mr-1" /> Add Category</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{editingId ? "Edit Category" : "Add Category"}</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Category name" /></div>
-              {!editingId && (
-                <div><Label>Type</Label>
-                  <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="expense">Expense</SelectItem>
-                      <SelectItem value="bill">Bill</SelectItem>
-                      <SelectItem value="emi">EMI</SelectItem>
-                      <SelectItem value="income">Income</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <div><Label>Icon Name</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="e.g., shopping-cart" /></div>
-              <div><Label>Color</Label><div className="flex items-center gap-2"><Input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-16 h-10" /><span className="text-sm text-muted-foreground">{form.color}</span></div></div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingId ? "Update" : "Add"}</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      {isLoading ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-20" />)}</div> : (
-        <Tabs defaultValue="expense">
-          <TabsList className="mb-4">
-            <TabsTrigger value="expense">Expenses ({expenseCats.length})</TabsTrigger>
-            <TabsTrigger value="bill">Bills ({billCats.length})</TabsTrigger>
-            <TabsTrigger value="emi">EMIs ({emiCats.length})</TabsTrigger>
-            <TabsTrigger value="income">Income ({incomeCats.length})</TabsTrigger>
-          </TabsList>
-          <TabsContent value="expense"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{expenseCats.map(renderCategoryCard)}</div></TabsContent>
-          <TabsContent value="bill"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{billCats.map(renderCategoryCard)}</div></TabsContent>
-          <TabsContent value="emi"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{emiCats.map(renderCategoryCard)}</div></TabsContent>
-          <TabsContent value="income"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{incomeCats.map(renderCategoryCard)}</div></TabsContent>
-        </Tabs>
-      )}
+        {isLoading ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-20" />)}</div> : (
+          <Tabs defaultValue="expense">
+            <TabsList className="mb-4">
+              <TabsTrigger value="expense">Expenses ({expenseCats.length})</TabsTrigger>
+              <TabsTrigger value="bill">Bills ({billCats.length})</TabsTrigger>
+              <TabsTrigger value="emi">EMIs ({emiCats.length})</TabsTrigger>
+              <TabsTrigger value="income">Income ({incomeCats.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="expense"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{expenseCats.map(renderCategoryCard)}</div></TabsContent>
+            <TabsContent value="bill"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{billCats.map(renderCategoryCard)}</div></TabsContent>
+            <TabsContent value="emi"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{emiCats.map(renderCategoryCard)}</div></TabsContent>
+            <TabsContent value="income"><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{incomeCats.map(renderCategoryCard)}</div></TabsContent>
+          </Tabs>
+        )}
+      </div>
     </div>
   );
 }

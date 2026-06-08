@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, User, Send, Trash2, ArrowRight } from "lucide-react";
@@ -38,7 +37,6 @@ export default function AiAssistant() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to get response from AI");
-      // Remove last user message if it failed, or keep it and add an error notice
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Sorry, I encountered an error connecting to my server. Please verify Ollama is running." }
@@ -58,7 +56,7 @@ export default function AiAssistant() {
     if (!text.trim() || chatMutation.isPending) return;
 
     const userMessage: ChatMessage = { role: "user", content: text };
-    const history = messages.slice(1); // Exclude the initial welcome message to keep context clean
+    const history = messages.slice(1);
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -80,47 +78,53 @@ export default function AiAssistant() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)] max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full max-w-4xl mx-auto space-y-4 animate-stagger-fade" style={{ animationDelay: "0ms" }}>
+      <div className="flex-shrink-0 flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse" />
+          <h2 className="text-2xl font-bold font-display tracking-tight flex items-center gap-2 text-foreground">
+            <Sparkles className="w-6 h-6 text-primary animate-pulse filter drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
             AI Financial Assistant
           </h2>
-          <p className="text-muted-foreground">Ask questions, log transactions, and get financial insights.</p>
+          <p className="text-sm text-muted-foreground font-sans">Ask questions, parse sentences to log ledger updates, and analyze metrics</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleClear} disabled={messages.length <= 1}>
-          <Trash2 className="w-4 h-4 mr-1 text-red-500" /> Clear Chat
+        <Button variant="outline" size="sm" onClick={handleClear} disabled={messages.length <= 1} className="rounded-xl border-border/60 text-muted-foreground hover:text-red-500 hover:bg-red-500/5 transition-all">
+          <Trash2 className="w-4 h-4 mr-1.5" /> Clear History
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Chat History Panel */}
-        <Card className="md:col-span-3 flex flex-col h-full overflow-hidden border border-muted/80 shadow-lg">
-          <CardHeader className="py-3 px-4 border-b bg-muted/20">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
-              ExpensePro AI Chatbot
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-gradient-to-b from-transparent to-muted/10">
+        <div className="md:col-span-3 flex flex-col h-full overflow-hidden glass-card glowing-border rounded-2xl">
+          <div className="py-3.5 px-4 border-b border-border/40 bg-card/40 flex items-center justify-between">
+            <div className="text-xs font-bold font-display text-muted-foreground flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              ExpenseFlow Intellect AI
+            </div>
+            <span className="text-[10px] bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full border border-primary/10 font-display">v1.2-Ollama</span>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-transparent">
             {messages.map((msg, index) => (
               <div
                 key={index}
                 className={`flex gap-3 max-w-[85%] ${msg.role === "user" ? "ml-auto flex-row-reverse" : "mr-auto"}`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white flex-shrink-0 ${
-                    msg.role === "user" ? "bg-indigo-600" : "bg-teal-600"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0 shadow-md ${
+                    msg.role === "user" 
+                      ? "bg-gradient-to-tr from-primary to-indigo-600" 
+                      : "bg-gradient-to-tr from-emerald-500 to-teal-600"
                   }`}
                 >
-                  {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                  {msg.role === "user" ? <User className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
                 </div>
                 <div
-                  className={`p-3 rounded-2xl shadow-sm text-sm leading-relaxed prose prose-sm max-w-none ${
+                  className={`p-3.5 rounded-2xl shadow-sm text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none ${
                     msg.role === "user"
-                      ? "bg-indigo-600 text-white rounded-tr-none prose-invert"
-                      : "bg-card border border-muted rounded-tl-none text-foreground"
+                      ? "bg-primary text-primary-foreground rounded-tr-none font-medium prose-headings:text-primary-foreground prose-p:text-primary-foreground prose-strong:text-primary-foreground"
+                      : "bg-card/75 backdrop-blur-md border border-border/50 rounded-tl-none text-foreground"
                   }`}
                 >
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -132,21 +136,21 @@ export default function AiAssistant() {
 
             {chatMutation.isPending && (
               <div className="flex gap-3 max-w-[80%] mr-auto items-center">
-                <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white flex-shrink-0">
-                  <Sparkles className="w-4 h-4 animate-spin" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                  <Sparkles className="w-5 h-5 animate-spin" />
                 </div>
-                <div className="bg-card border border-muted p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div className="bg-card/75 backdrop-blur-md border border-border/50 p-3.5 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
-          </CardContent>
+          </div>
 
           {/* Chat Input form */}
-          <div className="p-3 border-t bg-muted/10">
+          <div className="p-3.5 border-t border-border/40 bg-card/25 backdrop-blur-md">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -158,55 +162,51 @@ export default function AiAssistant() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask financial advice or type 'spent 500 on dinner paid via upi'..."
-                className="flex-1 text-sm bg-card"
+                className="flex-1 text-sm bg-background/50 rounded-xl border-border/50 focus-visible:ring-primary h-10"
                 disabled={chatMutation.isPending}
               />
-              <Button type="submit" disabled={chatMutation.isPending || !input.trim()}>
-                <Send className="w-4 h-4" />
+              <Button type="submit" disabled={chatMutation.isPending || !input.trim()} className="rounded-xl h-10 px-4 bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/15 transition-all">
+                <Send className="w-5 h-5" />
               </Button>
             </form>
           </div>
-        </Card>
+        </div>
 
         {/* Sidebar suggestions */}
         <div className="space-y-4">
-          <Card className="border border-muted/80 shadow-md">
-            <CardHeader className="py-3 px-4 border-b">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Suggested Prompts
-              </CardTitle>
-              <CardDescription className="text-[11px]">Click a prompt to ask the AI assistant directly.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 space-y-2">
+          <div className="glass-card glowing-border rounded-2xl p-4">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1 font-display">
+              Suggested Prompts
+            </span>
+            <span className="text-[11px] text-muted-foreground font-sans block mb-3">Click on a prompt to execute:</span>
+            <div className="space-y-2">
               {SUGGESTIONS.map((suggestion, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSend(suggestion)}
                   disabled={chatMutation.isPending}
-                  className="w-full text-left text-xs p-2.5 rounded-lg border border-transparent hover:border-indigo-100 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-all flex items-center justify-between group"
+                  className="w-full text-left text-xs p-3 rounded-xl bg-card/25 border border-border/40 hover:border-primary/40 text-muted-foreground hover:text-primary transition-all duration-300 flex items-center justify-between group"
                 >
-                  <span className="line-clamp-2 pr-2">{suggestion}</span>
-                  <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <span className="line-clamp-2 pr-2 font-medium font-sans">{suggestion}</span>
+                  <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-primary" />
                 </button>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card className="border border-muted/80 shadow-md bg-indigo-50/30 dark:bg-indigo-950/10">
-            <CardContent className="p-4 space-y-2">
-              <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                Natural Language Transactions
-              </h4>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                You can say things like:
-                <br />
-                <span className="font-semibold text-foreground">"Spent 1500 on electricity bill using credit card"</span>
-                <br />
-                The AI will extract the amount, category, and payment method, log the expense automatically, and update your dashboard!
-              </p>
-            </CardContent>
-          </Card>
+          <div className="glass-card glowing-border rounded-2xl p-4 bg-gradient-to-tr from-primary/5 to-indigo-500/5">
+            <h4 className="text-xs font-bold text-primary flex items-center gap-1.5 font-display mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              Natural Language Parsing
+            </h4>
+            <p className="text-[11px] text-muted-foreground leading-relaxed font-sans">
+              Try typing:
+              <br />
+              <span className="font-semibold text-foreground italic">"Logged 2000 for Internet bill using UPI"</span>
+              <br />
+              The assistant resolves parameters (amount, category, payment method) and issues transaction entries dynamically!
+            </p>
+          </div>
         </div>
       </div>
     </div>

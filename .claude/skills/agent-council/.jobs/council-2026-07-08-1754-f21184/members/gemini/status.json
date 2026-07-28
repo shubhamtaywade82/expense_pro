@@ -1,0 +1,10 @@
+{
+  "member": "gemini",
+  "state": "error",
+  "message": null,
+  "finishedAt": "2026-07-08T17:54:54.628Z",
+  "command": "gemini",
+  "exitCode": 1,
+  "signal": null,
+  "pid": 742829
+}

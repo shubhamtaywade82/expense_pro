@@ -9,8 +9,10 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
       password: "password123",
       password_confirmation: "password123"
     )
-    # Log in
+    # Log in and obtain JWT
     post api_v1_session_url, params: { email: @user.email, password: "password123" }
+    @token = JSON.parse(response.body)["token"]
+    @headers = { "Authorization" => "Bearer #{@token}" }
   end
 
   test "should get assistant response from chat endpoint" do
@@ -27,7 +29,7 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
     end
 
     Ollama::Client.stub(:new, mock_client) do
-      post api_v1_ai_chat_url, params: { message: "Hello AI" }
+      post api_v1_ai_chat_url, params: { message: "Hello AI" }, headers: @headers
       assert_response :success
       
       json = JSON.parse(response.body)

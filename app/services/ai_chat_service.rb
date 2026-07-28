@@ -6,6 +6,7 @@ class AiChatService
   def initialize(user)
     @user = user
     @client = Ollama::Client.new
+    @tool_executor = Ai::ToolExecutor.new(user)
   end
 
   def chat(message, history = [])
@@ -33,51 +34,7 @@ class AiChatService
   private
 
   def build_system_prompt
-    dashboard = DashboardService.new(@user, month: Date.current.month, year: Date.current.year).overview
-    net_savings = calculate_net_savings(dashboard)
-
-    <<~SYSTEM
-      You are ExpensePro AI, a premium personal finance assistant.
-      Use the tools provided to take actions like logging expenses or paying bills.
-
-      Current Local Time: #{Time.current.strftime("%A, %B %d, %Y, %I:%M %p")}
-
-      User's Current Financial Data (#{Time.current.strftime("%B %Y")}):
-      - Total Income: ₹#{dashboard.dig(:income, :total)} (#{dashboard.dig(:income, :received)} received, #{dashboard.dig(:income, :expected)} expected/projected)
-      - Total Expenses: ₹#{dashboard.dig(:expenses, :total)}
-      - Monthly Bills: ₹#{dashboard.dig(:bills, :total)} total (#{dashboard.dig(:bills, :paid)} paid, #{dashboard.dig(:bills, :unpaid)} pending)
-      - Loan EMIs: ₹#{dashboard.dig(:emis, :total)}
-      - Net Savings (This Month): ₹#{calculate_net_savings(dashboard)}
-
-      Overall / Life-to-Date Metrics:
-      - Total Income to Date: ₹#{dashboard.dig(:overall, :totalIncome)}
-      - Total Expenses to Date: ₹#{dashboard.dig(:overall, :totalExpense)}
-      - Total Loan EMIs Paid: ₹#{dashboard.dig(:overall, :totalEmiPaid)}
-      - Net Balance (Life-to-Date Savings): ₹#{dashboard.dig(:overall, :netBalance)}
-
-      Active Categories:
-      #{@user.categories.map { |c| "- #{c.name} (#{c.category_type})" }.join("\n")}
-
-      Active Monthly Bills:
-      #{@user.monthly_bills.active.map { |b| "- ID: #{b.id}, Name: #{b.name}, Amount: ₹#{b.amount}, Paid: #{b.is_paid ? 'Yes' : 'No'}" }.join("\n")}
-
-      Recent Expenses:
-      #{@user.expenses.includes(:category).recent_first.limit(5).map { |e| "- #{e.expense_date}: ₹#{e.amount} for #{e.description || e.category.name}" }.join("\n")}
-
-      Instructions:
-      1. Use 'create_expense' for spending.
-      2. Use 'pay_bill' with the correct ID for paying specific bills.
-      3. Do NOT hallucinate tools. All finance data is provided here; answer questions directly.
-      4. DO NOT call tools like 'get_net_savings', 'get_income', 'get_expenses', or 'get_bills'. This information is ALREADY in this prompt.
-      5. Only call 'pay_bill' if explicitly asked to mark it as paid.
-    SYSTEM
-  end
-
-  def calculate_net_savings(dashboard)
-    dashboard.dig(:income, :total).to_d -
-      dashboard.dig(:expenses, :total).to_d -
-      dashboard.dig(:bills, :total).to_d -
-      dashboard.dig(:emis, :total).to_d
+    Ai::PromptBuilder.new(@user).build
   end
 
   def available_tools
@@ -126,44 +83,11 @@ class AiChatService
     }
 
     tool_calls.each do |tc|
-      result = execute_tool(tc)
+      result = @tool_executor.execute(tc)
       messages << { role: "tool", tool_call_id: tc.id, name: tc.name, content: result.to_json }
     end
 
     @client.chat(messages: messages, tools: available_tools)
-  end
-
-  def execute_tool(tool_call)
-    case tool_call.name
-    when "create_expense"
-      args = tool_call.arguments
-      category = resolve_category(args["category_name"])
-      expense = @user.expenses.create!(
-        amount: args["amount"].to_d,
-        category: category,
-        payment_method: args["payment_method"],
-        expense_date: Date.parse(args["expense_date"] || Date.current.to_s),
-        description: args["description"]
-      )
-      { success: true, message: "Expense logged", expense_id: expense.id, amount: expense.amount.to_s, category: category.name }
-    when "pay_bill"
-      bill = @user.monthly_bills.find_by(id: tool_call.arguments["bill_id"])
-      if bill&.update(is_paid: true)
-        { success: true, message: "Bill marked as paid", bill_id: bill.id, name: bill.name }
-      else
-        { success: false, message: "Bill not found" }
-      end
-    else
-      { success: false, message: "Unknown tool" }
-    end
-  rescue StandardError => e
-    { success: false, message: "Error: #{e.message}" }
-  end
-
-  def resolve_category(name)
-    @user.categories.where("name ILIKE ?", name.strip).first ||
-      @user.categories.find_by(name: "Other") ||
-      @user.categories.create!(name: name, category_type: "expense")
   end
 
   def sanitize_history(history)
@@ -183,12 +107,12 @@ class AiChatService
 
   def needs_tools?(message)
     msg = message.to_s.downcase
-    # Keywords that suggest an action is needed
-    is_action = %w[spent log buy bought expense paid pay payed mark cost purchase].any? { |w| msg.include?(w) }
-    # Keywords that suggest a question is being asked
-    is_question = msg.include?("?") || msg.start_with?("have", "did", "is", "what", "how", "when", "please check")
-    
-    # If it's an action and NOT a simple data question, enable tools
+    action_keywords = %w[spent log buy bought expense paid pay payed mark cost purchase]
+    question_keywords = ["?", "have ", "did ", "is ", "what ", "how ", "when ", "please check"]
+
+    is_action = action_keywords.any? { |kw| msg.include?(kw) }
+    is_question = question_keywords.any? { |kw| msg.include?(kw) }
+
     is_action && !is_question
   end
 end

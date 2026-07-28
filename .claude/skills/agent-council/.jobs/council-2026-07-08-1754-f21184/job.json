@@ -1,0 +1,25 @@
+{
+  "id": "council-2026-07-08-1754-f21184",
+  "createdAt": "2026-07-08T17:54:41.266Z",
+  "configPath": "/home/nemesis/.claude/skills/agent-council/council.config.yaml",
+  "hostRole": "claude",
+  "chairmanRole": "claude",
+  "settings": {
+    "excludeChairmanFromMembers": true,
+    "timeoutSec": 120
+  },
+  "members": [
+    {
+      "name": "codex",
+      "command": "codex exec",
+      "emoji": "🤖",
+      "color": "BLUE"
+    },
+    {
+      "name": "gemini",
+      "command": "gemini",
+      "emoji": "💎",
+      "color": "GREEN"
+    }
+  ]
+}

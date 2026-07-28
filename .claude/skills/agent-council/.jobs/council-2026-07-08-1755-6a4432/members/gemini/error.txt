@@ -1,0 +1,47 @@
+Warning: True color (24-bit) support not detected. Using a terminal with true color enabled will result in a better visual experience.
+Invalid configuration in /home/nemesis/.gemini/settings.json:
+
+Error in: mcpServers.cockroachdb-cloud
+    Unrecognized key(s) in object: 'serverUrl'
+
+Please fix the configuration.
+See: https://geminicli.com/docs/reference/configuration/
+Error authenticating: IneligibleTierError: This client is no longer supported for Gemini Code Assist for individuals. To continue using Gemini, please migrate to the Antigravity suite of products: https://antigravity.google
+    at throwIneligibleOrProjectIdError (file:///home/nemesis/.nvm/versions/node/v22.14.0/lib/node_modules/@google/gemini-cli/bundle/chunk-SBG6CUNK.js:307713:11)
+    at _doSetupUser (file:///home/nemesis/.nvm/versions/node/v22.14.0/lib/node_modules/@google/gemini-cli/bundle/chunk-SBG6CUNK.js:307702:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  ineligibleTiers: [
+    {
+      reasonCode: 'UNSUPPORTED_CLIENT',
+      reasonMessage: 'This client is no longer supported for Gemini Code Assist for individuals. To continue using Gemini, please migrate to the Antigravity suite of products: https://antigravity.google',
+      tierId: 'free-tier',
+      tierName: 'Gemini Code Assist for individuals'
+    }
+  ]
+}
+MCP issues detected. Run /mcp list for status.
+Skill conflict detected: "render-workflows" from "/home/nemesis/.agents/skills/render-workflows/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-workflows/SKILL.md".
+Skill conflict detected: "render-web-services" from "/home/nemesis/.agents/skills/render-web-services/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-web-services/SKILL.md".
+Skill conflict detected: "render-static-sites" from "/home/nemesis/.agents/skills/render-static-sites/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-static-sites/SKILL.md".
+Skill conflict detected: "render-scaling" from "/home/nemesis/.agents/skills/render-scaling/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-scaling/SKILL.md".
+Skill conflict detected: "render-private-services" from "/home/nemesis/.agents/skills/render-private-services/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-private-services/SKILL.md".
+Skill conflict detected: "render-postgres" from "/home/nemesis/.agents/skills/render-postgres/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-postgres/SKILL.md".
+Skill conflict detected: "render-networking" from "/home/nemesis/.agents/skills/render-networking/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-networking/SKILL.md".
+Skill conflict detected: "render-monitor" from "/home/nemesis/.agents/skills/render-monitor/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-monitor/SKILL.md".
+Skill conflict detected: "render-migrate-from-heroku" from "/home/nemesis/.agents/skills/render-migrate-from-heroku/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-migrate-from-heroku/SKILL.md".
+Skill conflict detected: "render-mcp" from "/home/nemesis/.agents/skills/render-mcp/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-mcp/SKILL.md".
+Skill conflict detected: "render-keyvalue" from "/home/nemesis/.agents/skills/render-keyvalue/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-keyvalue/SKILL.md".
+Skill conflict detected: "render-domains" from "/home/nemesis/.agents/skills/render-domains/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-domains/SKILL.md".
+Skill conflict detected: "render-env-vars" from "/home/nemesis/.agents/skills/render-env-vars/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-env-vars/SKILL.md".
+Skill conflict detected: "render-docker" from "/home/nemesis/.agents/skills/render-docker/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-docker/SKILL.md".
+Skill conflict detected: "render-disks" from "/home/nemesis/.agents/skills/render-disks/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-disks/SKILL.md".
+Skill conflict detected: "render-deploy" from "/home/nemesis/.agents/skills/render-deploy/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-deploy/SKILL.md".
+Skill conflict detected: "render-debug" from "/home/nemesis/.agents/skills/render-debug/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-debug/SKILL.md".
+Skill conflict detected: "render-cron-jobs" from "/home/nemesis/.agents/skills/render-cron-jobs/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-cron-jobs/SKILL.md".
+Skill conflict detected: "render-cli" from "/home/nemesis/.agents/skills/render-cli/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-cli/SKILL.md".
+Skill conflict detected: "render-blueprints" from "/home/nemesis/.agents/skills/render-blueprints/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-blueprints/SKILL.md".
+Skill conflict detected: "render-background-workers" from "/home/nemesis/.agents/skills/render-background-workers/SKILL.md" is overriding the same skill from "/home/nemesis/.gemini/skills/render-background-workers/SKILL.md".
+An unexpected critical error occurred:IneligibleTierError: This client is no longer supported for Gemini Code Assist for individuals. To continue using Gemini, please migrate to the Antigravity suite of products: https://antigravity.google
+    at throwIneligibleOrProjectIdError (file:///home/nemesis/.nvm/versions/node/v22.14.0/lib/node_modules/@google/gemini-cli/bundle/chunk-SBG6CUNK.js:307713:11)
+    at _doSetupUser (file:///home/nemesis/.nvm/versions/node/v22.14.0/lib/node_modules/@google/gemini-cli/bundle/chunk-SBG6CUNK.js:307702:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

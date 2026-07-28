@@ -1,0 +1,10 @@
+{
+  "member": "codex",
+  "state": "error",
+  "message": null,
+  "finishedAt": "2026-07-08T17:55:31.649Z",
+  "command": "codex exec --skip-git-repo-check",
+  "exitCode": 1,
+  "signal": null,
+  "pid": 744604
+}

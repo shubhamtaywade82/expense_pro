@@ -103,9 +103,26 @@ export const api = {
   },
 
   incomes: {
-    list: (params: { month: number; year: number }) => get<Income[]>(`/incomes${buildQuery(params)}`),
-    summary: (params: { month: number; year: number }) =>
+    list: (params: { month?: number; year?: number; search?: string } = {}) =>
+      get<Income[]>(`/incomes${buildQuery(params)}`),
+    summary: (params: { month?: number; year?: number }) =>
       get<{ total: string; count: number; received: number; expected: number }>(`/incomes/summary${buildQuery(params)}`),
+    yearly: (params: { year: number }) =>
+      get<{
+        year: number;
+        total_income: number;
+        total_received: number;
+        months: {
+          month: number;
+          month_name: string;
+          full_month_name: string;
+          total: number;
+          received: number;
+          expected: number;
+          count: number;
+          incomes: Income[];
+        }[];
+      }>(`/incomes/yearly${buildQuery(params)}`),
     create: (data: CreatePayload<Income>) => post<Income>("/incomes", data),
     update: (data: UpdatePayload<Income>) => patch<Income>(`/incomes/${data.id}`, data),
     delete: (id: number) => del<void>(`/incomes/${id}`),

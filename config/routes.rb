@@ -13,6 +13,7 @@ Rails.application.routes.draw do
       resources :incomes, except: [ :show ] do
         collection do
           get :summary
+          get :yearly
         end
         member do
           patch :toggle_received

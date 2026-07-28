@@ -168,4 +168,25 @@ export const api = {
     financialYear: (params: { year: number }) =>
       get<FinancialYearReport>(`/reports/financial_year${buildQuery(params)}`),
   },
+
+  investments: {
+    list: (params: { assetClass?: string; status?: string } = {}) =>
+      get<{
+        investments: Investment[];
+        summary: {
+          total_invested: string;
+          current_value: string;
+          total_pnl: string;
+          count: number;
+        };
+      }>(`/investments${buildQuery(params)}`),
+    create: (data: CreatePayload<Investment>) => post<Investment>("/investments", data),
+    update: (data: UpdatePayload<Investment>) => patch<Investment>(`/investments/${data.id}`, data),
+    delete: (id: number) => del<void>(`/investments/${id}`),
+  },
+
+  tax: {
+    itrSummary: (params: { financialYear?: number } = {}) =>
+      get<ItrSummary>(`/tax/itr_summary${buildQuery(params)}`),
+  },
 };

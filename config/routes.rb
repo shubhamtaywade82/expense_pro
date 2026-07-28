@@ -30,6 +30,9 @@ Rails.application.routes.draw do
       resources :loans, only: [ :index, :show, :create, :destroy ]
       patch "emi_payments/:id/pay", to: "emi_payments#pay", as: :pay_emi
 
+      resources :investments, except: [ :show ]
+      get "tax/itr_summary", to: "tax#itr_summary"
+
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"
       get "reports/financial_year", to: "reports#financial_year"

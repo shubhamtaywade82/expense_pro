@@ -175,3 +175,80 @@ export type FinancialYearReport = {
   categoryYearly: { categoryName: string; categoryColor: string; total: string }[];
   loanSummary: Pick<Loan, "name" | "isActive" | "principalAmount" | "emiAmount" | "outstandingPrincipal" | "paidEmiCount" | "remainingEmiCount">[];
 };
+
+export type InvestmentAssetClass =
+  | "speculative_intraday"
+  | "non_speculative_fo"
+  | "swing_trading"
+  | "long_term_equity"
+  | "mutual_funds"
+  | "fixed_income"
+  | "crypto"
+  | "elss_80c"
+  | "gold";
+
+export type InvestmentStatus = "active" | "realized";
+
+export type Investment = CommonFields & {
+  name: string;
+  assetClass: InvestmentAssetClass;
+  symbol: string | null;
+  quantity: string | number;
+  buyPrice: string | number;
+  currentPrice: string | number | null;
+  sellPrice: string | number | null;
+  investedAmount: string | number;
+  realizedPnl: string | number;
+  unrealizedPnl: string | number;
+  purchaseDate: DateString;
+  sellDate: DateString | null;
+  status: InvestmentStatus;
+  notes: string | null;
+  currentValue?: string | number;
+  totalPnl?: string | number;
+  pnlPercentage?: number;
+  isStcg?: boolean;
+  isLtcg?: boolean;
+};
+
+export type ItrSummary = {
+  financial_year: string;
+  assessment_year: string;
+  gross_salary: number;
+  trading_summary: {
+    speculative_intraday_pnl: number;
+    non_speculative_fo_pnl: number;
+    crypto_pnl: number;
+    stcg_pnl: number;
+    ltcg_pnl: number;
+    total_pnl: number;
+  };
+  deductions: {
+    section_80c: number;
+    section_24b_home_loan_interest: number;
+    standard_deduction_new: number;
+    standard_deduction_old: number;
+  };
+  new_regime: {
+    taxable_income: number;
+    slab_tax: number;
+    rebate_87a: number;
+    total_tax: number;
+  };
+  old_regime: {
+    taxable_income: number;
+    slab_tax: number;
+    rebate_87a: number;
+    total_tax: number;
+  };
+  special_taxes: {
+    stcg_tax_sec111a: number;
+    ltcg_tax_sec112a: number;
+    crypto_tax_sec115bbh: number;
+  };
+  recommendation: {
+    best_regime: string;
+    tax_saved: number;
+    itr_form: string;
+  };
+};

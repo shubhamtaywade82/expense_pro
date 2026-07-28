@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_28_124500) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_28_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -95,6 +95,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_124500) do
     t.index ["user_id"], name: "index_incomes_on_user_id"
   end
 
+  create_table "investments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.string "asset_class", default: "long_term_equity", null: false
+    t.string "symbol"
+    t.decimal "quantity", precision: 14, scale: 4, default: "1.0", null: false
+    t.decimal "buy_price", precision: 14, scale: 2, null: false
+    t.decimal "current_price", precision: 14, scale: 2
+    t.decimal "sell_price", precision: 14, scale: 2
+    t.decimal "invested_amount", precision: 14, scale: 2, null: false
+    t.decimal "realized_pnl", precision: 14, scale: 2, default: "0.0", null: false
+    t.decimal "unrealized_pnl", precision: 14, scale: 2, default: "0.0", null: false
+    t.date "purchase_date", null: false
+    t.date "sell_date"
+    t.string "status", default: "active", null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "asset_class"], name: "index_investments_on_user_id_and_asset_class"
+    t.index ["user_id", "status"], name: "index_investments_on_user_id_and_status"
+    t.index ["user_id"], name: "index_investments_on_user_id"
+  end
+
   create_table "loans", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "category_id", null: false
@@ -158,6 +181,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_124500) do
   add_foreign_key "expenses", "categories"
   add_foreign_key "expenses", "users"
   add_foreign_key "incomes", "users"
+  add_foreign_key "investments", "users"
   add_foreign_key "loans", "categories"
   add_foreign_key "loans", "users"
   add_foreign_key "monthly_bills", "categories"

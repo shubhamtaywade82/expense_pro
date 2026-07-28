@@ -54,6 +54,7 @@ export default function Income() {
   const [activeTab, setActiveTab] = useState<"monthly" | "yearly" | "all" | "recurring">("monthly");
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [allYear, setAllYear] = useState(now.getFullYear());
   const [searchQuery, setSearchQuery] = useState("");
   const [frequencyFilter, setFrequencyFilter] = useState<string>("all");
   const [expandedMonth, setExpandedMonth] = useState<number | null>(month);
@@ -98,10 +99,21 @@ export default function Income() {
     enabled: activeTab === "yearly",
   });
 
-  const { data: allIncomes, isLoading: isLoadingAll } = useQuery({
-    queryKey: ["incomes", "all"],
+  // All Incomes tab: use yearly projection so prefilled months appear
+  const { data: allYearlyData, isLoading: isLoadingAll } = useQuery({
+    queryKey: ["incomes", "allYearly", { allYear }],
+    queryFn: () => api.incomes.yearly({ year: allYear }),
+    enabled: activeTab === "all",
+  });
+
+  // Flat list of all projected incomes for the selected year (for search/filter)
+  const allIncomes = (allYearlyData?.months ?? []).flatMap((m) => m.incomes);
+
+  // Recurring tab: fetch raw DB records (real templates only, no projection needed)
+  const { data: rawTemplates, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ["incomes", "templates"],
     queryFn: () => api.incomes.list({}),
-    enabled: activeTab === "all" || activeTab === "recurring",
+    enabled: activeTab === "recurring",
   });
 
   const invalidate = () => {

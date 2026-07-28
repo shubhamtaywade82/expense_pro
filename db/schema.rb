@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_28_133000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_28_133002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -47,7 +47,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133000) do
     t.datetime "expires_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
     t.index ["expires_at"], name: "index_dhan_access_tokens_on_expires_at"
+    t.index ["user_id"], name: "index_dhan_access_tokens_on_user_id"
+  end
+
+  create_table "dhan_credentials", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "client_id"
+    t.string "token_service_url"
+    t.text "token_service_secret"
+    t.text "fallback_access_token"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_dhan_credentials_on_user_id", unique: true
   end
 
   create_table "emi_payments", force: :cascade do |t|
@@ -184,6 +197,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133000) do
   add_foreign_key "budgets", "categories"
   add_foreign_key "budgets", "users"
   add_foreign_key "categories", "users"
+  add_foreign_key "dhan_access_tokens", "users"
+  add_foreign_key "dhan_credentials", "users"
   add_foreign_key "emi_payments", "loans"
   add_foreign_key "emi_payments", "users"
   add_foreign_key "expenses", "categories"

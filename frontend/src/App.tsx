@@ -12,6 +12,7 @@ import Categories from "./pages/Categories";
 import AiAssistant from "./pages/AiAssistant";
 import Investments from "./pages/Investments";
 import ITR from "./pages/ITR";
+import Dhan from "./pages/Dhan";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -112,6 +113,14 @@ export default function App() {
         element={
           <LayoutWrapper>
             <ITR />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/dhan"
+        element={
+          <LayoutWrapper>
+            <Dhan />
           </LayoutWrapper>
         }
       />

@@ -3,10 +3,15 @@ import type {
   Category,
   CreatePayload,
   DashboardOverview,
+  DhanCredential,
+  DhanCredentialUpdate,
+  DhanTokenStatus,
   EmiPayment,
   Expense,
   FinancialYearReport,
   Income,
+  Investment,
+  ItrSummary,
   Loan,
   LoanDetail,
   MonthlyBill,
@@ -67,6 +72,8 @@ const post = <T>(path: string, body?: unknown) =>
   request<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
 const patch = <T>(path: string, body?: unknown) =>
   request<T>(path, { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) });
+const put = <T>(path: string, body?: unknown) =>
+  request<T>(path, { method: "PUT", body: body === undefined ? undefined : JSON.stringify(body) });
 const del = <T>(path: string) => request<T>(path, { method: "DELETE" });
 
 export const api = {
@@ -188,5 +195,22 @@ export const api = {
   tax: {
     itrSummary: (params: { financialYear?: number } = {}) =>
       get<ItrSummary>(`/tax/itr_summary${buildQuery(params)}`),
+  },
+
+  dhan: {
+    tokenStatus: () => get<DhanTokenStatus>("/dhan/token_status"),
+    refreshToken: () => post<DhanTokenStatus>("/dhan/refresh_token"),
+    getCredential: () => get<DhanCredential>("/dhan/credential"),
+    updateCredential: (data: DhanCredentialUpdate) => put<DhanCredential>("/dhan/credential", data),
+    profile: () => get<Record<string, unknown>>("/dhan/profile"),
+    positions: () => get<Record<string, unknown>[]>("/dhan/positions"),
+    holdings: () => get<Record<string, unknown>[]>("/dhan/holdings"),
+    orders: () => get<Record<string, unknown>[]>("/dhan/orders"),
+    tradeBook: () => get<Record<string, unknown>[]>("/dhan/trade_book"),
+    tradeHistory: (params: { fromDate?: string; toDate?: string; page?: number } = {}) =>
+      get<Record<string, unknown>[]>(`/dhan/trade_history${buildQuery(params)}`),
+    fundLimits: () => get<Record<string, unknown>>("/dhan/fund_limits"),
+    ledger: (params: { fromDate?: string; toDate?: string } = {}) =>
+      get<Record<string, unknown>[]>(`/dhan/ledger${buildQuery(params)}`),
   },
 };

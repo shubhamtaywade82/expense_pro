@@ -21,6 +21,7 @@ import {
   Sparkles,
   TrendingUp,
   FileBadge,
+  LineChart,
 } from "lucide-react";
 
 const navItems = [
@@ -31,6 +32,7 @@ const navItems = [
   { path: "/income", label: "Income", icon: Wallet },
   { path: "/budget", label: "Budget", icon: PiggyBank },
   { path: "/investments", label: "Investments", icon: TrendingUp },
+  { path: "/dhan", label: "Dhan Trading", icon: LineChart },
   { path: "/itr", label: "ITR & Tax", icon: FileBadge },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/categories", label: "Categories", icon: Tags },

@@ -33,6 +33,19 @@ Rails.application.routes.draw do
       resources :investments, except: [ :show ]
       get "tax/itr_summary", to: "tax#itr_summary"
 
+      get "dhan/token_status", to: "dhan#token_status"
+      post "dhan/refresh_token", to: "dhan#refresh_token"
+      get "dhan/credential", to: "dhan#credential"
+      put "dhan/credential", to: "dhan#update_credential"
+      get "dhan/profile", to: "dhan#profile"
+      get "dhan/positions", to: "dhan#positions"
+      get "dhan/holdings", to: "dhan#holdings"
+      get "dhan/orders", to: "dhan#orders"
+      get "dhan/trade_book", to: "dhan#trade_book"
+      get "dhan/trade_history", to: "dhan#trade_history"
+      get "dhan/fund_limits", to: "dhan#fund_limits"
+      get "dhan/ledger", to: "dhan#ledger"
+
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"
       get "reports/financial_year", to: "reports#financial_year"

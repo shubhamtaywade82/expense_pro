@@ -56,6 +56,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Loads ENV vars from .env in dev/test; production reads real ENV vars from the platform
+  gem "dotenv-rails"
 end
 
 group :development do

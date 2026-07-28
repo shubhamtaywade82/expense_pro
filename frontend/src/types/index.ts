@@ -252,3 +252,27 @@ export type ItrSummary = {
     itr_form: string;
   };
 };
+
+export type DhanTokenStatus = {
+  connected: boolean;
+  expires_at?: string;
+  client_id?: string;
+  token_preview?: string;
+  message?: string;
+  error?: string;
+};
+
+export type DhanCredential = {
+  client_id: string | null;
+  token_service_url: string | null;
+  has_token_service_secret: boolean;
+  has_fallback_access_token: boolean;
+  message?: string;
+};
+
+export type DhanCredentialUpdate = {
+  clientId?: string;
+  tokenServiceUrl?: string;
+  tokenServiceSecret?: string;
+  fallbackAccessToken?: string;
+};

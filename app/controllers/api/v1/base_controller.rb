@@ -9,8 +9,13 @@ module Api
 
       before_action :underscore_param_keys!
       before_action :authenticate_user!
+      before_action :set_current_user
 
       private
+
+      def set_current_user
+        Current.user = current_user
+      end
 
       # The React frontend speaks camelCase (categoryId, expenseDate, ...);
       # ActiveRecord and strong params expect snake_case. Normalize once,

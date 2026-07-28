@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_28_130000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_28_133000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_130000) do
     t.index ["user_id", "category_type"], name: "index_categories_on_user_id_and_category_type"
     t.index ["user_id", "name"], name: "index_categories_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_categories_on_user_id"
+  end
+
+  create_table "dhan_access_tokens", force: :cascade do |t|
+    t.string "access_token", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_dhan_access_tokens_on_expires_at"
   end
 
   create_table "emi_payments", force: :cascade do |t|

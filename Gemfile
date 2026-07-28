@@ -70,3 +70,5 @@ group :test do
 end
 
 gem "ollama-client"
+gem "DhanHQ", "~> 3.3"
+gem "httparty"

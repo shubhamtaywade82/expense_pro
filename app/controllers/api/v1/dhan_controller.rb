@@ -1,0 +1,107 @@
+# frozen_string_literal: true
+
+module Api
+  module V1
+    class DhanController < BaseController
+      before_action :ensure_dhan_configured
+
+      def token_status
+        token = DhanAccessToken.active
+        if token
+          render json: {
+            connected: true,
+            expires_at: token.expires_at.iso8601,
+            client_id: DhanTokenService.client_id,
+            token_preview: "#{token.access_token.first(12)}..."
+          }
+        else
+          render json: { connected: false, message: "No valid token. Use refresh to fetch." }
+        end
+      end
+
+      def refresh_token
+        DhanTokenService.fetch_and_store!
+        token = DhanAccessToken.active
+        render json: {
+          connected: true,
+          expires_at: token.expires_at.iso8601,
+          client_id: DhanTokenService.client_id,
+          message: "Token refreshed successfully"
+        }
+      rescue DhanTokenService::TokenUnavailableError => e
+        render json: { connected: false, error: e.message }, status: :service_unavailable
+      end
+
+      def profile
+        svc = DhanDataService.new
+        render json: svc.profile
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def positions
+        svc = DhanDataService.new
+        render json: svc.positions
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def holdings
+        svc = DhanDataService.new
+        render json: svc.holdings
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def orders
+        svc = DhanDataService.new
+        render json: svc.orders
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def trade_book
+        svc = DhanDataService.new
+        render json: svc.trade_book
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def trade_history
+        from = params[:from_date] || 30.days.ago.to_date.to_s
+        to   = params[:to_date]   || Date.current.to_s
+        page = (params[:page] || 0).to_i
+
+        svc = DhanDataService.new
+        render json: svc.trade_history(from_date: from, to_date: to, page: page)
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def fund_limits
+        svc = DhanDataService.new
+        render json: svc.fund_limits
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      def ledger
+        from = params[:from_date] || 30.days.ago.to_date.to_s
+        to   = params[:to_date]   || Date.current.to_s
+
+        svc = DhanDataService.new
+        render json: svc.ledger(from_date: from, to_date: to)
+      rescue => e
+        render json: { error: e.message }, status: :service_unavailable
+      end
+
+      private
+
+      def ensure_dhan_configured
+        return if DhanTokenService.client_id.present?
+
+        render json: { error: "DHAN_CLIENT_ID not configured" }, status: :service_unavailable
+      end
+    end
+  end
+end

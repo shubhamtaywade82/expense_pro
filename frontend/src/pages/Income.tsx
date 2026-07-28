@@ -276,8 +276,8 @@ export default function Income() {
     return matchesSearch && matchesFrequency;
   });
 
-  // Filter recurring templates
-  const recurringTemplates = (allIncomes || []).filter((inc) => inc.isRecurring && !inc.parentId);
+  // Filter recurring templates - from real DB records (not projections)
+  const recurringTemplates = (rawTemplates || []).filter((inc) => inc.isRecurring && !inc.parentId);
 
   return (
     <div className="flex-1 overflow-y-auto pr-1 -mr-1">
@@ -555,6 +555,30 @@ export default function Income() {
                   size="icon"
                   className="h-8 w-8 rounded-lg"
                   onClick={() => setYear(year + 1)}
+                >
+                  &rarr;
+                </Button>
+              </div>
+            )}
+
+            {activeTab === "all" && (
+              <div className="flex items-center gap-2 bg-card/60 p-1.5 rounded-xl border border-border/40">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg"
+                  onClick={() => setAllYear(allYear - 1)}
+                >
+                  &larr;
+                </Button>
+                <span className="text-xs sm:text-sm font-semibold px-4 py-1 bg-muted/60 rounded-lg">
+                  All Incomes {allYear}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 rounded-lg"
+                  onClick={() => setAllYear(allYear + 1)}
                 >
                   &rarr;
                 </Button>
@@ -1124,7 +1148,7 @@ export default function Income() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoadingAll ? (
+                {isLoadingTemplates ? (
                   <div className="space-y-3">
                     {[...Array(3)].map((_, i) => (
                       <Skeleton key={i} className="h-16 rounded-xl" />

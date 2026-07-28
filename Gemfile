@@ -69,4 +69,4 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "ollama-client", path: "/home/nemesis/project/ai-workspace/ollama-ecosystem/ollama-client"
+gem "ollama-client"

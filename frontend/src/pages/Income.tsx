@@ -1134,7 +1134,7 @@ export default function Income() {
                     ))}
                   </div>
                 )}
-              CardContent>
+              </CardContent>
             </Card>
           </TabsContent>
 

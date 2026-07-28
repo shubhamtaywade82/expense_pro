@@ -19,6 +19,8 @@ import {
   X,
   IndianRupee,
   Sparkles,
+  TrendingUp,
+  FileBadge,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +30,8 @@ const navItems = [
   { path: "/loans", label: "Loans & EMIs", icon: Landmark },
   { path: "/income", label: "Income", icon: Wallet },
   { path: "/budget", label: "Budget", icon: PiggyBank },
+  { path: "/investments", label: "Investments", icon: TrendingUp },
+  { path: "/itr", label: "ITR & Tax", icon: FileBadge },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/categories", label: "Categories", icon: Tags },
   { path: "/ai-assistant", label: "AI Assistant", icon: Sparkles },

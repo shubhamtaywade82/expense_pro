@@ -118,9 +118,9 @@ export default function Expenses() {
   const expenseCategories = categories?.filter((c) => c.type === "expense") ?? [];
 
   const groupedExpenses = useMemo(() => {
-    if (!expenses) return [];
+    if (!Array.isArray(expenses) || expenses.length === 0) return [];
     const groups: Record<string, Expense[]> = {};
-    
+
     expenses.forEach(exp => {
       const date = exp.expenseDate || format(new Date(), "yyyy-MM-dd");
       if (!groups[date]) groups[date] = [];

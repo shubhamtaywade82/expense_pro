@@ -27,5 +27,21 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: path.resolve(__dirname, "../public/frontend"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Prevent recharts/lodash CJS _ namespace from colliding with
+        // esbuild-minified local variables also named _
+        manualChunks(id) {
+          if (id.includes('recharts') || id.includes('lodash') || id.includes('victory-vendor')) {
+            return 'recharts-vendor';
+          }
+        },
+      },
+    },
+  },
+  esbuild: {
+    // Reserve _ so esbuild never picks it as a minified variable name
+    // This prevents collision with lodash's _ namespace in the same scope
+    reserveProps: /^_$/,
   },
 }))

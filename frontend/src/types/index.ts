@@ -47,6 +47,9 @@ export type Income = Omit<CommonFields, "id"> & {
   changeReason?: string | null;
   originalAmount?: string | number | null;
   amountDifference?: number | null;
+  isLatestRecurring?: boolean;
+  isOngoing?: boolean;
+  gapInfo?: string | null;
 };
 
 export type MonthlyBill = CommonFields & {

@@ -42,10 +42,10 @@ import {
   Sparkles,
   CheckCircle2,
   Clock,
-  Sparkle,
   SlidersHorizontal,
-  RotateCcw,
-  TrendingDown,
+  Info,
+  AlertTriangle,
+  Link2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -180,7 +180,6 @@ export default function Income() {
     e.preventDefault();
     if (!form.source || !form.amount) return;
 
-    // Check if amount or details differ from original template amount
     const hasAmountChanged =
       form.originalAmount && parseFloat(form.amount) !== parseFloat(form.originalAmount);
     const isCustomFlag = form.isCustom || Boolean(hasAmountChanged) || Boolean(form.changeReason);
@@ -281,7 +280,7 @@ export default function Income() {
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Income Dashboard</h2>
                 <p className="text-sm text-muted-foreground">
-                  Track recurring salary, prefilled date ranges, monthly increments, and custom overrides
+                  Track recurring salary, prefilled date ranges, gaps, and custom month overrides
                 </p>
               </div>
             </div>
@@ -344,7 +343,7 @@ export default function Income() {
                         )}
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">Date</Label>
+                      <Label className="text-sm font-medium">Start Date</Label>
                       <Input
                         type="date"
                         className="mt-1"
@@ -395,9 +394,9 @@ export default function Income() {
 
                   <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Recurring Template</Label>
+                      <Label className="text-sm font-medium">Recurring Rule</Label>
                       <p className="text-xs text-muted-foreground">
-                        Prefills upcoming months automatically
+                        Prefills upcoming date range automatically
                       </p>
                     </div>
                     <Switch
@@ -407,14 +406,24 @@ export default function Income() {
                   </div>
 
                   {form.isRecurring && (
-                    <div>
-                      <Label className="text-sm font-medium">End Date (Optional)</Label>
+                    <div className="space-y-1.5 p-3 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" /> Rule End Date (Optional)
+                        </Label>
+                        <span className="text-[10px] text-muted-foreground">
+                          Leave blank for Latest / Ongoing Rule
+                        </span>
+                      </div>
                       <Input
                         type="date"
-                        className="mt-1"
+                        className="mt-1 text-xs bg-card"
                         value={form.endDate}
                         onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                       />
+                      <p className="text-[11px] text-muted-foreground leading-tight pt-1">
+                        💡 <span className="font-semibold">Rule Rule Invariant:</span> Only the latest active recurring rule for a source can be ongoing without an end date. Historical rules will require start & end dates.
+                      </p>
                     </div>
                   )}
 
@@ -477,7 +486,7 @@ export default function Income() {
                 <Wallet className="w-4 h-4" /> All Incomes
               </TabsTrigger>
               <TabsTrigger value="recurring" className="rounded-lg gap-2 text-xs sm:text-sm">
-                <Repeat className="w-4 h-4" /> Recurring Master Templates
+                <Repeat className="w-4 h-4" /> Recurring Master Rules
               </TabsTrigger>
             </TabsList>
 
@@ -1089,17 +1098,17 @@ export default function Income() {
                     ))}
                   </div>
                 )}
-              </CardContent>
+              CardContent>
             </Card>
           </TabsContent>
 
-          {/* TAB 4: RECURRING MASTER TEMPLATES */}
+          {/* TAB 4: RECURRING MASTER RULES & DATE RANGE VALIDATIONS */}
           <TabsContent value="recurring" className="space-y-6 m-0">
             <Card className="border border-border/40 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg font-bold">Recurring Master Templates</CardTitle>
+                <CardTitle className="text-lg font-bold">Recurring Master Rules & Range Audits</CardTitle>
                 <CardDescription>
-                  Master recurring income rules that prefill date ranges. Editing a template updates the baseline for all un-customized months.
+                  Master income rules. Only the latest rule can be ongoing. Historical rules require start & end dates.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1111,7 +1120,7 @@ export default function Income() {
                   </div>
                 ) : recurringTemplates.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
-                    No recurring income rules set up yet. When adding an income, toggle "Recurring Template" to prefill date ranges.
+                    No recurring income rules set up yet. When adding an income, toggle "Recurring Rule" to prefill date ranges.
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
@@ -1123,23 +1132,45 @@ export default function Income() {
                           ? parseFloat(template.amount) * 4
                           : parseFloat(template.amount);
 
+                      const isLatest = template.isLatestRecurring ?? !template.endDate;
+                      const gapMessage = template.gapInfo;
+
                       return (
                         <Card
                           key={template.id}
-                          className="border border-emerald-500/20 bg-card/60 hover:bg-card transition-all"
+                          className={`border transition-all ${
+                            isLatest
+                              ? "border-emerald-500/30 bg-card/80 hover:bg-card"
+                              : "border-border/60 bg-muted/20 opacity-90"
+                          }`}
                         >
                           <CardContent className="p-4 space-y-3">
                             <div className="flex items-start justify-between">
                               <div>
-                                <h4 className="font-bold text-base text-foreground">
-                                  {template.source}
-                                </h4>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 capitalize">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-base text-foreground">
+                                    {template.source}
+                                  </h4>
+                                  {isLatest ? (
+                                    <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-[10px]">
+                                      Latest / Ongoing Rule
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                      Historical Period
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap text-xs text-muted-foreground">
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 capitalize text-[10px]">
                                     {template.frequency}
                                   </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    Started: {format(new Date(template.incomeDate), "dd MMM yyyy")}
+                                  <span>
+                                    Start: {format(new Date(template.incomeDate), "dd MMM yyyy")}
+                                  </span>
+                                  <span>•</span>
+                                  <span>
+                                    End: {template.endDate ? format(new Date(template.endDate), "dd MMM yyyy") : "Ongoing (Present)"}
                                   </span>
                                 </div>
                               </div>
@@ -1153,6 +1184,28 @@ export default function Income() {
                               </div>
                             </div>
 
+                            {/* Gap / Overlap audit alert */}
+                            {gapMessage && (
+                              <div
+                                className={`p-2.5 rounded-lg text-xs flex items-start gap-2 ${
+                                  gapMessage.startsWith("Gap:")
+                                    ? "bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300"
+                                    : gapMessage.startsWith("Overlap:")
+                                    ? "bg-rose-500/10 border border-rose-500/20 text-rose-800 dark:text-rose-300"
+                                    : "bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300"
+                                }`}
+                              >
+                                {gapMessage.startsWith("Gap:") ? (
+                                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                                ) : gapMessage.startsWith("Overlap:") ? (
+                                  <AlertTriangle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
+                                ) : (
+                                  <Link2 className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                                )}
+                                <span>{gapMessage}</span>
+                              </div>
+                            )}
+
                             {template.notes && (
                               <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded-lg">
                                 {template.notes}
@@ -1162,8 +1215,8 @@ export default function Income() {
                             <div className="flex items-center justify-between border-t border-border/40 pt-3">
                               <span className="text-xs text-muted-foreground">
                                 {template.endDate
-                                  ? `Active until ${format(new Date(template.endDate), "dd MMM yyyy")}`
-                                  : "Ongoing active rule"}
+                                  ? `Closed range: ${format(new Date(template.incomeDate), "MMM yyyy")} to ${format(new Date(template.endDate), "MMM yyyy")}`
+                                  : "Ongoing active rule for future months"}
                               </span>
                               <div className="flex items-center gap-1">
                                 <Button
@@ -1172,7 +1225,7 @@ export default function Income() {
                                   className="h-7 text-xs"
                                   onClick={() => handleEdit(template)}
                                 >
-                                  <Pencil className="w-3 h-3 mr-1" /> Edit Baseline
+                                  <Pencil className="w-3 h-3 mr-1" /> Edit Rule
                                 </Button>
                                 {template.id !== null && (
                                   <Button

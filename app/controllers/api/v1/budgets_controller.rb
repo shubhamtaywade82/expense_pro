@@ -7,8 +7,17 @@ module Api
         month = params[:month].to_i
         year = params[:year].to_i
 
-        budgets = current_user.budgets.includes(:category).for_period(month, year)
-        render json: budgets.map { |budget| serialize(budget) }
+        budgets = current_user.budgets.includes(:category).for_period(month, year).to_a
+
+        # One grouped query for every budget's spend instead of Budget#actual_spent
+        # issuing its own SELECT per row (they all share this index's month/year).
+        spent_by_category = current_user.expenses
+          .where(category_id: budgets.map(&:category_id))
+          .for_month(month, year)
+          .group(:category_id)
+          .sum(:amount)
+
+        render json: budgets.map { |budget| serialize(budget, spent: spent_by_category[budget.category_id] || 0) }
       end
 
       def create
@@ -37,8 +46,8 @@ module Api
         params.permit(:category_id, :month, :year, :amount, :alert_threshold)
       end
 
-      def serialize(budget)
-        spent = budget.actual_spent.to_d
+      def serialize(budget, spent: budget.actual_spent)
+        spent = spent.to_d
         amount = budget.amount.to_d
         percentage = amount.positive? ? (spent / amount * 100).round(1).to_f : 0.0
 

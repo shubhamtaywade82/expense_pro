@@ -45,6 +45,25 @@ function formatCurrency(val: unknown) {
   }).format(num || 0);
 }
 
+// Dhan's raw API leaves trading_symbol blank for most F&O legs (it only sends
+// security_id + strike/option-type/expiry) — build a readable label from those
+// instead of falling through to an empty cell.
+function resolveSymbol(row: Record<string, unknown>) {
+  const symbol = row.trading_symbol || row.custom_symbol;
+  if (symbol) return String(symbol);
+
+  const strike = row.drv_strike_price;
+  const optionType = row.drv_option_type;
+  const expiry = row.drv_expiry_date;
+  if (strike || optionType || expiry) {
+    const parts = [strike ? String(strike) : null, optionType ? String(optionType) : null, expiry ? String(expiry) : null].filter(Boolean);
+    const label = parts.join(" ");
+    return row.security_id ? `${label} (#${row.security_id})` : label;
+  }
+
+  return row.security_id ? `#${row.security_id}` : "—";
+}
+
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="text-center py-10 border border-dashed border-border/60 rounded-2xl bg-muted/20 text-sm text-muted-foreground">
@@ -93,7 +112,7 @@ function RowList({
             <tr key={i} className="border-b border-border/20 hover:bg-muted/30">
               {keys.map((k) => (
                 <td key={k} className="py-2 pr-4 whitespace-nowrap text-foreground">
-                  {String(row[k] ?? "—")}
+                  {k === "trading_symbol" ? resolveSymbol(row) : String(row[k] ?? "—")}
                 </td>
               ))}
             </tr>
@@ -116,6 +135,7 @@ function DhanSettingsForm() {
     tokenServiceUrl: "",
     tokenServiceSecret: "",
     fallbackAccessToken: "",
+    autoImportPnl: false,
   });
 
   useEffect(() => {
@@ -124,6 +144,7 @@ function DhanSettingsForm() {
       ...f,
       clientId: credential.data.client_id ?? "",
       tokenServiceUrl: credential.data.token_service_url ?? "",
+      autoImportPnl: credential.data.auto_import_pnl,
     }));
   }, [credential.data]);
 
@@ -143,6 +164,7 @@ function DhanSettingsForm() {
     };
     if (form.tokenServiceSecret) payload.tokenServiceSecret = form.tokenServiceSecret;
     if (form.fallbackAccessToken) payload.fallbackAccessToken = form.fallbackAccessToken;
+    payload.autoImportPnl = form.autoImportPnl;
     saveMutation.mutate(payload);
   };
 
@@ -212,6 +234,25 @@ function DhanSettingsForm() {
           placeholder={credential.data?.has_fallback_access_token ? "•••••••••••• (leave blank to keep)" : "Used only if the token service is unreachable"}
         />
       </div>
+
+      <label className="flex items-start gap-2.5 p-3 rounded-xl bg-muted/30 border border-border/40 cursor-pointer">
+        <input
+          type="checkbox"
+          className="mt-0.5"
+          checked={form.autoImportPnl ?? false}
+          onChange={(e) => setForm({ ...form, autoImportPnl: e.target.checked })}
+        />
+        <span className="text-xs">
+          <span className="font-medium text-foreground block">
+            Auto-import Intraday &amp; F&amp;O P&amp;L to Investments
+          </span>
+          <span className="text-muted-foreground">
+            Re-imports the trailing 7 days into Investments each time you refresh your Dhan
+            connection (not a scheduled background job — only runs when you or a page load hits
+            Refresh Token).
+          </span>
+        </span>
+      </label>
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saveMutation.isPending} className="rounded-xl bg-cyan-600 text-white hover:bg-cyan-500">
@@ -379,6 +420,94 @@ function LedgerSummary({ entries }: { entries: Record<string, unknown>[] | undef
           {credit - debit >= 0 ? "+" : ""}
           {formatCurrency(credit - debit)}
         </p>
+      </div>
+    </div>
+  );
+}
+
+const PNL_SEGMENT_LABELS: Record<string, { label: string; importable: boolean; note: string }> = {
+  speculative_intraday: { label: "Intraday (Speculative)", importable: true, note: "Sec 43(5) business income" },
+  non_speculative_fo: { label: "F&O (Non-Speculative)", importable: true, note: "Business income" },
+  equity_delivery: { label: "Equity Delivery (CNC)", importable: false, note: "Add manually — STCG/LTCG needs lot matching" },
+  commodity: { label: "Commodity (MCX)", importable: false, note: "Not auto-classified" },
+};
+
+function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: string }) {
+  const queryClient = useQueryClient();
+  const summary = useQuery({
+    queryKey: ["dhan", "pnl_summary", { fromDate, toDate }],
+    queryFn: () => api.dhan.pnlSummary({ fromDate, toDate }),
+  });
+
+  const importMutation = useMutation({
+    mutationFn: () => api.dhan.importToInvestments({ fromDate, toDate }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["investments"] });
+      queryClient.invalidateQueries({ queryKey: ["tax"] });
+    },
+  });
+
+  if (summary.isLoading) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!summary.data) return null;
+
+  const segments = summary.data.segments;
+  const truncated = summary.data.truncated;
+  const hasImportableTrades = ["speculative_intraday", "non_speculative_fo"].some(
+    (k) => segments[k as keyof typeof segments].trade_count > 0
+  );
+
+  return (
+    <div className="mb-4 space-y-3">
+      {truncated && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300">
+          Too many trades in this range to summarize accurately — figures below are a partial count.
+          Narrow the date range for correct P&amp;L (import is disabled until then).
+        </div>
+      )}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Object.entries(PNL_SEGMENT_LABELS).map(([key, meta]) => {
+          const bucket = segments[key as keyof typeof segments];
+          return (
+            <div key={key} className="p-3 rounded-xl bg-muted/30 border border-border/40">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{meta.label}</p>
+              <p className={`text-base font-bold ${bucket.net_pnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                {bucket.net_pnl >= 0 ? "+" : ""}
+                {formatCurrency(bucket.net_pnl)}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {bucket.trade_count} trades · {meta.note}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl"
+          disabled={!hasImportableTrades || truncated || importMutation.isPending}
+          onClick={() => importMutation.mutate()}
+        >
+          {importMutation.isPending ? "Importing..." : "Import Intraday + F&O to Investments"}
+        </Button>
+        {importMutation.isSuccess && (
+          <span className="text-xs text-emerald-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Imported {importMutation.data.imported_count} position(s)
+          </span>
+        )}
+        {importMutation.isError && <span className="text-xs text-rose-600">Import failed</span>}
       </div>
     </div>
   );
@@ -650,9 +779,16 @@ export default function Dhan() {
               <PeriodPicker onChange={(f, t) => { setFromDate(f); setToDate(t); }} />
             </CardHeader>
             <CardContent>
-              <TradeHistorySummary trades={tradeHistory.data} />
+              {tradeHistory.data?.truncated && (
+                <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300">
+                  This range has too many trades to load in full — figures below only cover the trades that
+                  were fetched. Narrow the date range for complete and accurate totals.
+                </div>
+              )}
+              <PnlSummaryPanel fromDate={fromDate} toDate={toDate} />
+              <TradeHistorySummary trades={tradeHistory.data?.trades} />
               <RowList
-                rows={tradeHistory.data}
+                rows={tradeHistory.data?.trades}
                 isLoading={tradeHistory.isLoading}
                 emptyLabel="No trades in this range"
                 keys={["trading_symbol", "transaction_type", "traded_quantity", "traded_price", "brokerage_charges", "stt", "create_time"]}

@@ -267,6 +267,7 @@ export type DhanCredential = {
   token_service_url: string | null;
   has_token_service_secret: boolean;
   has_fallback_access_token: boolean;
+  auto_import_pnl: boolean;
   message?: string;
 };
 
@@ -275,4 +276,31 @@ export type DhanCredentialUpdate = {
   tokenServiceUrl?: string;
   tokenServiceSecret?: string;
   fallbackAccessToken?: string;
+  autoImportPnl?: boolean;
+};
+
+export type DhanPnlBucket = {
+  buy_value: number;
+  sell_value: number;
+  charges: number;
+  net_pnl: number;
+  trade_count: number;
+};
+
+export type DhanPnlSummary = {
+  from_date: string;
+  to_date: string;
+  truncated: boolean;
+  segments: {
+    speculative_intraday: DhanPnlBucket;
+    non_speculative_fo: DhanPnlBucket;
+    equity_delivery: DhanPnlBucket;
+    commodity: DhanPnlBucket;
+    other: DhanPnlBucket;
+  };
+};
+
+export type DhanImportResult = {
+  imported_count: number;
+  investments: { id: number; name: string; asset_class: string; realized_pnl: string }[];
 };

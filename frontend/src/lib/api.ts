@@ -5,6 +5,8 @@ import type {
   DashboardOverview,
   DhanCredential,
   DhanCredentialUpdate,
+  DhanImportResult,
+  DhanPnlSummary,
   DhanTokenStatus,
   EmiPayment,
   Expense,
@@ -207,10 +209,14 @@ export const api = {
     holdings: () => get<Record<string, unknown>[]>("/dhan/holdings"),
     orders: () => get<Record<string, unknown>[]>("/dhan/orders"),
     tradeBook: () => get<Record<string, unknown>[]>("/dhan/trade_book"),
-    tradeHistory: (params: { fromDate?: string; toDate?: string; page?: number } = {}) =>
-      get<Record<string, unknown>[]>(`/dhan/trade_history${buildQuery(params)}`),
+    tradeHistory: (params: { fromDate?: string; toDate?: string } = {}) =>
+      get<{ trades: Record<string, unknown>[]; truncated: boolean }>(`/dhan/trade_history${buildQuery(params)}`),
     fundLimits: () => get<Record<string, unknown>>("/dhan/fund_limits"),
     ledger: (params: { fromDate?: string; toDate?: string } = {}) =>
       get<Record<string, unknown>[]>(`/dhan/ledger${buildQuery(params)}`),
+    pnlSummary: (params: { fromDate?: string; toDate?: string } = {}) =>
+      get<DhanPnlSummary>(`/dhan/pnl_summary${buildQuery(params)}`),
+    importToInvestments: (data: { fromDate: string; toDate: string }) =>
+      post<DhanImportResult>("/dhan/import_to_investments", data),
   },
 };

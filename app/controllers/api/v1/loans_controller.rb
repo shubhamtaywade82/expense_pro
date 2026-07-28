@@ -4,7 +4,8 @@ module Api
       before_action :set_loan, only: [ :show, :destroy ]
 
       def index
-        render json: current_user.loans.includes(:category).map { |loan| serialize_summary(loan) }
+        loans = current_user.loans.includes(:category, :emi_payments)
+        render json: loans.map { |loan| serialize_summary(loan) }
       end
 
       def show
@@ -25,7 +26,7 @@ module Api
       private
 
       def set_loan
-        @loan = current_user.loans.find(params[:id])
+        @loan = current_user.loans.includes(:emi_payments).find(params[:id])
       end
 
       def loan_params
@@ -34,8 +35,10 @@ module Api
       end
 
       def serialize_summary(loan)
-        paid_count = loan.emi_payments.where(is_paid: true).count
-        total_interest = loan.emi_payments.sum(:interest_amount)
+        # Block-form count/sum reuse the preloaded emi_payments association
+        # instead of each issuing its own SELECT against the DB.
+        paid_count = loan.emi_payments.count(&:is_paid?)
+        total_interest = loan.emi_payments.sum(&:interest_amount)
 
         loan.as_json.merge(
           "categoryName" => loan.category.name,

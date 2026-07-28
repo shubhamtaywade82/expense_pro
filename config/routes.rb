@@ -45,6 +45,8 @@ Rails.application.routes.draw do
       get "dhan/trade_history", to: "dhan#trade_history"
       get "dhan/fund_limits", to: "dhan#fund_limits"
       get "dhan/ledger", to: "dhan#ledger"
+      get "dhan/pnl_summary", to: "dhan#pnl_summary"
+      post "dhan/import_to_investments", to: "dhan#import_to_investments"
 
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"

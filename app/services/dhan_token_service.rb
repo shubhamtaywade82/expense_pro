@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
 # Fetches the current user's DhanHQ access token: DB-configured (via the Dhan
-# Settings UI, DhanCredential) render token endpoint first, falling back to
+# Settings UI, BrokerCredential) render token endpoint first, falling back to
 # ENV vars if the user hasn't configured one. Mirrors the pattern from
 # algo_trading_api's Dhan::TokenManager, scoped per-user.
+#
+# One concrete broker adapter (BROKER = "dhan") over the broker-generic
+# BrokerCredential/BrokerAccessToken tables, so adding CoinDCX or Delta
+# Exchange India later is a new *TokenService, not a schema change.
 class DhanTokenService
+  BROKER = "dhan"
   DEFAULT_TOKEN_SERVICE_URL = "https://algo-trading-api.onrender.com/auth/dhan/token"
 
   class TokenUnavailableError < StandardError; end
@@ -13,7 +18,7 @@ class DhanTokenService
   class << self
     def current_token!
       user = require_user!
-      stored = DhanAccessToken.active(user)
+      stored = BrokerAccessToken.active(user, broker: BROKER)
       return stored.access_token if stored.present?
 
       fetch_and_store!
@@ -27,8 +32,9 @@ class DhanTokenService
               "No DhanHQ token available for #{user.email}. Configure it in Dhan Settings or set DHAN_ACCESS_TOKEN."
       end
 
-      DhanAccessToken.create!(
+      BrokerAccessToken.create!(
         user: user,
+        broker: BROKER,
         access_token: token_info[:access_token],
         expires_at: token_info[:expires_at]
       )
@@ -54,7 +60,7 @@ class DhanTokenService
     end
 
     def credential_for(user)
-      DhanCredential.find_by(user: user)
+      BrokerCredential.find_by(user: user, broker: BROKER)
     end
 
     def fetch_from_render_api(user)

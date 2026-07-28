@@ -25,7 +25,16 @@ import {
   Settings,
   ShieldCheck,
 } from "lucide-react";
-import { format, subDays } from "date-fns";
+import {
+  format,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfQuarter,
+  endOfQuarter,
+} from "date-fns";
 
 function formatCurrency(val: unknown) {
   const num = typeof val === "string" ? parseFloat(val) : typeof val === "number" ? val : 0;
@@ -221,6 +230,160 @@ function DhanSettingsForm() {
   );
 }
 
+type PeriodPreset = "week" | "month" | "quarter" | "fy" | "custom";
+
+function currentFyYear() {
+  const now = new Date();
+  // Indian FY runs Apr 1 - Mar 31; Jan-Mar belongs to the FY that started the previous April.
+  return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+}
+
+function PeriodPicker({ onChange }: { onChange: (from: string, to: string) => void }) {
+  const [preset, setPreset] = useState<PeriodPreset>("month");
+  const [fyYear, setFyYear] = useState(currentFyYear);
+  const [customFrom, setCustomFrom] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
+  const [customTo, setCustomTo] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  useEffect(() => {
+    const now = new Date();
+    let from: Date;
+    let to: Date;
+    switch (preset) {
+      case "week":
+        from = startOfWeek(now, { weekStartsOn: 1 });
+        to = endOfWeek(now, { weekStartsOn: 1 });
+        break;
+      case "quarter":
+        from = startOfQuarter(now);
+        to = endOfQuarter(now);
+        break;
+      case "fy":
+        from = new Date(fyYear - 1, 3, 1);
+        to = new Date(fyYear, 2, 31);
+        break;
+      case "custom":
+        onChange(customFrom, customTo);
+        return;
+      default:
+        from = startOfMonth(now);
+        to = endOfMonth(now);
+    }
+    onChange(format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, fyYear, customFrom, customTo]);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-0.5 bg-muted/40 p-1 rounded-xl border border-border/40">
+        {(["week", "month", "quarter", "fy", "custom"] as PeriodPreset[]).map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setPreset(p)}
+            className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+              preset === p ? "bg-cyan-600 text-white" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {p === "fy" ? "This FY" : p === "custom" ? "Custom" : `This ${p[0].toUpperCase()}${p.slice(1)}`}
+          </button>
+        ))}
+      </div>
+
+      {preset === "fy" && (
+        <div className="flex items-center gap-1 text-xs">
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setFyYear((y) => y - 1)}>
+            &larr;
+          </Button>
+          <span className="font-semibold px-1 min-w-[90px] text-center">
+            FY {fyYear - 1}-{String(fyYear).slice(2)}
+          </span>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-lg" onClick={() => setFyYear((y) => y + 1)}>
+            &rarr;
+          </Button>
+        </div>
+      )}
+
+      {preset === "custom" && (
+        <div className="flex items-end gap-2">
+          <div>
+            <Label className="text-[10px] text-muted-foreground">From</Label>
+            <Input type="date" className="h-8 text-xs" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} />
+          </div>
+          <div>
+            <Label className="text-[10px] text-muted-foreground">To</Label>
+            <Input type="date" className="h-8 text-xs" value={customTo} onChange={(e) => setCustomTo(e.target.value)} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function num(val: unknown) {
+  return typeof val === "string" ? parseFloat(val) : typeof val === "number" ? val : 0;
+}
+
+function TradeHistorySummary({ trades }: { trades: Record<string, unknown>[] | undefined }) {
+  if (!trades || trades.length === 0) return null;
+
+  const turnover = trades.reduce((sum, t) => sum + num(t.traded_quantity) * num(t.traded_price), 0);
+  const charges = trades.reduce(
+    (sum, t) =>
+      sum +
+      num(t.sebi_tax) +
+      num(t.stt) +
+      num(t.brokerage_charges) +
+      num(t.service_tax) +
+      num(t.exchange_transaction_charges) +
+      num(t.stamp_duty),
+    0
+  );
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-3 mb-4">
+      <div className="p-3 rounded-xl bg-muted/30 border border-border/40">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Trades</p>
+        <p className="text-base font-bold text-foreground">{trades.length}</p>
+      </div>
+      <div className="p-3 rounded-xl bg-muted/30 border border-border/40">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Turnover</p>
+        <p className="text-base font-bold text-foreground">{formatCurrency(turnover)}</p>
+      </div>
+      <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Charges</p>
+        <p className="text-base font-bold text-rose-600 dark:text-rose-400">{formatCurrency(charges)}</p>
+      </div>
+    </div>
+  );
+}
+
+function LedgerSummary({ entries }: { entries: Record<string, unknown>[] | undefined }) {
+  if (!entries || entries.length === 0) return null;
+
+  const credit = entries.reduce((sum, e) => sum + num(e.credit), 0);
+  const debit = entries.reduce((sum, e) => sum + num(e.debit), 0);
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-3 mb-4">
+      <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Credit</p>
+        <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(credit)}</p>
+      </div>
+      <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Debit</p>
+        <p className="text-base font-bold text-rose-600 dark:text-rose-400">{formatCurrency(debit)}</p>
+      </div>
+      <div className="p-3 rounded-xl bg-muted/30 border border-border/40">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Net Change</p>
+        <p className={`text-base font-bold ${credit - debit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+          {credit - debit >= 0 ? "+" : ""}
+          {formatCurrency(credit - debit)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function Dhan() {
   const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -386,9 +549,6 @@ export default function Dhan() {
 
       <Tabs defaultValue={connected ? "positions" : "settings"} className="w-full space-y-4">
         <TabsList className="bg-card/60 backdrop-blur-md p-1 rounded-xl border border-border/40 flex-wrap h-auto">
-          <TabsTrigger value="settings" className="rounded-lg text-xs gap-1.5">
-            <Settings className="w-3.5 h-3.5" /> Settings
-          </TabsTrigger>
           <TabsTrigger value="positions" className="rounded-lg text-xs gap-1.5">
             <Briefcase className="w-3.5 h-3.5" /> Positions
           </TabsTrigger>
@@ -407,24 +567,10 @@ export default function Dhan() {
           <TabsTrigger value="ledger" className="rounded-lg text-xs gap-1.5">
             <Receipt className="w-3.5 h-3.5" /> Ledger
           </TabsTrigger>
+          <TabsTrigger value="settings" className="rounded-lg text-xs gap-1.5 ml-auto">
+            <Settings className="w-3.5 h-3.5" /> Settings
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="settings" className="m-0">
-          <Card className="border border-border/40 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg font-bold">
-                <ShieldCheck className="w-4 h-4 text-cyan-500" /> Broker Connection Settings
-              </CardTitle>
-              <CardDescription>
-                Configure how this account fetches its DhanHQ access token. Secrets are encrypted at
-                rest and never sent back to the browser after saving.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DhanSettingsForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="positions" className="m-0">
           <Card className="border border-border/40 shadow-sm">
@@ -496,23 +642,15 @@ export default function Dhan() {
 
         <TabsContent value="history" className="m-0">
           <Card className="border border-border/40 shadow-sm">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-lg font-bold">Trade History</CardTitle>
                 <CardDescription>Historical executed trades with charge breakdown</CardDescription>
               </div>
-              <div className="flex items-end gap-2">
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">From</Label>
-                  <Input type="date" className="h-8 text-xs" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">To</Label>
-                  <Input type="date" className="h-8 text-xs" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                </div>
-              </div>
+              <PeriodPicker onChange={(f, t) => { setFromDate(f); setToDate(t); }} />
             </CardHeader>
             <CardContent>
+              <TradeHistorySummary trades={tradeHistory.data} />
               <RowList
                 rows={tradeHistory.data}
                 isLoading={tradeHistory.isLoading}
@@ -525,29 +663,38 @@ export default function Dhan() {
 
         <TabsContent value="ledger" className="m-0">
           <Card className="border border-border/40 shadow-sm">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <CardTitle className="text-lg font-bold">Ledger Report</CardTitle>
                 <CardDescription>Credit / debit transactions and running balance</CardDescription>
               </div>
-              <div className="flex items-end gap-2">
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">From</Label>
-                  <Input type="date" className="h-8 text-xs" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                </div>
-                <div>
-                  <Label className="text-[10px] text-muted-foreground">To</Label>
-                  <Input type="date" className="h-8 text-xs" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                </div>
-              </div>
+              <PeriodPicker onChange={(f, t) => { setFromDate(f); setToDate(t); }} />
             </CardHeader>
             <CardContent>
+              <LedgerSummary entries={ledger.data} />
               <RowList
                 rows={ledger.data}
                 isLoading={ledger.isLoading}
                 emptyLabel="No ledger entries in this range"
                 keys={["voucherdate", "narration", "voucherdesc", "debit", "credit", "runbal"]}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="m-0">
+          <Card className="border border-border/40 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg font-bold">
+                <ShieldCheck className="w-4 h-4 text-cyan-500" /> Broker Connection Settings
+              </CardTitle>
+              <CardDescription>
+                Configure how this account fetches its DhanHQ access token. Secrets are encrypted at
+                rest and never sent back to the browser after saving.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DhanSettingsForm />
             </CardContent>
           </Card>
         </TabsContent>

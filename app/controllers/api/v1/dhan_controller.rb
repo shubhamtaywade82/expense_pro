@@ -6,7 +6,7 @@ module Api
       before_action :ensure_dhan_configured, except: %i[credential update_credential]
 
       def token_status
-        token = DhanAccessToken.active(current_user)
+        token = BrokerAccessToken.active(current_user, broker: DhanTokenService::BROKER)
         if token
           render json: {
             connected: true,
@@ -21,7 +21,7 @@ module Api
 
       def refresh_token
         DhanTokenService.fetch_and_store!
-        token = DhanAccessToken.active(current_user)
+        token = BrokerAccessToken.active(current_user, broker: DhanTokenService::BROKER)
         render json: {
           connected: true,
           expires_at: token.expires_at.iso8601,
@@ -97,12 +97,12 @@ module Api
 
       # Broker connection settings — secrets are write-only, never re-serialized.
       def credential
-        cred = DhanCredential.find_by(user: current_user)
+        cred = BrokerCredential.find_by(user: current_user, broker: DhanTokenService::BROKER)
         render json: credential_json(cred)
       end
 
       def update_credential
-        cred = DhanCredential.find_or_initialize_by(user: current_user)
+        cred = BrokerCredential.find_or_initialize_by(user: current_user, broker: DhanTokenService::BROKER)
         cred.client_id = params[:client_id] if params.key?(:client_id)
         cred.token_service_url = params[:token_service_url] if params.key?(:token_service_url)
         cred.token_service_secret = params[:token_service_secret] if params[:token_service_secret].present?
@@ -110,7 +110,7 @@ module Api
         cred.save!
 
         # Settings changed — force a fresh token fetch under the new config next time it's needed.
-        DhanAccessToken.where(user: current_user).delete_all
+        BrokerAccessToken.where(user: current_user, broker: DhanTokenService::BROKER).delete_all
 
         render json: credential_json(cred).merge(message: "Broker settings saved")
       end

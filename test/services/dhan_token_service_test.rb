@@ -18,7 +18,7 @@ class DhanTokenServiceTest < ActiveSupport::TestCase
   end
 
   test "current_token! returns the DB-cached token without hitting the network" do
-    DhanAccessToken.create!(user: @user, access_token: "cached-token", expires_at: 1.hour.from_now)
+    BrokerAccessToken.create!(user: @user, broker: "dhan", access_token: "cached-token", expires_at: 1.hour.from_now)
 
     assert_equal "cached-token", DhanTokenService.current_token!
   end
@@ -29,7 +29,7 @@ class DhanTokenServiceTest < ActiveSupport::TestCase
 
     token = DhanTokenService.fetch_and_store!
     assert_equal "env-token", token
-    assert DhanAccessToken.active(@user).present?
+    assert BrokerAccessToken.active(@user, broker: "dhan").present?
   end
 
   test "fetch_and_store! raises TokenUnavailableError when nothing is configured" do
@@ -50,9 +50,10 @@ class DhanTokenServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "DhanCredential fallback_access_token takes precedence over ENV" do
+  test "BrokerCredential fallback_access_token takes precedence over ENV" do
+    ENV["DHAN_TOKEN_ACCESS_TOKEN"] = nil
     ENV["DHAN_ACCESS_TOKEN"] = "env-token"
-    DhanCredential.create!(user: @user, fallback_access_token: "credential-token")
+    BrokerCredential.create!(user: @user, broker: "dhan", fallback_access_token: "credential-token")
 
     token = DhanTokenService.fetch_and_store!
     assert_equal "credential-token", token
@@ -65,8 +66,14 @@ class DhanTokenServiceTest < ActiveSupport::TestCase
       password: "password123",
       password_confirmation: "password123"
     )
-    DhanAccessToken.create!(user: other_user, access_token: "other-users-token", expires_at: 1.hour.from_now)
+    BrokerAccessToken.create!(user: other_user, broker: "dhan", access_token: "other-users-token", expires_at: 1.hour.from_now)
 
-    assert_nil DhanAccessToken.active(@user)
+    assert_nil BrokerAccessToken.active(@user, broker: "dhan")
+  end
+
+  test "tokens are isolated per broker" do
+    BrokerAccessToken.create!(user: @user, broker: "coindcx", access_token: "coindcx-token", expires_at: 1.hour.from_now)
+
+    assert_nil BrokerAccessToken.active(@user, broker: "dhan")
   end
 end

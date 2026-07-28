@@ -42,6 +42,10 @@ import {
   Sparkles,
   CheckCircle2,
   Clock,
+  Sparkle,
+  SlidersHorizontal,
+  RotateCcw,
+  TrendingDown,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -56,9 +60,12 @@ export default function Income() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isCustomOverride, setIsCustomOverride] = useState(false);
+  
   const [form, setForm] = useState({
     source: "",
     amount: "",
+    originalAmount: "",
     incomeDate: format(now, "yyyy-MM-dd"),
     isRecurring: false,
     frequency: "monthly" as string,
@@ -66,6 +73,8 @@ export default function Income() {
     parentId: null as number | null,
     isReceived: true,
     endDate: "",
+    isCustom: false,
+    changeReason: "",
   });
 
   const queryClient = useQueryClient();
@@ -140,6 +149,9 @@ export default function Income() {
         notes: inc.notes,
         parentId: inc.parentId,
         isReceived: true,
+        isCustom: inc.isCustom || false,
+        changeReason: inc.changeReason || undefined,
+        originalAmount: inc.originalAmount ? String(inc.originalAmount) : undefined,
       });
     }
   };
@@ -148,6 +160,7 @@ export default function Income() {
     setForm({
       source: "",
       amount: "",
+      originalAmount: "",
       incomeDate: format(new Date(), "yyyy-MM-dd"),
       isRecurring: false,
       frequency: "monthly",
@@ -155,14 +168,23 @@ export default function Income() {
       parentId: null,
       isReceived: true,
       endDate: "",
+      isCustom: false,
+      changeReason: "",
     });
     setEditingId(null);
+    setIsCustomOverride(false);
     setDialogOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.source || !form.amount) return;
+
+    // Check if amount or details differ from original template amount
+    const hasAmountChanged =
+      form.originalAmount && parseFloat(form.amount) !== parseFloat(form.originalAmount);
+    const isCustomFlag = form.isCustom || Boolean(hasAmountChanged) || Boolean(form.changeReason);
+
     const payload = {
       source: form.source,
       amount: form.amount,
@@ -173,16 +195,27 @@ export default function Income() {
       parentId: form.parentId,
       isReceived: form.isReceived,
       endDate: form.isRecurring && form.endDate ? form.endDate : null,
+      isCustom: isCustomFlag,
+      changeReason: form.changeReason || (hasAmountChanged ? "Month Custom Adjustment" : undefined),
+      originalAmount: form.originalAmount || undefined,
     };
+
     if (editingId) updateMutation.mutate({ id: editingId, ...payload });
     else createMutation.mutate(payload);
   };
 
   const handleEdit = (inc: IncomeType) => {
+    const isProjected = inc.id === null;
+    const isOverride = Boolean(inc.parentId) || Boolean(inc.isCustom);
     setEditingId(inc.id);
+    setIsCustomOverride(isOverride || isProjected);
+
+    const origAmt = inc.originalAmount ? String(inc.originalAmount) : String(inc.amount);
+
     setForm({
       source: inc.source,
       amount: String(inc.amount),
+      originalAmount: origAmt,
       incomeDate: inc.incomeDate
         ? format(new Date(inc.incomeDate), "yyyy-MM-dd")
         : format(new Date(), "yyyy-MM-dd"),
@@ -192,6 +225,8 @@ export default function Income() {
       parentId: inc.parentId || null,
       isReceived: inc.isReceived,
       endDate: inc.endDate ? format(new Date(inc.endDate), "yyyy-MM-dd") : "",
+      isCustom: inc.isCustom || isOverride,
+      changeReason: inc.changeReason || "",
     });
     setDialogOpen(true);
   };
@@ -224,7 +259,8 @@ export default function Income() {
   const filteredAllIncomes = (allIncomes || []).filter((inc) => {
     const matchesSearch =
       inc.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (inc.notes && inc.notes.toLowerCase().includes(searchQuery.toLowerCase()));
+      (inc.notes && inc.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (inc.changeReason && inc.changeReason.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesFrequency = frequencyFilter === "all" || inc.frequency === frequencyFilter;
     return matchesSearch && matchesFrequency;
   });
@@ -238,14 +274,14 @@ export default function Income() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/40 p-4 lg:p-6 rounded-2xl border border-border/40 backdrop-blur-md shadow-sm">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white">
                 <Wallet className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">Income Dashboard</h2>
                 <p className="text-sm text-muted-foreground">
-                  Track monthly earnings, annual projections, and recurring income streams
+                  Track recurring salary, prefilled date ranges, monthly increments, and custom overrides
                 </p>
               </div>
             </div>
@@ -265,10 +301,15 @@ export default function Income() {
                   <Plus className="w-4 h-4 mr-2" /> Add Income Source
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[480px]">
+              <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle className="text-xl font-bold">
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
                     {editingId ? "Edit Income Entry" : "Record New Income"}
+                    {isCustomOverride && (
+                      <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30 text-xs">
+                        Custom Override
+                      </Badge>
+                    )}
                   </DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -278,22 +319,29 @@ export default function Income() {
                       className="mt-1"
                       value={form.source}
                       onChange={(e) => setForm({ ...form, source: e.target.value })}
-                      placeholder="e.g., Monthly Salary, Freelance Client, Investment Return"
+                      placeholder="e.g., Monthly Salary, Consulting Retainer, Performance Bonus"
                       required
                     />
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium">Amount (₹)</Label>
                       <Input
                         type="number"
                         step="0.01"
-                        className="mt-1"
+                        className="mt-1 font-semibold text-emerald-600"
                         value={form.amount}
                         onChange={(e) => setForm({ ...form, amount: e.target.value })}
                         placeholder="0.00"
                         required
                       />
+                      {form.originalAmount &&
+                        parseFloat(form.amount) !== parseFloat(form.originalAmount) && (
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            Baseline Template: {formatCurrency(form.originalAmount)}
+                          </p>
+                        )}
                     </div>
                     <div>
                       <Label className="text-sm font-medium">Date</Label>
@@ -306,6 +354,27 @@ export default function Income() {
                       />
                     </div>
                   </div>
+
+                  {/* Change Reason / Custom Note (for Increments / Bonuses / Deductions) */}
+                  {(form.parentId || form.isCustom || (form.originalAmount && parseFloat(form.amount) !== parseFloat(form.originalAmount))) && (
+                    <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                          <SlidersHorizontal className="w-3.5 h-3.5" /> Month Variation / Reason
+                        </Label>
+                        <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600">
+                          Custom Month Flag
+                        </Badge>
+                      </div>
+                      <Input
+                        className="text-xs bg-card"
+                        value={form.changeReason}
+                        onChange={(e) => setForm({ ...form, changeReason: e.target.value, isCustom: true })}
+                        placeholder="e.g., Salary Increment (+₹15,000), Annual Bonus, Tax Adjustment"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <Label className="text-sm font-medium">Frequency</Label>
                     <Select
@@ -323,11 +392,12 @@ export default function Income() {
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
                     <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Recurring Source</Label>
+                      <Label className="text-sm font-medium">Recurring Template</Label>
                       <p className="text-xs text-muted-foreground">
-                        Automatically projects future earnings
+                        Prefills upcoming months automatically
                       </p>
                     </div>
                     <Switch
@@ -335,6 +405,7 @@ export default function Income() {
                       onCheckedChange={(v) => setForm({ ...form, isRecurring: v })}
                     />
                   </div>
+
                   {form.isRecurring && (
                     <div>
                       <Label className="text-sm font-medium">End Date (Optional)</Label>
@@ -346,6 +417,7 @@ export default function Income() {
                       />
                     </div>
                   )}
+
                   <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
                     <div className="space-y-0.5">
                       <Label className="text-sm font-medium">Status: Received</Label>
@@ -358,6 +430,7 @@ export default function Income() {
                       onCheckedChange={(v) => setForm({ ...form, isReceived: v })}
                     />
                   </div>
+
                   <div>
                     <Label className="text-sm font-medium">Notes (Optional)</Label>
                     <Input
@@ -367,6 +440,7 @@ export default function Income() {
                       placeholder="Add details, transaction reference, or category tag"
                     />
                   </div>
+
                   <DialogFooter className="pt-2">
                     <Button type="button" variant="outline" onClick={resetForm} className="rounded-xl">
                       Cancel
@@ -376,7 +450,7 @@ export default function Income() {
                       disabled={createMutation.isPending || updateMutation.isPending}
                       className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white"
                     >
-                      {editingId ? "Update Income" : "Save Income"}
+                      {editingId ? "Save Changes" : "Create Income"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -394,7 +468,7 @@ export default function Income() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border/40 pb-3">
             <TabsList className="bg-card/60 backdrop-blur-md p-1 rounded-xl border border-border/40">
               <TabsTrigger value="monthly" className="rounded-lg gap-2 text-xs sm:text-sm">
-                <Calendar className="w-4 h-4" /> Monthly View
+                <Calendar className="w-4 h-4" /> Monthly Prefilled List
               </TabsTrigger>
               <TabsTrigger value="yearly" className="rounded-lg gap-2 text-xs sm:text-sm">
                 <Layers className="w-4 h-4" /> Yearly Breakdown
@@ -403,7 +477,7 @@ export default function Income() {
                 <Wallet className="w-4 h-4" /> All Incomes
               </TabsTrigger>
               <TabsTrigger value="recurring" className="rounded-lg gap-2 text-xs sm:text-sm">
-                <Repeat className="w-4 h-4" /> Recurring Rules
+                <Repeat className="w-4 h-4" /> Recurring Master Templates
               </TabsTrigger>
             </TabsList>
 
@@ -483,7 +557,7 @@ export default function Income() {
                     {formatCurrency(monthlySummary?.total ?? "0")}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {monthlySummary?.count ?? 0} expected & received entries
+                    {monthlySummary?.count ?? 0} prefilled & active entries
                   </p>
                 </CardContent>
               </Card>
@@ -518,20 +592,20 @@ export default function Income() {
                   <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                     {formatCurrency(monthlySummary?.expected ?? 0)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Pending receipt this month</p>
+                  <p className="text-xs text-muted-foreground mt-1">Pending receipt for {monthNames[month - 1]}</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Income Entries Table / List */}
+            {/* Income Entries List */}
             <Card className="border border-border/40 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-lg font-bold">
-                    Income List for {monthNames[month - 1]} {year}
+                    Prefilled Income List ({monthNames[month - 1]} {year})
                   </CardTitle>
                   <CardDescription>
-                    All active income records and projected recurring items for this month
+                    Prefilled from recurring rules. Modify any month to record increments or custom variations.
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -547,7 +621,7 @@ export default function Income() {
                     <Wallet className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-60" />
                     <h3 className="font-semibold text-lg">No income recorded</h3>
                     <p className="text-sm text-muted-foreground mt-1 mb-4">
-                      No income records or projections found for {monthNames[month - 1]} {year}
+                      No income records or recurring rules found for {monthNames[month - 1]} {year}
                     </p>
                     <Button
                       size="sm"
@@ -565,116 +639,157 @@ export default function Income() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {monthlyIncomes.map((inc, index) => (
-                      <div
-                        key={inc.id ?? `proj-${index}`}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border/50 bg-card/60 hover:bg-muted/40 transition-all gap-4"
-                      >
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 text-emerald-600">
-                            <TrendingUp className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-foreground text-base">
-                                {inc.source}
-                              </span>
-                              <Badge variant="outline" className="text-[10px] h-5 capitalize">
-                                {inc.frequency}
-                              </Badge>
-                              {inc.isRecurring && (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                                >
-                                  Recurring
-                                </Badge>
-                              )}
-                              {inc.id === null && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] h-5 border-dashed border-indigo-300 text-indigo-600 bg-indigo-50/50"
-                                >
-                                  Auto Projected
-                                </Badge>
-                              )}
-                            </div>
+                  <div className="space-y-3">
+                    {monthlyIncomes.map((inc, index) => {
+                      const isCustom = Boolean(inc.isCustom);
+                      const diff = inc.amountDifference ?? 0;
+                      const hasDiff = Math.abs(diff) > 0.01;
 
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
-                              <span>
-                                Date: {inc.incomeDate ? format(new Date(inc.incomeDate), "dd MMM yyyy") : ""}
-                              </span>
-                              {inc.notes && <span>• {inc.notes}</span>}
-                              {inc.endDate && (
-                                <span className="text-rose-500 font-medium">
-                                  • Ends: {format(new Date(inc.endDate), "dd MMM yyyy")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/40">
-                          <div className="text-right">
-                            <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                              +{formatCurrency(inc.amount)}
-                            </div>
-                            <div className="mt-0.5">
-                              {inc.isReceived ? (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
-                                >
-                                  Received
-                                </Badge>
+                      return (
+                        <div
+                          key={inc.id ?? `proj-${index}`}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all gap-4 ${
+                            isCustom
+                              ? "border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10"
+                              : "border-border/50 bg-card/60 hover:bg-muted/40"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5">
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                                isCustom
+                                  ? "bg-amber-500/15 text-amber-600 border border-amber-500/30"
+                                  : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600"
+                              }`}
+                            >
+                              {isCustom ? (
+                                <SlidersHorizontal className="w-5 h-5" />
                               ) : (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-                                >
-                                  Expected
-                                </Badge>
+                                <TrendingUp className="w-5 h-5" />
                               )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-foreground text-base">
+                                  {inc.source}
+                                </span>
+                                <Badge variant="outline" className="text-[10px] h-5 capitalize">
+                                  {inc.frequency}
+                                </Badge>
+                                {inc.isRecurring && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[10px] h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                                  >
+                                    Recurring
+                                  </Badge>
+                                )}
+                                {inc.id === null && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] h-5 border-dashed border-indigo-300 text-indigo-600 bg-indigo-50/50"
+                                  >
+                                    Prefilled
+                                  </Badge>
+                                )}
+                                {isCustom && (
+                                  <Badge className="text-[10px] h-5 bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 font-semibold">
+                                    Custom Override
+                                  </Badge>
+                                )}
+                                {hasDiff && diff > 0 && (
+                                  <Badge className="text-[10px] h-5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-bold">
+                                    +{formatCurrency(diff)} Increment
+                                  </Badge>
+                                )}
+                                {hasDiff && diff < 0 && (
+                                  <Badge className="text-[10px] h-5 bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30 font-bold">
+                                    {formatCurrency(diff)} Adjustment
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
+                                <span>
+                                  Date: {inc.incomeDate ? format(new Date(inc.incomeDate), "dd MMM yyyy") : ""}
+                                </span>
+                                {inc.changeReason && (
+                                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                    • Reason: {inc.changeReason}
+                                  </span>
+                                )}
+                                {inc.notes && <span>• {inc.notes}</span>}
+                                {inc.originalAmount && hasDiff && (
+                                  <span className="text-muted-foreground">
+                                    (Baseline: {formatCurrency(inc.originalAmount)})
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1">
-                            {!inc.isReceived && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-emerald-600 hover:bg-emerald-500/10 rounded-lg"
-                                onClick={() => handleToggleReceived(inc)}
-                                title="Mark as Received"
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {inc.id !== null && (
-                              <>
+                          <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/40">
+                            <div className="text-right">
+                              <div className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                                +{formatCurrency(inc.amount)}
+                              </div>
+                              <div className="mt-0.5">
+                                {inc.isReceived ? (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                                  >
+                                    Received
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                                  >
+                                    Expected
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              {!inc.isReceived && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
-                                  onClick={() => handleEdit(inc)}
+                                  className="h-8 w-8 text-emerald-600 hover:bg-emerald-500/10 rounded-lg"
+                                  onClick={() => handleToggleReceived(inc)}
+                                  title="Mark as Received"
                                 >
-                                  <Pencil className="w-3.5 h-3.5" />
+                                  <Check className="w-4 h-4" />
                                 </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 text-xs gap-1 rounded-lg text-muted-foreground hover:text-foreground"
+                                onClick={() => handleEdit(inc)}
+                                title="Customize or change month income data"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                <span>{isCustom ? "Edit Custom" : inc.id === null ? "Customize Month" : "Edit"}</span>
+                              </Button>
+                              {inc.id !== null && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 text-rose-500 hover:bg-rose-500/10 rounded-lg"
                                   onClick={() => deleteMutation.mutate(inc.id!)}
+                                  title="Delete / Reset"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </Button>
-                              </>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -696,7 +811,7 @@ export default function Income() {
                   <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
                     {formatCurrency(yearlyData?.total_income ?? 0)}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Full 12-month projected total</p>
+                  <p className="text-xs text-muted-foreground mt-1">Full 12-month prefilled & custom total</p>
                 </CardContent>
               </Card>
 
@@ -738,7 +853,7 @@ export default function Income() {
                   12-Month Income Breakdown ({year})
                 </CardTitle>
                 <CardDescription>
-                  Month-by-month summary of total earnings, received status, and items list
+                  Month-by-month summary showing prefilled recurring income, custom overrides, and bonuses
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -752,6 +867,8 @@ export default function Income() {
                   <div className="space-y-3">
                     {yearlyData?.months.map((m) => {
                       const isExpanded = expandedMonth === m.month;
+                      const customCount = m.incomes.filter((i) => i.isCustom).length;
+
                       return (
                         <div
                           key={m.month}
@@ -766,9 +883,16 @@ export default function Income() {
                                 {m.month_name}
                               </div>
                               <div>
-                                <h4 className="font-semibold text-foreground text-sm">
-                                  {m.full_month_name} {year}
-                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-semibold text-foreground text-sm">
+                                    {m.full_month_name} {year}
+                                  </h4>
+                                  {customCount > 0 && (
+                                    <Badge className="text-[10px] h-4 bg-amber-500/15 text-amber-600 border-amber-500/30">
+                                      {customCount} Custom Overrides
+                                    </Badge>
+                                  )}
+                                </div>
                                 <p className="text-xs text-muted-foreground">
                                   {m.count} income entries ({m.incomes.filter((i) => i.isReceived).length} received)
                                 </p>
@@ -805,25 +929,36 @@ export default function Income() {
                                 m.incomes.map((inc, i) => (
                                   <div
                                     key={inc.id ?? `ym-${i}`}
-                                    className="flex items-center justify-between p-2.5 rounded-lg bg-card border border-border/30 text-xs"
+                                    className="flex items-center justify-between p-3 rounded-lg bg-card border border-border/30 text-xs"
                                   >
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2.5">
                                       <span className="font-medium text-foreground">{inc.source}</span>
                                       <Badge variant="outline" className="text-[10px] h-4">
                                         {inc.frequency}
                                       </Badge>
-                                      {inc.isReceived ? (
-                                        <Badge className="text-[9px] h-4 bg-emerald-500/15 text-emerald-600 border-0">
-                                          Received
-                                        </Badge>
-                                      ) : (
+                                      {inc.isCustom && (
                                         <Badge className="text-[9px] h-4 bg-amber-500/15 text-amber-600 border-0">
-                                          Expected
+                                          Custom Override
                                         </Badge>
                                       )}
+                                      {inc.changeReason && (
+                                        <span className="text-amber-600 text-[11px]">
+                                          ({inc.changeReason})
+                                        </span>
+                                      )}
                                     </div>
-                                    <div className="font-semibold text-emerald-600">
-                                      +{formatCurrency(inc.amount)}
+                                    <div className="flex items-center gap-3">
+                                      <span className="font-semibold text-emerald-600">
+                                        +{formatCurrency(inc.amount)}
+                                      </span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 text-[11px] px-2"
+                                        onClick={() => handleEdit(inc)}
+                                      >
+                                        Edit
+                                      </Button>
                                     </div>
                                   </div>
                                 ))
@@ -846,7 +981,7 @@ export default function Income() {
                 <div>
                   <CardTitle className="text-lg font-bold">Master Income Index</CardTitle>
                   <CardDescription>
-                    Complete list of all recorded income transactions across all dates
+                    Complete list of all recorded income transactions and custom month overrides
                   </CardDescription>
                 </div>
 
@@ -855,7 +990,7 @@ export default function Income() {
                   <div className="relative w-full sm:w-60">
                     <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
                     <Input
-                      placeholder="Search income source..."
+                      placeholder="Search source or reason..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9 h-9 text-xs rounded-xl"
@@ -909,9 +1044,17 @@ export default function Income() {
                                   Recurring
                                 </Badge>
                               )}
+                              {inc.isCustom && (
+                                <Badge className="text-[10px] h-4 bg-amber-500/15 text-amber-600 border-0">
+                                  Custom Override
+                                </Badge>
+                              )}
                             </div>
                             <div className="text-xs text-muted-foreground mt-0.5">
                               Date: {inc.incomeDate ? format(new Date(inc.incomeDate), "dd MMM yyyy") : ""}
+                              {inc.changeReason && (
+                                <span className="text-amber-600 font-medium"> • {inc.changeReason}</span>
+                              )}
                               {inc.notes && ` • ${inc.notes}`}
                             </div>
                           </div>
@@ -950,13 +1093,13 @@ export default function Income() {
             </Card>
           </TabsContent>
 
-          {/* TAB 4: RECURRING RULES / TEMPLATES */}
+          {/* TAB 4: RECURRING MASTER TEMPLATES */}
           <TabsContent value="recurring" className="space-y-6 m-0">
             <Card className="border border-border/40 shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg font-bold">Recurring Income Rules</CardTitle>
+                <CardTitle className="text-lg font-bold">Recurring Master Templates</CardTitle>
                 <CardDescription>
-                  Master recurring income templates that auto-project into future months
+                  Master recurring income rules that prefill date ranges. Editing a template updates the baseline for all un-customized months.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -968,7 +1111,7 @@ export default function Income() {
                   </div>
                 ) : recurringTemplates.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
-                    No recurring income rules set up yet. When adding an income, toggle "Recurring Source" to auto-project it.
+                    No recurring income rules set up yet. When adding an income, toggle "Recurring Template" to prefill date ranges.
                   </div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
@@ -1029,7 +1172,7 @@ export default function Income() {
                                   className="h-7 text-xs"
                                   onClick={() => handleEdit(template)}
                                 >
-                                  <Pencil className="w-3 h-3 mr-1" /> Edit Rule
+                                  <Pencil className="w-3 h-3 mr-1" /> Edit Baseline
                                 </Button>
                                 {template.id !== null && (
                                   <Button
@@ -1038,7 +1181,7 @@ export default function Income() {
                                     className="h-7 text-xs text-rose-500"
                                     onClick={() => deleteMutation.mutate(template.id!)}
                                   >
-                                    <Trash2 className="w-3 h-3 mr-1" /> Delete
+                                    <Trash2 className="w-3 h-3 mr-1" /> Delete Rule
                                   </Button>
                                 )}
                               </div>

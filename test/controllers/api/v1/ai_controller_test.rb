@@ -1,5 +1,4 @@
 require "test_helper"
-require "minitest/mock"
 
 class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
   setup do
@@ -28,13 +27,18 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
       mock_response
     end
 
-    Ollama::Client.stub(:new, mock_client) do
+    original_new = Ollama::Client.method(:new)
+    Ollama::Client.define_singleton_method(:new) { |*| mock_client }
+
+    begin
       post api_v1_ai_chat_url, params: { message: "Hello AI" }, headers: @headers
       assert_response :success
-      
+
       json = JSON.parse(response.body)
       assert_equal "assistant", json["role"]
       assert_equal "Hello! How can I help you today?", json["content"]
+    ensure
+      Ollama::Client.define_singleton_method(:new, &original_new)
     end
   end
 end

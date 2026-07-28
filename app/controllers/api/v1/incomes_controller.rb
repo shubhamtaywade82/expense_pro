@@ -104,7 +104,7 @@ module Api
       end
 
       def income_params
-        params.permit(:source, :amount, :income_date, :is_recurring, :frequency, :notes, :parent_id, :is_received, :end_date)
+        params.permit(:source, :amount, :income_date, :is_recurring, :frequency, :notes, :parent_id, :is_received, :end_date, :is_custom, :change_reason, :original_amount)
       end
     end
   end

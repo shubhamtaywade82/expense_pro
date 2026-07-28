@@ -76,7 +76,9 @@ class IncomeProjectionService
       frequency: template.frequency,
       notes: template.notes,
       parent_id: template.id,
-      is_received: false
+      is_received: false,
+      is_custom: false,
+      original_amount: template.amount
     )
   end
 end

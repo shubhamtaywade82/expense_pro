@@ -44,11 +44,13 @@ class DhanDataService
   # thousands of fills, so this must report whether it hit the cap rather
   # than silently returning a partial (and therefore wrong) P&L.
   #
-  # Capped at 100 pages (2000 trades, ~20s at Dhan's 5 req/sec Data API
+  # Capped at 250 pages (5000 trades, ~50s at Dhan's 5 req/sec Data API
   # limit) so a wide range fails fast with `truncated: true` instead of
-  # hanging the request for minutes — narrow the date range to get complete,
-  # fast results instead.
-  MAX_TRADE_HISTORY_PAGES = 100
+  # hanging the request for minutes. A full FY for an active F&O trader can
+  # still exceed this — import period-by-period (This Month / This Quarter)
+  # instead of This FY; each import is its own correctly-dated Investment
+  # row and TaxCalculatorService sums all of them for the FY regardless.
+  MAX_TRADE_HISTORY_PAGES = 250
 
   def trade_history_all(from_date:, to_date:)
     trades = []

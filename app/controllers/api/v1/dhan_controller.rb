@@ -116,26 +116,35 @@ module Api
       end
 
       # Creates/updates one aggregate Investment per importable segment
-      # (speculative_intraday, non_speculative_fo) for the given period.
+      # (speculative_intraday, non_speculative_fo — auto-classified) for the
+      # given period. Pass manual_asset_class (swing_trading or
+      # long_term_equity) to also import the equity_delivery bucket under
+      # that user-chosen classification — the trade log alone can't tell
+      # STCG from LTCG without FIFO lot-matching.
       # Refuses to import on truncated trade data — a partial P&L is wrong,
       # not just incomplete, once it feeds into ITR/Investments.
       def import_to_investments
         from = params.require(:from_date)
         to = params.require(:to_date)
+        manual_asset_class = params[:manual_asset_class].presence
 
         result = DhanDataService.new.trade_history_all(from_date: from, to_date: to)
         if result[:truncated]
-          render json: { error: "Too many trades in this range to import accurately. Narrow the date range and try again." },
+          render json: { error: "Too many trades in this range to import accurately. Import This Month or This Quarter instead — each import is its own dated record, and ITR sums all of them across the year." },
                  status: :unprocessable_entity
           return
         end
 
-        imported = DhanInvestmentImportService.new(current_user, from_date: from, to_date: to, trades: result[:trades]).call
+        imported = DhanInvestmentImportService.new(
+          current_user, from_date: from, to_date: to, trades: result[:trades], manual_asset_class: manual_asset_class
+        ).call
 
         render json: {
           imported_count: imported.size,
           investments: imported.map { |i| { id: i.id, name: i.name, asset_class: i.asset_class, realized_pnl: i.realized_pnl.to_s } }
         }
+      rescue ArgumentError => e
+        render json: { error: e.message }, status: :unprocessable_entity
       rescue => e
         render json: { error: e.message }, status: :service_unavailable
       end

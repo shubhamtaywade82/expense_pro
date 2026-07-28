@@ -217,7 +217,7 @@ export const api = {
       get<Record<string, unknown>[]>(`/dhan/ledger${buildQuery(params)}`),
     pnlSummary: (params: { fromDate?: string; toDate?: string } = {}) =>
       get<DhanPnlSummary>(`/dhan/pnl_summary${buildQuery(params)}`),
-    importToInvestments: (data: { fromDate: string; toDate: string }) =>
+    importToInvestments: (data: { fromDate: string; toDate: string; manualAssetClass?: "swing_trading" | "long_term_equity" }) =>
       post<DhanImportResult>("/dhan/import_to_investments", data),
   },
 

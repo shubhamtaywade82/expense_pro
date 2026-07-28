@@ -67,4 +67,43 @@ class DhanInvestmentImportServiceTest < ActiveSupport::TestCase
     assert_empty imported
     assert_equal 0, @user.investments.count
   end
+
+  test "leaves equity delivery unimported without manual_asset_class" do
+    trades = [
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "BUY", traded_quantity: 5, traded_price: 200),
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "SELL", traded_quantity: 5, traded_price: 250)
+    ]
+
+    imported = DhanInvestmentImportService.new(@user, from_date: "2026-07-01", to_date: "2026-07-31", trades: trades).call
+
+    assert_empty imported
+  end
+
+  test "imports equity delivery under the caller-chosen asset class when manual_asset_class is given" do
+    trades = [
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "BUY", traded_quantity: 5, traded_price: 200),
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "SELL", traded_quantity: 5, traded_price: 250)
+    ]
+
+    imported = DhanInvestmentImportService.new(
+      @user, from_date: "2026-07-01", to_date: "2026-07-31", trades: trades, manual_asset_class: "long_term_equity"
+    ).call
+
+    assert_equal 1, imported.size
+    assert_equal "long_term_equity", imported.first.asset_class
+    assert_equal 250.0, imported.first.realized_pnl.to_f # 1250 sell - 1000 buy
+  end
+
+  test "raises on an invalid manual_asset_class" do
+    trades = [
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "BUY", traded_quantity: 5, traded_price: 200),
+      trade(exchange_segment: "NSE_EQ", product_type: "CNC", transaction_type: "SELL", traded_quantity: 5, traded_price: 250)
+    ]
+
+    assert_raises(ArgumentError) do
+      DhanInvestmentImportService.new(
+        @user, from_date: "2026-07-01", to_date: "2026-07-31", trades: trades, manual_asset_class: "crypto"
+      ).call
+    end
+  end
 end

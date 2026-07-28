@@ -440,7 +440,8 @@ function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: strin
   });
 
   const importMutation = useMutation({
-    mutationFn: () => api.dhan.importToInvestments({ fromDate, toDate }),
+    mutationFn: (manualAssetClass?: "swing_trading" | "long_term_equity") =>
+      api.dhan.importToInvestments({ fromDate, toDate, manualAssetClass }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       queryClient.invalidateQueries({ queryKey: ["tax"] });
@@ -469,8 +470,9 @@ function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: strin
     <div className="mb-4 space-y-3">
       {truncated && (
         <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300">
-          Too many trades in this range to summarize accurately — figures below are a partial count.
-          Narrow the date range for correct P&amp;L (import is disabled until then).
+          Too many trades in this range to summarize accurately — figures below are a partial count, and import
+          is disabled to avoid recording wrong P&amp;L. Switch to This Month or This Quarter instead: each import
+          is its own dated record, and ITR sums them across the whole year regardless of how many times you import.
         </div>
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -491,14 +493,14 @@ function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: strin
         })}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
           size="sm"
           variant="outline"
           className="rounded-xl"
           disabled={!hasImportableTrades || truncated || importMutation.isPending}
-          onClick={() => importMutation.mutate()}
+          onClick={() => importMutation.mutate(undefined)}
         >
           {importMutation.isPending ? "Importing..." : "Import Intraday + F&O to Investments"}
         </Button>
@@ -509,6 +511,42 @@ function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: strin
         )}
         {importMutation.isError && <span className="text-xs text-rose-600">Import failed</span>}
       </div>
+
+      {segments.equity_delivery.trade_count > 0 && (
+        <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border/50">
+          <p className="text-xs font-medium text-foreground mb-2">
+            Manually classify & import Equity Delivery ({segments.equity_delivery.trade_count} trades) — you know
+            whether these were short-term flips or long-term holds, the trade log can't tell:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-xl"
+              disabled={truncated || importMutation.isPending}
+              onClick={() => importMutation.mutate("swing_trading")}
+            >
+              Import as Swing Trading (STCG)
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-xl"
+              disabled={truncated || importMutation.isPending}
+              onClick={() => importMutation.mutate("long_term_equity")}
+            >
+              Import as Long-Term Equity (LTCG)
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted-foreground mt-1.5">
+        Each import covers exactly the period selected above — importing overlapping periods (e.g. a month, then
+        the quarter containing it) double-counts that overlap in ITR. Import non-overlapping periods only.
+      </p>
     </div>
   );
 }
@@ -781,8 +819,8 @@ export default function Dhan() {
             <CardContent>
               {tradeHistory.data?.truncated && (
                 <div className="mb-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300">
-                  This range has too many trades to load in full — figures below only cover the trades that
-                  were fetched. Narrow the date range for complete and accurate totals.
+                  This range has too many trades to load in full — the table below only covers what was fetched.
+                  Switch to This Month or This Quarter to see (and import) this period completely.
                 </div>
               )}
               <PnlSummaryPanel fromDate={fromDate} toDate={toDate} />

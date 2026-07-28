@@ -4,7 +4,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === "production" ? "/frontend/" : "/",
   plugins: [react()],
   server: {
     port: 5173,
@@ -24,4 +25,4 @@ export default defineConfig({
     outDir: path.resolve(__dirname, "../public/frontend"),
     emptyOutDir: true,
   },
-});
+}))

@@ -104,16 +104,19 @@ class ReportService
   end
 
   def loan_summary
-    user.loans.includes(:emi_payments).map do |loan|
-      paid = loan.emi_payments.count(&:is_paid)
+    loans = user.loans.to_a
+    aggregates = Loan.batch_aggregates(loans)
+
+    loans.map do |loan|
+      agg = aggregates[loan]
       {
         name: loan.name,
-        isActive: paid < loan.tenure_months,
+        isActive: agg[:paid_count] < loan.tenure_months,
         principalAmount: loan.principal_amount.to_s,
         emiAmount: loan.emi_amount.to_s,
-        outstandingPrincipal: loan.outstanding_principal.to_s,
-        paidEmiCount: paid,
-        remainingEmiCount: loan.tenure_months - paid
+        outstandingPrincipal: agg[:outstanding_principal].to_s,
+        paidEmiCount: agg[:paid_count],
+        remainingEmiCount: loan.tenure_months - agg[:paid_count]
       }
     end
   end

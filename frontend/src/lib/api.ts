@@ -3,6 +3,7 @@ import type {
   Category,
   CreatePayload,
   DashboardOverview,
+  BrokerSnapshots,
   DhanCredential,
   DhanCredentialUpdate,
   DhanImportResult,
@@ -218,5 +219,10 @@ export const api = {
       get<DhanPnlSummary>(`/dhan/pnl_summary${buildQuery(params)}`),
     importToInvestments: (data: { fromDate: string; toDate: string }) =>
       post<DhanImportResult>("/dhan/import_to_investments", data),
+  },
+
+  brokerSnapshots: {
+    // Reads persisted holdings/positions from Postgres — no live broker call.
+    list: () => get<BrokerSnapshots>("/broker_snapshots"),
   },
 };

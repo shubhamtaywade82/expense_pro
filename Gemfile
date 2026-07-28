@@ -59,6 +59,9 @@ group :development, :test do
 
   # Loads ENV vars from .env in dev/test; production reads real ENV vars from the platform
   gem "dotenv-rails"
+
+  # Detects N+1 queries and unused eager loading; raises in test, alerts in dev
+  gem "bullet"
 end
 
 group :development do

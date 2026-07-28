@@ -32,6 +32,7 @@ Rails.application.routes.draw do
 
       resources :investments, except: [ :show ]
       get "tax/itr_summary", to: "tax#itr_summary"
+      get "broker_snapshots", to: "broker_snapshots#index"
 
       get "dhan/token_status", to: "dhan#token_status"
       post "dhan/refresh_token", to: "dhan#refresh_token"

@@ -23,6 +23,7 @@ module Api
         DhanTokenService.fetch_and_store!
         token = BrokerAccessToken.active(current_user, broker: DhanTokenService::BROKER)
         run_auto_import_if_enabled
+        sync_snapshots
         render json: {
           connected: true,
           expires_at: token.expires_at.iso8601,
@@ -41,15 +42,17 @@ module Api
       end
 
       def positions
-        svc = DhanDataService.new
-        render json: svc.positions
+        data = DhanDataService.new.positions
+        snapshot_service.sync_positions!(data)
+        render json: data
       rescue => e
         render json: { error: e.message }, status: :service_unavailable
       end
 
       def holdings
-        svc = DhanDataService.new
-        render json: svc.holdings
+        data = DhanDataService.new.holdings
+        snapshot_service.sync_holdings!(data)
+        render json: data
       rescue => e
         render json: { error: e.message }, status: :service_unavailable
       end
@@ -159,6 +162,19 @@ module Api
       end
 
       private
+
+      def snapshot_service
+        @snapshot_service ||= BrokerSnapshotSyncService.new(current_user, broker: DhanTokenService::BROKER)
+      end
+
+      # Best-effort — a snapshot refresh failing shouldn't fail the token refresh itself.
+      def sync_snapshots
+        svc = DhanDataService.new
+        snapshot_service.sync_holdings!(svc.holdings)
+        snapshot_service.sync_positions!(svc.positions)
+      rescue StandardError => e
+        Rails.logger.warn("[DhanController] snapshot sync on refresh failed: #{e.message}")
+      end
 
       def credential_json(cred)
         {

@@ -38,6 +38,27 @@ class Loan < ApplicationRecord
     principal_amount.to_d - paid_emi_sum
   end
 
+  class << self
+    # One set of grouped queries for every loan's paid-count/interest/
+    # outstanding-principal, instead of each loan loading (or worse,
+    # re-querying) its own emi_payments collection. Returns
+    # { loan => { paid_count:, total_interest:, outstanding_principal: } }.
+    def batch_aggregates(loans)
+      loan_ids = loans.map(&:id)
+      paid_counts = EmiPayment.where(loan_id: loan_ids, is_paid: true).group(:loan_id).count
+      total_interests = EmiPayment.where(loan_id: loan_ids).group(:loan_id).sum(:interest_amount)
+      paid_principals = EmiPayment.where(loan_id: loan_ids, is_paid: true).group(:loan_id).sum(:principal_amount)
+
+      loans.index_with do |loan|
+        {
+          paid_count: paid_counts[loan.id] || 0,
+          total_interest: total_interests[loan.id] || 0,
+          outstanding_principal: loan.principal_amount.to_d - (paid_principals[loan.id] || 0).to_d
+        }
+      end
+    end
+  end
+
   private
 
   # Pre-calculates and persists the full amortization schedule so that EMI

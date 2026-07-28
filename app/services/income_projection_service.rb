@@ -1,14 +1,21 @@
 # frozen_string_literal: true
 
 class IncomeProjectionService
-  def initialize(user, start_date, end_date)
+  # include_parent: callers that only aggregate sums/counts never touch
+  # #parent, so eager-loading it there is pure overhead — only callers that
+  # serialize the returned Income records (Income#as_json calls #parent via
+  # #base_amount/#amount_difference) should opt in.
+  def initialize(user, start_date, end_date, include_parent: false)
     @user = user
     @start_date = start_date.to_date
     @end_date = end_date.to_date
+    @include_parent = include_parent
   end
 
   def call
-    real_incomes = @user.incomes.where(income_date: @start_date..@end_date).to_a
+    scope = @user.incomes.where(income_date: @start_date..@end_date)
+    scope = scope.includes(:parent) if @include_parent
+    real_incomes = scope.to_a
     templates = @user.incomes.templates
                       .where("income_date <= ?", @end_date)
                       .where("end_date IS NULL OR end_date >= ?", @start_date)
@@ -75,7 +82,7 @@ class IncomeProjectionService
       is_recurring: true,
       frequency: template.frequency,
       notes: template.notes,
-      parent_id: template.id,
+      parent: template,
       is_received: false,
       is_custom: false,
       original_amount: template.amount

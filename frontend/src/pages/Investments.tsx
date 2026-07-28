@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router";
 import { api } from "@/lib/api";
 import type { Investment as InvestmentType, InvestmentAssetClass } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,8 +41,104 @@ import {
   Coins,
   ShieldCheck,
   Building2,
+  Landmark,
+  ExternalLink,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+
+function brokerNum(val: unknown) {
+  return typeof val === "string" ? parseFloat(val) : typeof val === "number" ? val : 0;
+}
+
+function brokerCurrency(val: unknown) {
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(brokerNum(val));
+}
+
+function brokerSymbol(row: Record<string, unknown>) {
+  if (row.trading_symbol) return String(row.trading_symbol);
+  const parts = [row.drv_strike_price, row.drv_option_type, row.drv_expiry_date].filter(Boolean).map(String);
+  if (parts.length) return parts.join(" ");
+  return row.security_id ? `#${row.security_id}` : "—";
+}
+
+// Read-only view of persisted broker holdings/positions (BrokerSnapshot, via
+// /api/v1/broker_snapshots) — fast, no live broker call. Covers every
+// connected broker (currently just Dhan); not merged into the totals above
+// since this data hasn't been classified/imported into Investment records —
+// only Dhan Settings > Import does that, and only for intraday/F&O.
+function BrokerHoldingsPanel() {
+  const snapshots = useQuery({
+    queryKey: ["broker_snapshots"],
+    queryFn: api.brokerSnapshots.list,
+  });
+
+  if (snapshots.isLoading) return <Skeleton className="h-32 rounded-2xl mb-6" />;
+
+  const holdings = snapshots.data?.holdings ?? [];
+  const positions = snapshots.data?.positions ?? [];
+  if (holdings.length === 0 && positions.length === 0) return null;
+
+  return (
+    <Card className="border border-border/40 shadow-sm mb-6">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base font-bold">
+            <Landmark className="w-4 h-4 text-cyan-500" /> Connected Broker Data
+          </CardTitle>
+          <CardDescription>
+            Live holdings & open positions from your connected brokers.
+            {snapshots.data?.last_synced_at && (
+              <> Synced {formatDistanceToNow(new Date(snapshots.data.last_synced_at), { addSuffix: true })}.</>
+            )}{" "}
+            Not counted in the totals below until imported.
+          </CardDescription>
+        </div>
+        <Link to="/dhan" className="text-xs text-cyan-600 hover:underline flex items-center gap-1 whitespace-nowrap">
+          Open Broker Dashboard <ExternalLink className="w-3 h-3" />
+        </Link>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {holdings.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Demat Holdings</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {holdings.map((h, i) => (
+                <div key={i} className="p-2.5 rounded-lg bg-muted/30 border border-border/40 text-xs flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{brokerSymbol(h)}</p>
+                    <p className="text-muted-foreground">Qty: {String(h.total_qty ?? "—")} · {String(h.broker ?? "dhan")}</p>
+                  </div>
+                  <span className="font-semibold text-foreground flex-shrink-0">{brokerCurrency(h.avg_cost_price)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {positions.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Open Positions</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {positions.map((p, i) => {
+                const pnl = brokerNum(p.unrealized_profit) + brokerNum(p.realized_profit);
+                return (
+                  <div key={i} className="p-2.5 rounded-lg bg-muted/30 border border-border/40 text-xs flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{brokerSymbol(p)}</p>
+                      <p className="text-muted-foreground">{String(p.position_type ?? "")} {String(p.net_qty ?? "—")} · {String(p.broker ?? "dhan")}</p>
+                    </div>
+                    <span className={`font-semibold flex-shrink-0 ${pnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                      {pnl >= 0 ? "+" : ""}{brokerCurrency(pnl)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Investments() {
   const [activeAssetClass, setActiveAssetClass] = useState<string>("all");
@@ -379,6 +476,8 @@ export default function Investments() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <BrokerHoldingsPanel />
 
       {/* Portfolio Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">

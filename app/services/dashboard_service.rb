@@ -76,10 +76,13 @@ class DashboardService
   end
 
   def loan_summary
-    loans = user.loans.includes(:emi_payments).to_a
+    loans = user.loans.to_a
+    total_principal = loans.sum { |l| l.principal_amount.to_d }
+    total_paid_principal = user.emi_payments.where(loan_id: loans.map(&:id), is_paid: true).sum(:principal_amount)
+
     {
       activeCount: loans.size,
-      outstandingTotal: loans.sum(&:outstanding_principal).to_s,
+      outstandingTotal: (total_principal - total_paid_principal).to_s,
       totalEMI: loans.sum(&:emi_amount).to_s
     }
   end

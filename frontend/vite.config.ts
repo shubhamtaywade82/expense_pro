@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: ["lodash"],
+  },
   build: {
     outDir: path.resolve(__dirname, "../public/frontend"),
     emptyOutDir: true,

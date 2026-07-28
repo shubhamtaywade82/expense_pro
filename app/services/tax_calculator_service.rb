@@ -15,7 +15,12 @@ class TaxCalculatorService
     gross_salary = incomes.sum { |inc| inc.amount.to_f }
 
     # 2. Investments & Capital Gains breakdown
-    investments = @user.investments.where(purchase_date: start_d..end_d).or(@user.investments.realized)
+    # Active positions count in the FY they were opened; realized ones count
+    # in the FY they were actually sold (not the FY they were bought) — a
+    # position opened in FY24-25 and closed in FY25-26 belongs to the latter.
+    investments = @user.investments
+      .where(purchase_date: start_d..end_d)
+      .or(@user.investments.where(status: "realized", sell_date: start_d..end_d))
 
     speculative_pnl = investments.select { |i| i.asset_class == "speculative_intraday" }.sum(&:total_pnl).to_f
     non_speculative_fo_pnl = investments.select { |i| i.asset_class == "non_speculative_fo" }.sum(&:total_pnl).to_f

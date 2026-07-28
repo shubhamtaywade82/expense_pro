@@ -304,3 +304,9 @@ export type DhanImportResult = {
   imported_count: number;
   investments: { id: number; name: string; asset_class: string; realized_pnl: string }[];
 };
+
+export type BrokerSnapshots = {
+  holdings: Record<string, unknown>[];
+  positions: Record<string, unknown>[];
+  last_synced_at: string | null;
+};

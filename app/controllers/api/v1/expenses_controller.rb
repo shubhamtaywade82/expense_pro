@@ -3,7 +3,7 @@ module Api
     class ExpensesController < BaseController
       before_action :set_expense, only: [ :update, :destroy ]
 
-      include Pagy::Backend
+      include Pagy::Method
 
       def index
         scope = current_user.expenses.includes(:category).recent_first

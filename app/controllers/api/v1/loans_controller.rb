@@ -4,8 +4,10 @@ module Api
       before_action :set_loan, only: [ :show, :destroy ]
 
       def index
-        loans = current_user.loans.includes(:category, :emi_payments)
-        render json: loans.map { |loan| serialize_summary(loan) }
+        loans = current_user.loans.includes(:category).to_a
+        aggregates = Loan.batch_aggregates(loans)
+
+        render json: loans.map { |loan| serialize_summary(loan, **aggregates[loan]) }
       end
 
       def show
@@ -26,7 +28,7 @@ module Api
       private
 
       def set_loan
-        @loan = current_user.loans.includes(:emi_payments).find(params[:id])
+        @loan = current_user.loans.find(params[:id])
       end
 
       def loan_params
@@ -34,17 +36,19 @@ module Api
                       :tenure_months, :start_date, :loan_type, :notes)
       end
 
-      def serialize_summary(loan)
-        # Block-form count/sum reuse the preloaded emi_payments association
-        # instead of each issuing its own SELECT against the DB.
-        paid_count = loan.emi_payments.count(&:is_paid?)
-        total_interest = loan.emi_payments.sum(&:interest_amount)
+      # paid_count/total_interest/outstanding_principal are batched by #index
+      # (Loan.batch_aggregates); when absent (show/create — a single loan),
+      # each falls back to its own lightweight scalar query.
+      def serialize_summary(loan, paid_count: nil, total_interest: nil, outstanding_principal: nil)
+        paid_count ||= loan.emi_payments.where(is_paid: true).count
+        total_interest ||= loan.emi_payments.sum(:interest_amount)
+        outstanding_principal ||= loan.outstanding_principal
 
         loan.as_json.merge(
           "categoryName" => loan.category.name,
           "categoryColor" => loan.category.color,
           "emiAmount" => loan.emi_amount.to_s,
-          "outstandingPrincipal" => loan.outstanding_principal.to_s,
+          "outstandingPrincipal" => outstanding_principal.to_s,
           "totalInterest" => total_interest.to_s,
           "totalAmount" => (loan.principal_amount.to_d + total_interest).to_s,
           "isActive" => paid_count < loan.tenure_months,

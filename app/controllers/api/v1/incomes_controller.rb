@@ -6,15 +6,15 @@ module Api
       def index
         if params[:month].present? && params[:year].present?
           start_date = Date.new(params[:year].to_i, params[:month].to_i, 1)
-          incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month).call
+          incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month, include_parent: true).call
           render json: incomes
         elsif params[:year].present?
           start_date = Date.new(params[:year].to_i, 1, 1)
           end_date = Date.new(params[:year].to_i, 12, 31)
-          incomes = IncomeProjectionService.new(current_user, start_date, end_date).call
+          incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
           render json: incomes
         else
-          render json: current_user.incomes.recent_first
+          render json: current_user.incomes.includes(:parent).recent_first
         end
       end
 
@@ -27,7 +27,7 @@ module Api
           end_date = Date.new(params[:year].to_i, 12, 31)
           incomes = IncomeProjectionService.new(current_user, start_date, end_date).call
         else
-          incomes = current_user.incomes.to_a
+          incomes = current_user.incomes.includes(:parent).to_a
         end
 
         total = incomes.sum { |inc| inc.amount.to_f }
@@ -42,7 +42,7 @@ module Api
         start_date = Date.new(year, 1, 1)
         end_date = Date.new(year, 12, 31)
 
-        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date).call
+        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
 
         months_summary = (1..12).map do |m|
           m_start = Date.new(year, m, 1)

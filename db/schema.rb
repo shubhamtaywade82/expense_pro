@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_28_133005) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_28_133006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -37,6 +37,20 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133005) do
     t.string "broker", default: "dhan", null: false
     t.boolean "auto_import_pnl", default: false, null: false
     t.index ["user_id", "broker"], name: "index_broker_credentials_on_user_id_and_broker", unique: true
+  end
+
+  create_table "broker_snapshots", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "broker", null: false
+    t.string "kind", null: false
+    t.string "security_id", null: false
+    t.string "trading_symbol"
+    t.jsonb "data", default: {}, null: false
+    t.datetime "synced_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "broker", "kind", "security_id"], name: "index_broker_snapshots_on_user_broker_kind_security", unique: true
+    t.index ["user_id"], name: "index_broker_snapshots_on_user_id"
   end
 
   create_table "budgets", force: :cascade do |t|
@@ -202,6 +216,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133005) do
 
   add_foreign_key "broker_access_tokens", "users"
   add_foreign_key "broker_credentials", "users"
+  add_foreign_key "broker_snapshots", "users"
   add_foreign_key "budgets", "categories"
   add_foreign_key "budgets", "users"
   add_foreign_key "categories", "users"

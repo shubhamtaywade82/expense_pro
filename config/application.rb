@@ -23,5 +23,8 @@ module ExpensePro
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # app/services is not autoloaded by default in Rails 8
+    config.autoload_paths << Rails.root.join("app", "services")
   end
 end

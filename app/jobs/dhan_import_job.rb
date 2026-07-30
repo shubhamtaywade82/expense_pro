@@ -21,5 +21,6 @@ class DhanImportJob < ApplicationJob
     raise
   ensure
     Rails.cache.delete(lock_key)
+    Current.reset
   end
 end

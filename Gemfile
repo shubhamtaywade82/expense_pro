@@ -79,3 +79,7 @@ gem "ollama-client"
 gem "DhanHQ", "~> 3.3"
 gem "httparty"
 gem "rack-attack"
+
+gem "image_processing", "~> 2.0"
+gem "combine_pdf", "~> 1.0"
+gem "marcel", "~> 1.2"

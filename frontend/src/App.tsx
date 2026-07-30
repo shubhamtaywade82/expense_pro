@@ -12,10 +12,12 @@ import Categories from "./pages/Categories";
 import AiAssistant from "./pages/AiAssistant";
 import Investments from "./pages/Investments";
 import ITR from "./pages/ITR";
-import Dhan from "./pages/Dhan";
+import Brokers from "./pages/Brokers";
 import DebtPlanner from "./pages/DebtPlanner";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import TaxDocuments from "./pages/TaxDocuments";
+import ItrFiling from "./pages/ItrFiling";
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -118,10 +120,10 @@ export default function App() {
         }
       />
       <Route
-        path="/dhan"
+        path="/brokers"
         element={
           <LayoutWrapper>
-            <Dhan />
+            <Brokers />
           </LayoutWrapper>
         }
       />
@@ -130,6 +132,22 @@ export default function App() {
         element={
           <LayoutWrapper>
             <DebtPlanner />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/tax-documents"
+        element={
+          <LayoutWrapper>
+            <TaxDocuments />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/itr-filing"
+        element={
+          <LayoutWrapper>
+            <ItrFiling />
           </LayoutWrapper>
         }
       />

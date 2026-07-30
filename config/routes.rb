@@ -89,6 +89,21 @@ Rails.application.routes.draw do
       get "reports/financial_year", to: "reports#financial_year"
       post "ai/chat", to: "ai#chat"
 
+      resources :tax_documents, only: %i[index create destroy] do
+        member do
+          patch :verify
+          patch :correct
+          get :preview
+        end
+      end
+
+      namespace :itr_filing do
+        get :prefill
+        get :download
+        get :readiness
+        get :checklist
+      end
+
       get "net_worth", to: "net_worth#show"
       get "debt_plans/summary", to: "debt_plans#summary"
       get "debt_plans/simulate", to: "debt_plans#simulate"

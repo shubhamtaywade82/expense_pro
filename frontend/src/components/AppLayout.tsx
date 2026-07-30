@@ -23,6 +23,8 @@ import {
   TrendingUp,
   FileBadge,
   LineChart,
+  Vault,
+  ScrollText,
 } from "lucide-react";
 
 const navItems = [
@@ -34,8 +36,9 @@ const navItems = [
   { path: "/income", label: "Income", icon: Wallet },
   { path: "/budget", label: "Budget", icon: PiggyBank },
   { path: "/investments", label: "Investments", icon: TrendingUp },
-  { path: "/dhan", label: "Dhan Trading", icon: LineChart },
-  { path: "/itr", label: "ITR & Tax", icon: FileBadge },
+  { path: "/brokers", label: "Brokers", icon: LineChart },
+  { path: "/tax-documents", label: "Tax Vault", icon: Vault },
+  { path: "/itr-filing", label: "ITR Filing", icon: ScrollText },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/categories", label: "Categories", icon: Tags },
   { path: "/ai-assistant", label: "AI Assistant", icon: Sparkles },

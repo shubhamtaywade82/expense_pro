@@ -36,9 +36,10 @@ class BrokerSyncJob < ApplicationJob
     Rails.cache.write("#{cache_key}:trades", imported.size, expires_in: 5.minutes)
   rescue => e
     Rails.cache.write("#{cache_key}:status", "error", expires_in: 5.minutes)
-    Rails.cache.write("#{cache_key}:error", e.message, expires_in: 1.hour)
+    Rails.cache.write("#{cache_key}:sync_error", e.message, expires_in: 10.minutes)
     raise
   ensure
+    Current.reset
     Rails.cache.delete(lock_key)
   end
 end

@@ -1,17 +1,32 @@
+require 'pagy/backend'
+
 module Api
   module V1
-    class BaseController < ActionController::Base
-      skip_before_action :verify_authenticity_token
+    class BaseController < ActionController::API
 
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable
       rescue_from ActionController::ParameterMissing, with: :render_bad_request
+
+      include Pagy::Backend
 
       before_action :underscore_param_keys!
       before_action :authenticate_user!
       before_action :set_current_user
 
       private
+
+      def paginated_response(pagy, records)
+        {
+          data: records,
+          meta: {
+            page: pagy.page,
+            per_page: pagy.limit,
+            total: pagy.count,
+            pages: pagy.pages
+          }
+        }
+      end
 
       def set_current_user
         Current.user = current_user

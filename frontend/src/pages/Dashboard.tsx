@@ -78,13 +78,13 @@ export default function Dashboard() {
     }
   };
 
-  const trendData = data?.monthlyTrend.map((t) => ({
+  const trendData = data?.monthlyTrend?.map((t) => ({
     month: format(new Date(t.month + "-01"), "MMM yy"),
     expenses: parseFloat(t.expenses),
     income: parseFloat(t.income),
   })) ?? [];
 
-  const pieData = data?.categoryBreakdown.map((c) => ({
+  const pieData = data?.categoryBreakdown?.map((c) => ({
     name: c.categoryName,
     value: parseFloat(c.total),
     color: c.categoryColor || "#818cf8",
@@ -532,7 +532,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {data?.recentExpenses.map((exp, idx) => (
+                  {data?.recentExpenses?.map((exp, idx) => (
                     <div 
                       key={exp.id} 
                       className="flex items-center justify-between p-3.5 rounded-2xl bg-card/25 border border-border/30 hover:border-primary/30 hover:bg-card/60 transition-all duration-300 group hover:-translate-y-0.5 shadow-sm"

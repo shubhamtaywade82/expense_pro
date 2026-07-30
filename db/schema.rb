@@ -539,10 +539,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
   create_table "transactions", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "financial_account_id", null: false
-    t.bigint "category_id", null: false
-    t.bigint "loan_account_id", null: false
-    t.string "taggable_type", null: false
-    t.bigint "taggable_id", null: false
+    t.bigint "category_id"
+    t.bigint "loan_account_id"
+    t.string "taggable_type"
+    t.bigint "taggable_id"
     t.string "txn_type"
     t.integer "status"
     t.decimal "amount"

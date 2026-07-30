@@ -29,6 +29,8 @@ class Loan < ApplicationRecord
     (p * r * factor / (factor - 1)).round(2)
   end
 
+  scope :active, -> { where(id: EmiPayment.where(is_paid: false).select(:loan_id)) }
+
   def outstanding_principal
     paid_emi_sum = if emi_payments.loaded?
       emi_payments.select(&:is_paid).sum(&:principal_amount)
@@ -36,6 +38,18 @@ class Loan < ApplicationRecord
       emi_payments.where(is_paid: true).sum(:principal_amount)
     end
     principal_amount.to_d - paid_emi_sum
+  end
+
+  def is_active
+    outstanding_principal > 0
+  end
+
+  def remaining_emi_count
+    if emi_payments.loaded?
+      emi_payments.count { |emi| !emi.is_paid }
+    else
+      emi_payments.where(is_paid: false).count
+    end
   end
 
   class << self

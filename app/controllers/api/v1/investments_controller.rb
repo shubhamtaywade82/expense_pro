@@ -29,13 +29,21 @@ module Api
         total_pnl = investments.sum(&:total_pnl)
         current_value = investments.sum(&:current_value)
 
+        @pagy, paged_investments = pagy(investments)
+
         render json: {
-          investments: investments,
+          investments: paged_investments,
           summary: {
             total_invested: total_invested.to_s,
             current_value: current_value.to_s,
             total_pnl: total_pnl.to_s,
             count: investments.count
+          },
+          meta: {
+            page: @pagy.page,
+            per_page: @pagy.limit,
+            total: @pagy.count,
+            pages: @pagy.pages
           }
         }
       end

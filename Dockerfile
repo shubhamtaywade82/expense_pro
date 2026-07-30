@@ -87,4 +87,4 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 # or use a process manager (foreman/overmind) to run both:
 #   CMD ["foreman", "start"]
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+CMD ["./bin/start"]

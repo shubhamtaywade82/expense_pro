@@ -112,38 +112,35 @@ class TaxCalculatorService
                       end
 
     {
-      financial_year: "FY #{@year - 1}-#{String(@year)[2..3]}",
-      assessment_year: "AY #{@year}-#{String(@year + 1)[2..3]}",
-      income: {
-        gross_salary: gross_salary,
-        gross_freelance: gross_freelance,
-        foreign_assets: 0
+      financial_year: "2025-26",
+      assessment_year: "2026-27",
+      gross_salary: gross_salary,
+      recommendation: {
+        best_regime: recommended_regime == "new" ? "New Tax Regime" : "Old Tax Regime",
+        tax_saved: tax_saved,
+        itr_form: recommended_itr
       },
-      tds_summary: {
-        total_tds: tds_paid
-      },
-      trading_income: {
+      trading_summary: {
         speculative_intraday_pnl: speculative_pnl,
         non_speculative_fo_pnl: non_speculative_fo_pnl,
+        stcg_pnl: stcg_pnl + gold_stcg,
+        ltcg_pnl: ltcg_pnl + gold_ltcg,
         crypto_pnl: crypto_pnl,
-        fixed_income_pnl: fixed_income_pnl,
-        gold_stcg_pnl: gold_stcg,
-        gold_ltcg_pnl: gold_ltcg,
-        stcg_pnl: stcg_pnl,
-        ltcg_pnl: ltcg_pnl,
         total_pnl: speculative_pnl + non_speculative_fo_pnl + crypto_pnl + fixed_income_pnl + gold_stcg + gold_ltcg + stcg_pnl + ltcg_pnl
       },
-      comparison: {
-        recommended_regime: recommended_regime,
-        recommended: recommended,
-        new_regime: tax_new,
-        old_regime: tax_old
+      new_regime: tax_new,
+      old_regime: tax_old,
+      deductions: {
+        standard_deduction_new: 75_000,
+        standard_deduction_old: 50_000,
+        section_80c: old_regime.dig(:deductions_breakdown, :section_80c) || 0,
+        section_24b_home_loan_interest: old_regime.dig(:deductions_breakdown, :section_24b) || 0
       },
-      advance_tax: calculate_advance_tax(total_tax_new, tds_paid),
-      tax_audit: check_tax_audit(speculative_pnl, non_speculative_fo_pnl),
-      advance_tax_required: calculate_advance_tax(total_tax_new, tds_paid)[:required] ? calculate_advance_tax(total_tax_new, tds_paid)[:total_liability] : 0,
-      recommended_itr_code: recommended_itr,
-      recommended_itr: recommended_itr == "ITR-3" ? "ITR-3 / ITR-4 (Business & Professional Income)" : (recommended_itr == "ITR-2" ? "ITR-2 (Capital Gains & Crypto Income)" : "ITR-1 (Sahaj - Salary & Interest Income)")
+      special_taxes: {
+        stcg_tax_sec111a: tax_new[:stcg_tax],
+        ltcg_tax_sec112a: tax_new[:ltcg_tax],
+        crypto_tax_sec115bbh: tax_new[:crypto_tax]
+      }
     }
   end
 
@@ -240,7 +237,7 @@ class TaxCalculatorService
     {
       taxable_income: income,
       slab_tax: slab_tax.round(2),
-      rebate: rebate_data[:rebate].round(2),
+      rebate_87a: rebate_data[:rebate].round(2),
       marginal_relief_applied: rebate_data[:marginal_relief] || surcharge_data[:marginal_relief],
       base_tax: base_tax.round(2),
       surcharge: surcharge_data[:surcharge].round(2),

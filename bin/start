@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# Start Solid Queue workers in the background
+./bin/jobs &
+
+# Start the Rails server using Thruster
+./bin/thrust ./bin/rails server -b 0.0.0.0

@@ -45,7 +45,6 @@ gem "thruster", require: false
 gem "jwt"
 gem "paper_trail"
 gem "blueprinter"
-gem "pagy"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -83,3 +82,5 @@ gem "rack-attack"
 gem "image_processing", "~> 2.0"
 gem "combine_pdf", "~> 1.0"
 gem "marcel", "~> 1.2"
+
+gem "pagy", "~> 9.3"

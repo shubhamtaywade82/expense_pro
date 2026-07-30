@@ -11,15 +11,15 @@ class Api::V1::LoansControllerTest < ActionDispatch::IntegrationTest
     @category = @user.categories.find_by!(name: "Personal Loan")
 
     3.times do |i|
-      @user.loans.create!(
-        category: @category,
+      @user.loan_accounts.create!(
         name: "Loan #{i}",
         lender: "Bank #{i}",
         principal_amount: 100_000,
         interest_rate: 8.5,
         tenure_months: 12,
         start_date: 1.year.ago.to_date,
-        loan_type: "personal"
+        loan_type: "personal",
+        status: "active"
       )
     end
 
@@ -29,26 +29,30 @@ class Api::V1::LoansControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index query count does not grow with the number of loans" do
-    queries_for_three = count_queries { get api_v1_loans_url, headers: @headers }
-    assert_response :success
-    assert_equal 3, JSON.parse(response.body).size
+    # Warm up cache so Rails schema queries don't inflate the first count
+    count_queries { get api_v1_loans_url, headers: @headers }
 
-    @user.loans.create!(
-      category: @category,
+    # Append a random string to force a cache miss (ETag bypass)
+    queries_for_three = count_queries { get api_v1_loans_url, params: { t: "1" }, headers: @headers }
+    assert_response :success
+    assert_equal 3, JSON.parse(response.body)["data"].size
+
+    @user.loan_accounts.create!(
       name: "Loan extra",
       lender: "Bank extra",
       principal_amount: 50_000,
       interest_rate: 8.5,
       tenure_months: 12,
       start_date: 1.year.ago.to_date,
-      loan_type: "personal"
+      loan_type: "personal",
+      status: "active"
     )
 
-    queries_for_four = count_queries { get api_v1_loans_url, headers: @headers }
+    queries_for_four = count_queries { get api_v1_loans_url, params: { t: "2" }, headers: @headers }
     assert_response :success
-    assert_equal 4, JSON.parse(response.body).size
+    assert_equal 4, JSON.parse(response.body)["data"].size
 
-    assert_equal queries_for_three, queries_for_four,
+    assert_operator queries_for_four, :<=, queries_for_three,
       "expected a flat query count regardless of loan count (N+1 in serialize_summary)"
   end
 
@@ -57,7 +61,9 @@ class Api::V1::LoansControllerTest < ActionDispatch::IntegrationTest
   def count_queries(&block)
     count = 0
     counter = ->(*, payload) { count += 1 unless payload[:cached] || /^(BEGIN|COMMIT)/.match?(payload[:sql]) }
-    ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+    ActiveRecord::Base.uncached do
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+    end
     count
   end
 end

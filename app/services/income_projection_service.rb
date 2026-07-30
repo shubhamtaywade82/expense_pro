@@ -14,7 +14,7 @@ class IncomeProjectionService
 
   def call
     scope = @user.incomes.where(income_date: @start_date..@end_date)
-    scope = scope.includes(:parent) if @include_parent
+    scope = scope.includes(:parent, :tax_deductions) if @include_parent
     real_incomes = scope.to_a
     templates = @user.incomes.templates
                       .where("income_date <= ?", @end_date)

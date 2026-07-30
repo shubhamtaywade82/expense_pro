@@ -1,7 +1,7 @@
 class IncomeBlueprint < Blueprinter::Base
   identifier :id
 
-  fields :description, :amount, :income_date, :is_recurring, :recurrence_period,
+  fields :source, :amount, :income_date, :is_recurring, :frequency, :notes,
          :is_received, :parent_id, :income_type, :gross_amount, :tax_deducted,
          :pf_deducted, :other_deductions, :created_at, :updated_at
 

@@ -4,9 +4,10 @@ module Api
       before_action :set_loan, only: [ :show, :destroy ]
 
       def index
-        loans = current_user.loan_accounts.includes(:emi_schedules).to_a
+        scope = current_user.loan_accounts.includes(:emi_schedules)
+        @pagy, @loans = pagy(scope)
 
-        render json: loans.map { |loan| serialize_summary(loan) }
+        render json: paginated_response(@pagy, @loans.map { |loan| serialize_summary(loan) })
       end
 
       def show
@@ -40,9 +41,14 @@ module Api
       end
 
       def serialize_summary(loan)
-        paid_schedules = loan.emi_schedules.where(status: "paid")
-        paid_count = paid_schedules.count
-        total_interest = loan.emi_schedules.sum(:interest_component)
+        if loan.emi_schedules.loaded?
+          schedules = loan.emi_schedules.to_a
+          paid_count = schedules.count { |emi| emi.status == "paid" }
+          total_interest = schedules.sum(&:interest_component)
+        else
+          paid_count = loan.emi_schedules.where(status: "paid").count
+          total_interest = loan.emi_schedules.sum(:interest_component)
+        end
         outstanding_principal = loan.outstanding_principal.presence || loan.principal_amount
 
         loan.as_json.merge(

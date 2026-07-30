@@ -14,7 +14,7 @@ module Api
           incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
           render json: IncomeBlueprint.render_as_hash(incomes)
         else
-          render json: IncomeBlueprint.render_as_hash(current_user.incomes.includes(:parent).recent_first)
+          render json: IncomeBlueprint.render_as_hash(current_user.incomes.includes(:parent, :tax_deductions).recent_first)
         end
       end
 
@@ -42,7 +42,7 @@ module Api
         start_date = Date.new(year, 1, 1)
         end_date = Date.new(year, 12, 31)
 
-        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
+        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date).call
 
         months_summary = (1..12).map do |m|
           m_start = Date.new(year, m, 1)

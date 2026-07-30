@@ -17,14 +17,7 @@ module Api
 
         @pagy, @expenses = pagy(scope)
         
-        render json: {
-          data: ExpenseBlueprint.render_as_hash(@expenses),
-          meta: {
-            current_page: @pagy.page,
-            total_pages: @pagy.pages,
-            total_count: @pagy.count
-          }
-        }
+        render json: ExpenseBlueprint.render_as_hash(@expenses)
       end
 
       def create

@@ -22,6 +22,6 @@ class Api::V1::ExpensesControllerTest < ActionDispatch::IntegrationTest
   test "index loads without N+1 queries (Bullet)" do
     get api_v1_expenses_url, headers: @headers
     assert_response :success
-    assert_equal 3, JSON.parse(response.body)["data"].size
+    assert_equal 3, JSON.parse(response.body).size
   end
 end

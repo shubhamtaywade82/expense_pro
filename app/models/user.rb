@@ -10,6 +10,7 @@ class User < ApplicationRecord
   has_many :budgets, dependent: :destroy
   has_many :investments, dependent: :destroy
   has_many :broker_snapshots, dependent: :destroy
+  has_many :trades, dependent: :destroy
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 

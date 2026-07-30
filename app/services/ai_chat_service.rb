@@ -17,12 +17,8 @@ class AiChatService
     ]
 
     begin
-      if needs_tools?(message)
-        response = @client.chat(messages: messages, tools: available_tools)
-        response = handle_tool_calls(response, messages) if response.message.tool_calls&.any?
-      else
-        response = @client.chat(messages: messages)
-      end
+      response = @client.chat(messages: messages, tools: available_tools)
+      response = handle_tool_calls(response, messages) if response.message.tool_calls&.any?
 
       { role: "assistant", content: response.message.content }
     rescue StandardError => e
@@ -67,7 +63,7 @@ class AiChatService
             properties: {
               bill_id: { type: "integer", description: "Database ID of the bill." }
             },
-            required: ["bill_id"]
+            required: [ "bill_id" ]
           }
         }
       }
@@ -103,16 +99,5 @@ class AiChatService
       end
       { role: msg[:role] || msg["role"], content: content }
     end
-  end
-
-  def needs_tools?(message)
-    msg = message.to_s.downcase
-    action_keywords = %w[spent log buy bought expense paid pay payed mark cost purchase]
-    question_keywords = ["?", "have ", "did ", "is ", "what ", "how ", "when ", "please check"]
-
-    is_action = action_keywords.any? { |kw| msg.include?(kw) }
-    is_question = question_keywords.any? { |kw| msg.include?(kw) }
-
-    is_action && !is_question
   end
 end

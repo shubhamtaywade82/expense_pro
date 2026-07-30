@@ -48,6 +48,10 @@ Rails.application.routes.draw do
       get "dhan/ledger", to: "dhan#ledger"
       get "dhan/pnl_summary", to: "dhan#pnl_summary"
       post "dhan/import_to_investments", to: "dhan#import_to_investments"
+      post "dhan/sync_investments", to: "dhan#sync_investments"
+      get "dhan/sync_status", to: "dhan#sync_status"
+      post "dhan/import_trades", to: "dhan#import_trades"
+      get "dhan/pnl_report", to: "dhan#pnl_report"
 
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"

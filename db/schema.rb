@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_28_133006) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -193,6 +193,44 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133006) do
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
   end
 
+  create_table "trades", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "broker", default: "dhan", null: false
+    t.string "exchange_trade_id"
+    t.string "order_id"
+    t.string "exchange_order_id"
+    t.string "dhan_client_id"
+    t.string "transaction_type", null: false
+    t.string "exchange_segment", null: false
+    t.string "product_type"
+    t.string "order_type"
+    t.string "trading_symbol"
+    t.string "custom_symbol"
+    t.string "security_id"
+    t.string "isin"
+    t.string "instrument"
+    t.decimal "traded_quantity", precision: 14, scale: 4
+    t.decimal "traded_price", precision: 14, scale: 2
+    t.date "expiry_date"
+    t.string "option_type"
+    t.decimal "strike_price", precision: 14, scale: 2
+    t.decimal "sebi_tax", precision: 12, scale: 2, default: "0.0"
+    t.decimal "stt", precision: 12, scale: 2, default: "0.0"
+    t.decimal "brokerage", precision: 12, scale: 2, default: "0.0"
+    t.decimal "gst", precision: 12, scale: 2, default: "0.0"
+    t.decimal "exchange_charges", precision: 12, scale: 2, default: "0.0"
+    t.decimal "stamp_duty", precision: 12, scale: 2, default: "0.0"
+    t.jsonb "raw_data", default: {}
+    t.datetime "trade_date"
+    t.datetime "exchange_time"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "broker", "trade_date"], name: "index_trades_on_user_id_and_broker_and_trade_date"
+    t.index ["user_id", "exchange_segment"], name: "index_trades_on_user_id_and_exchange_segment"
+    t.index ["user_id", "exchange_trade_id"], name: "index_trades_on_user_id_and_exchange_trade_id", unique: true, where: "(exchange_trade_id IS NOT NULL)"
+    t.index ["user_id"], name: "index_trades_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -230,4 +268,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_28_133006) do
   add_foreign_key "loans", "users"
   add_foreign_key "monthly_bills", "categories"
   add_foreign_key "monthly_bills", "users"
+  add_foreign_key "trades", "users"
 end

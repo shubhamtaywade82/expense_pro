@@ -43,8 +43,10 @@ import {
   Building2,
   Landmark,
   ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 function brokerNum(val: unknown) {
   return typeof val === "string" ? parseFloat(val) : typeof val === "number" ? val : 0;
@@ -140,9 +142,15 @@ function BrokerHoldingsPanel() {
   );
 }
 
+function currentFy() {
+  const now = new Date();
+  return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+}
+
 export default function Investments() {
   const [activeAssetClass, setActiveAssetClass] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [financialYear, setFinancialYear] = useState(currentFy());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -163,8 +171,8 @@ export default function Investments() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["investments", { assetClass: activeAssetClass, status: statusFilter }],
-    queryFn: () => api.investments.list({ assetClass: activeAssetClass, status: statusFilter }),
+    queryKey: ["investments", { assetClass: activeAssetClass, status: statusFilter, financialYear }],
+    queryFn: () => api.investments.list({ assetClass: activeAssetClass, status: statusFilter, financialYear }),
   });
 
   const invalidate = () => {
@@ -192,6 +200,30 @@ export default function Investments() {
   const deleteMutation = useMutation({
     mutationFn: api.investments.delete,
     onSuccess: invalidate,
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: () => api.dhan.syncInvestments(),
+    onSuccess: () => {
+      toast.success("Sync started in background");
+      const poll = () => {
+        api.dhan.syncStatus().then((s) => {
+          if (s.status === "completed") {
+            invalidate();
+            toast.success(`Synced ${s.trades_imported} trades from Dhan`);
+          } else if (s.status === "truncated") {
+            invalidate();
+            toast.warning("Snapshots synced, trade history too large — import per month from Dhan page");
+          } else {
+            setTimeout(poll, 3000);
+          }
+        }).catch(() => setTimeout(poll, 3000));
+      };
+      setTimeout(poll, 3000);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Sync failed");
+    },
   });
 
   const resetForm = () => {
@@ -294,6 +326,47 @@ export default function Investments() {
               Manage F&O, Speculative Intraday, Swing Trading, STCG/LTCG Equity, Mutual Funds & Crypto
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-card/60 p-1 rounded-xl border border-border/40">
+            <button
+              type="button"
+              className="px-2 h-7 rounded-lg text-[11px] font-medium bg-cyan-600 text-white"
+            >
+              FY
+            </button>
+          </div>
+          <div className="flex items-center gap-1 text-xs">
+            <button
+              type="button"
+              className="h-7 w-7 rounded-lg hover:bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              onClick={() => setFinancialYear((y) => y - 1)}
+            >
+              &larr;
+            </button>
+            <span className="font-semibold px-2 min-w-[90px] text-center text-sm">
+              FY {financialYear - 1}-{String(financialYear).slice(2)}
+            </span>
+            <button
+              type="button"
+              className="h-7 w-7 rounded-lg hover:bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              onClick={() => setFinancialYear((y) => y + 1)}
+            >
+              &rarr;
+            </button>
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="rounded-xl gap-1.5 border-emerald-500/30 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Syncing..." : "Sync from Dhan"}
+          </Button>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

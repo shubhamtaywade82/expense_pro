@@ -21,19 +21,19 @@ module Api
       # ActiveRecord and strong params expect snake_case. Normalize once,
       # at the boundary, instead of mapping keys in every controller.
       def underscore_param_keys!
-        self.params = params.to_unsafe_h.deep_transform_keys { |key| key.to_s.underscore }
+        self.params = params.deep_transform_keys { |key| key.to_s.underscore }
       end
 
       def current_user
         return @current_user if @current_user
 
-        header = request.headers['Authorization']
+        header = request.headers["Authorization"]
         return nil unless header.present?
 
-        token = header.split(' ').last
+        token = header.split(" ").last
         begin
-          decoded = JWT.decode(token, Rails.application.credentials.secret_key_base || 'secret', true, { algorithm: 'HS256' })
-          @current_user = User.find_by(id: decoded[0]['user_id'])
+          decoded = JWT.decode(token, jwt_secret, true, { algorithm: "HS256" })
+          @current_user = User.find_by(id: decoded[0]["user_id"])
         rescue JWT::DecodeError
           nil
         end
@@ -41,6 +41,11 @@ module Api
 
       def authenticate_user!
         render json: { error: "Unauthorized" }, status: :unauthorized unless current_user
+      end
+
+      def jwt_secret
+        ENV["JWT_SECRET"].presence or Rails.application.credentials.secret_key_base or
+          raise("Missing JWT_SECRET. Set ENV['JWT_SECRET'] or configure secret_key_base in credentials.")
       end
 
       def render_not_found

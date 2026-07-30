@@ -18,8 +18,13 @@ class DhanTokenService
   class << self
     def current_token!
       user = require_user!
+      return Current.dhan_access_token if Current.dhan_access_token.present?
+
       stored = BrokerAccessToken.active(user, broker: BROKER)
-      return stored.access_token if stored.present?
+      if stored.present?
+        Current.dhan_access_token = stored.access_token
+        return stored.access_token
+      end
 
       fetch_and_store!
     end
@@ -39,6 +44,7 @@ class DhanTokenService
         expires_at: token_info[:expires_at]
       )
 
+      Current.dhan_access_token = token_info[:access_token]
       token_info[:access_token]
     end
 
@@ -47,9 +53,11 @@ class DhanTokenService
       credential&.client_id.presence || ENV.fetch("DHAN_CLIENT_ID", ENV.fetch("CLIENT_ID", nil))
     end
 
-    # Used as DhanHQ's on_token_expired hook: discards the stale record and
-    # fetches a fresh one immediately, ignoring any cached non-expired row.
+    # Used as DhanHQ's on_token_expired hook: discards the stale record,
+    # clears the request-scoped cache, and fetches a fresh one immediately
+    # (ignoring any cached non-expired row).
     def force_refresh!
+      Current.dhan_access_token = nil
       fetch_and_store!
     end
 

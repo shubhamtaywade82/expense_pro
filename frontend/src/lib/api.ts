@@ -8,6 +8,8 @@ import type {
   DhanCredentialUpdate,
   DhanImportResult,
   DhanPnlSummary,
+  DhanSyncResult,
+  DhanSyncStatus,
   DhanTokenStatus,
   EmiPayment,
   Expense,
@@ -19,6 +21,7 @@ import type {
   LoanDetail,
   MonthlyBill,
   MonthlyReport,
+  PnlReport,
   UpdatePayload,
   User,
 } from "@/types";
@@ -180,7 +183,7 @@ export const api = {
   },
 
   investments: {
-    list: (params: { assetClass?: string; status?: string } = {}) =>
+    list: (params: { assetClass?: string; status?: string; financialYear?: number } = {}) =>
       get<{
         investments: Investment[];
         summary: {
@@ -219,6 +222,17 @@ export const api = {
       get<DhanPnlSummary>(`/dhan/pnl_summary${buildQuery(params)}`),
     importToInvestments: (data: { fromDate: string; toDate: string; manualAssetClass?: "swing_trading" | "long_term_equity" }) =>
       post<DhanImportResult>("/dhan/import_to_investments", data),
+    syncInvestments: (data?: { fromDate?: string; toDate?: string }) =>
+      post<DhanSyncResult>("/dhan/sync_investments", data || {}),
+    syncStatus: () => get<DhanSyncStatus>("/dhan/sync_status"),
+    importTrades: (data: { fromDate: string; toDate: string }) =>
+      post<{ imported: number; from_date: string; to_date: string }>("/dhan/import_trades", data),
+    pnlReport: (params: { fromDate?: string; toDate?: string } = {}) =>
+      get<PnlReport>(`/dhan/pnl_report${buildQuery(params)}`),
+    pnlReportCsv: (params: { fromDate?: string; toDate?: string } = {}) => {
+      const search = buildQuery(params);
+      return `${BASE_URL}/dhan/pnl_report${search}&format=csv`;
+    },
   },
 
   brokerSnapshots: {

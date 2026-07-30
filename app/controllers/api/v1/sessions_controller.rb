@@ -29,7 +29,7 @@ module Api
       private
 
       def generate_token(user_id)
-        JWT.encode({ user_id: user_id, exp: 24.hours.from_now.to_i }, Rails.application.credentials.secret_key_base || 'secret', 'HS256')
+        JWT.encode({ user_id: user_id, exp: 24.hours.from_now.to_i }, jwt_secret, "HS256")
       end
 
       def serialize(user)

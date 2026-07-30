@@ -35,6 +35,7 @@ import {
   startOfQuarter,
   endOfQuarter,
 } from "date-fns";
+import { toast } from "sonner";
 
 function formatCurrency(val: unknown) {
   const num = typeof val === "string" ? parseFloat(val) : typeof val === "number" ? val : 0;
@@ -275,12 +276,13 @@ type PeriodPreset = "week" | "month" | "quarter" | "fy" | "custom";
 
 function currentFyYear() {
   const now = new Date();
-  // Indian FY runs Apr 1 - Mar 31; Jan-Mar belongs to the FY that started the previous April.
+  // Returns the ending year of the ongoing Indian FY.
+  // Jul 2026 → 2027 (FY 2026-27), Jan 2026 → 2026 (FY 2025-26)
   return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
 }
 
 function PeriodPicker({ onChange }: { onChange: (from: string, to: string) => void }) {
-  const [preset, setPreset] = useState<PeriodPreset>("month");
+  const [preset, setPreset] = useState<PeriodPreset>("fy");
   const [fyYear, setFyYear] = useState(currentFyYear);
   const [customFrom, setCustomFrom] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [customTo, setCustomTo] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -551,6 +553,133 @@ function PnlSummaryPanel({ fromDate, toDate }: { fromDate: string; toDate: strin
   );
 }
 
+function PnlReportPanel({ fromDate, toDate }: { fromDate: string; toDate: string }) {
+  const queryClient = useQueryClient();
+
+  const report = useQuery({
+    queryKey: ["dhan", "pnl_report", { fromDate, toDate }],
+    queryFn: () => api.dhan.pnlReport({ fromDate, toDate }),
+  });
+
+  const importTradesMutation = useMutation({
+    mutationFn: () => api.dhan.importTrades({ fromDate, toDate }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["dhan", "pnl_report"] });
+      queryClient.invalidateQueries({ queryKey: ["investments"] });
+      queryClient.invalidateQueries({ queryKey: ["dhan", "trade_history"] });
+      toast.success(`Imported ${data.imported} trades`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Import failed");
+    },
+  });
+
+  if (report.isLoading) {
+    return <Skeleton className="h-64 rounded-xl" />;
+  }
+
+  const noTrades = !report.data || report.data.trades.length === 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl"
+          onClick={() => importTradesMutation.mutate()}
+          disabled={importTradesMutation.isPending}
+        >
+          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${importTradesMutation.isPending ? "animate-spin" : ""}`} />
+          {importTradesMutation.isPending ? "Importing..." : "Import Trades from Dhan"}
+        </Button>
+        {report.data && report.data.trades.length > 0 && (
+          <a
+            href={api.dhan.pnlReportCsv({ fromDate, toDate })}
+            className="inline-flex items-center gap-1.5 text-xs text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 dark:hover:text-cyan-300 underline underline-offset-2"
+          >
+            Download CSV
+          </a>
+        )}
+      </div>
+
+      {report.data?.trades.length > 0 && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(PNL_SEGMENT_LABELS).map(([key, meta]) => {
+              const seg = report.data!.summary[key];
+              if (!seg || seg.trade_count === 0) return null;
+              return (
+                <div key={key} className="p-3 rounded-xl bg-muted/30 border border-border/40">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{meta.label}</p>
+                  <p className={`text-base font-bold ${seg.net_pnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                    {seg.net_pnl >= 0 ? "+" : ""}{formatCurrency(seg.net_pnl)}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {seg.trade_count} trades · Buy: {formatCurrency(seg.buy_value)} · Sell: {formatCurrency(seg.sell_value)}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-border/40">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left p-2 font-medium">Date</th>
+                  <th className="text-left p-2 font-medium">Symbol</th>
+                  <th className="text-left p-2 font-medium">Type</th>
+                  <th className="text-right p-2 font-medium">Qty</th>
+                  <th className="text-right p-2 font-medium">Price</th>
+                  <th className="text-right p-2 font-medium">Value</th>
+                  <th className="text-right p-2 font-medium">Brokerage</th>
+                  <th className="text-right p-2 font-medium">STT</th>
+                  <th className="text-right p-2 font-medium">GST</th>
+                  <th className="text-right p-2 font-medium">Other Chrg</th>
+                  <th className="text-right p-2 font-medium">Net Value</th>
+                  <th className="text-left p-2 font-medium">Segment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.data!.trades.map((t, i) => (
+                  <tr key={i} className="border-t border-border/30 hover:bg-muted/20">
+                    <td className="p-2 whitespace-nowrap">{t.trade_date || "—"}</td>
+                    <td className="p-2 whitespace-nowrap font-medium">{t.symbol}</td>
+                    <td className="p-2">{t.transaction_type}</td>
+                    <td className="p-2 text-right">{t.quantity}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.price)}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.total_value)}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.brokerage)}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.stt)}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.gst)}</td>
+                    <td className="p-2 text-right">{formatCurrency(t.sebi_tax + t.exchange_charges + t.stamp_duty)}</td>
+                    <td className={`p-2 text-right font-medium ${t.net_value >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                      {formatCurrency(t.net_value)}
+                    </td>
+                    <td className="p-2 whitespace-nowrap">
+                      <Badge variant="outline" className="text-[10px]">
+                        {PNL_SEGMENT_LABELS[t.segment as keyof typeof PNL_SEGMENT_LABELS]?.label || t.segment}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {noTrades && !importTradesMutation.isPending && (
+        <div className="p-6 rounded-xl bg-muted/20 border border-dashed border-border/50 text-center text-sm text-muted-foreground">
+          No trades in this period. Click "Import Trades from Dhan" to pull trade-level data for ITR filing.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Dhan() {
   const queryClient = useQueryClient();
   const [fromDate, setFromDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -616,6 +745,31 @@ export default function Dhan() {
     queryClient.invalidateQueries({ queryKey: ["dhan"] });
   };
 
+  const syncMutation = useMutation({
+    mutationFn: () => api.dhan.syncInvestments(),
+    onSuccess: () => {
+      const poll = () => {
+        api.dhan.syncStatus().then((s) => {
+          if (s.status === "completed") {
+            queryClient.invalidateQueries({ queryKey: ["dhan"] });
+            queryClient.invalidateQueries({ queryKey: ["investments"] });
+            queryClient.invalidateQueries({ queryKey: ["tax"] });
+            toast.success(`Synced ${s.trades_imported} trades from Dhan`);
+          } else if (s.status === "truncated") {
+            toast.warning("Snapshots synced, trade history too large — import per month from PnL tab");
+          } else {
+            setTimeout(poll, 3000);
+          }
+        }).catch(() => setTimeout(poll, 3000));
+      };
+      toast.success("Sync started in background");
+      setTimeout(poll, 3000);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Sync failed");
+    },
+  });
+
   const profileData = profile.data;
   const funds = fundLimits.data;
 
@@ -657,6 +811,18 @@ export default function Dhan() {
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${tokenStatus.isFetching ? "animate-spin" : ""}`} />
             Refresh Token
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl border-emerald-500/30 text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+            onClick={() => {
+              syncMutation.mutate();
+            }}
+            disabled={syncMutation.isPending}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${syncMutation.isPending ? "animate-spin" : ""}`} />
+            {syncMutation.isPending ? "Syncing..." : "Sync to Investments"}
           </Button>
         </div>
       </div>
@@ -733,6 +899,9 @@ export default function Dhan() {
           </TabsTrigger>
           <TabsTrigger value="ledger" className="rounded-lg text-xs gap-1.5">
             <Receipt className="w-3.5 h-3.5" /> Ledger
+          </TabsTrigger>
+          <TabsTrigger value="pnl_report" className="rounded-lg text-xs gap-1.5">
+            <LineChart className="w-3.5 h-3.5" /> PNL Report
           </TabsTrigger>
           <TabsTrigger value="settings" className="rounded-lg text-xs gap-1.5 ml-auto">
             <Settings className="w-3.5 h-3.5" /> Settings
@@ -852,6 +1021,24 @@ export default function Dhan() {
                 emptyLabel="No ledger entries in this range"
                 keys={["voucherdate", "narration", "voucherdesc", "debit", "credit", "runbal"]}
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pnl_report" className="m-0">
+          <Card className="border border-border/40 shadow-sm">
+            <CardHeader className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg font-bold">PNL Report (ITR Ready)</CardTitle>
+                <CardDescription>
+                  Trade-level profit & loss matching Dhan XLS export structure. Import individual trades,
+                  view summary by segment, and download CSV for ITR filing.
+                </CardDescription>
+              </div>
+              <PeriodPicker onChange={(f, t) => { setFromDate(f); setToDate(t); }} />
+            </CardHeader>
+            <CardContent>
+              <PnlReportPanel fromDate={fromDate} toDate={toDate} />
             </CardContent>
           </Card>
         </TabsContent>

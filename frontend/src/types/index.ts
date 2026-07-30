@@ -305,8 +305,57 @@ export type DhanImportResult = {
   investments: { id: number; name: string; asset_class: string; realized_pnl: string }[];
 };
 
+export type DhanSyncResult = {
+  message: string;
+  status: string;
+};
+
+export type DhanSyncStatus = {
+  status: "none" | "running" | "completed" | "truncated";
+  trades_imported: number;
+};
+
 export type BrokerSnapshots = {
   holdings: Record<string, unknown>[];
   positions: Record<string, unknown>[];
   last_synced_at: string | null;
+};
+
+export type Trade = {
+  trade_date: string | null;
+  symbol: string;
+  security_id: string | null;
+  isin: string | null;
+  exchange_segment: string;
+  product_type: string | null;
+  instrument: string | null;
+  transaction_type: "BUY" | "SELL";
+  quantity: number;
+  price: number;
+  total_value: number;
+  brokerage: number;
+  stt: number;
+  gst: number;
+  sebi_tax: number;
+  exchange_charges: number;
+  stamp_duty: number;
+  total_charges: number;
+  net_value: number;
+  expiry: string | null;
+  strike_price: number | null;
+  option_type: string | null;
+  segment: string;
+};
+
+export type PnlReport = {
+  from_date: string;
+  to_date: string;
+  trades: Trade[];
+  summary: Record<string, {
+    buy_value: number;
+    sell_value: number;
+    charges: number;
+    net_pnl: number;
+    trade_count: number;
+  }>;
 };

@@ -22,9 +22,13 @@ import {
   Coins,
 } from "lucide-react";
 
+function currentFy() {
+  const now = new Date();
+  return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+}
+
 export default function ITR() {
-  const currentYear = new Date().getFullYear();
-  const [financialYear, setFinancialYear] = useState(currentYear);
+  const [financialYear, setFinancialYear] = useState(currentFy());
 
   const { data: itr, isLoading, error } = useQuery({
     queryKey: ["tax", "itr", { financialYear }],

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class TaxCalculatorService
-  def initialize(user, financial_year = 2026)
+  def initialize(user, financial_year = nil)
     @user = user
-    @year = financial_year
+    @year = financial_year || default_financial_year
   end
 
   def call
@@ -38,11 +38,11 @@ class TaxCalculatorService
     elss_amount = investments.select { |i| i.asset_class == "elss_80c" }.sum(&:invested_amount).to_f
     home_loans = @user.loans.where(loan_type: "home")
     home_loan_principal = home_loans.sum { |l| l.principal_amount.to_f * (12.0 / l.tenure_months) }
-    sec_80c = [elss_amount + home_loan_principal, 150_000.0].min
+    sec_80c = [ elss_amount + home_loan_principal, 150_000.0 ].min
 
     # Section 24(b): Home Loan Interest
     home_loan_interest = home_loans.sum { |l| (l.emi_amount.to_f * 12) - (l.principal_amount.to_f * (12.0 / l.tenure_months)) }
-    sec_24b_old = [home_loan_interest, 200_000.0].min
+    sec_24b_old = [ home_loan_interest, 200_000.0 ].min
 
     # 4. Old vs New Tax Calculations
     # Standard Deductions
@@ -51,10 +51,10 @@ class TaxCalculatorService
 
     # Taxable Income calculation
     # New Regime: Salary - 75,000 + Business/Trading P&L
-    taxable_new = [gross_salary - std_deduction_new, 0].max + [non_speculative_fo_pnl, 0].max + [speculative_pnl, 0].max
+    taxable_new = [ gross_salary - std_deduction_new, 0 ].max + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
 
     # Old Regime: Salary - 50,000 - 80C - 24b + Trading P&L
-    taxable_old = [gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0].max + [non_speculative_fo_pnl, 0].max + [speculative_pnl, 0].max
+    taxable_old = [ gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0 ].max + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
 
     # Tax liability calculations
     tax_new = calculate_new_regime_tax(taxable_new)
@@ -64,7 +64,7 @@ class TaxCalculatorService
     # STCG (Sec 111A) @ 20%
     stcg_tax = stcg_pnl > 0 ? (stcg_pnl * 0.20).round(2) : 0.0
     # LTCG (Sec 112A) @ 12.5% on gains exceeding ₹1,25,000
-    taxable_ltcg = [ltcg_pnl - 125_000.0, 0].max
+    taxable_ltcg = [ ltcg_pnl - 125_000.0, 0 ].max
     ltcg_tax = taxable_ltcg > 0 ? (taxable_ltcg * 0.125).round(2) : 0.0
     # Crypto (Sec 115BBH) @ 30%
     crypto_tax = crypto_pnl > 0 ? (crypto_pnl * 0.30).round(2) : 0.0
@@ -77,11 +77,11 @@ class TaxCalculatorService
 
     recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0
                         "ITR-3 (F&O / Speculative Trading Business Income)"
-                      elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0
+    elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0
                         "ITR-2 (Capital Gains & Crypto Income)"
-                      else
+    else
                         "ITR-1 (Sahaj - Salary & Interest Income)"
-                      end
+    end
 
     {
       financial_year: "FY #{@year - 1}-#{String(@year)[2..3]}",
@@ -133,10 +133,10 @@ class TaxCalculatorService
 
     tax = 0.0
     tax += (800_000 - 400_000) * 0.05 if income > 400_000
-    tax += ([income, 1_200_000].min - 800_000) * 0.10 if income > 800_000
-    tax += ([income, 1_600_000].min - 1_200_000) * 0.15 if income > 1_200_000
-    tax += ([income, 2_000_000].min - 1_600_000) * 0.20 if income > 1_600_000
-    tax += ([income, 2_400_000].min - 2_000_000) * 0.25 if income > 2_000_000
+    tax += ([ income, 1_200_000 ].min - 800_000) * 0.10 if income > 800_000
+    tax += ([ income, 1_600_000 ].min - 1_200_000) * 0.15 if income > 1_200_000
+    tax += ([ income, 2_000_000 ].min - 1_600_000) * 0.20 if income > 1_600_000
+    tax += ([ income, 2_400_000 ].min - 2_000_000) * 0.25 if income > 2_000_000
     tax += (income - 2_400_000) * 0.30 if income > 2_400_000
 
     # Section 87A rebate for New Regime up to 12 Lakhs
@@ -152,8 +152,8 @@ class TaxCalculatorService
     return { slab_tax: 0.0, rebate: 0.0, total_tax: 0.0 } if income <= 250_000
 
     tax = 0.0
-    tax += ([income, 500_000].min - 250_000) * 0.05 if income > 250_000
-    tax += ([income, 1_000_000].min - 500_000) * 0.20 if income > 500_000
+    tax += ([ income, 500_000 ].min - 250_000) * 0.05 if income > 250_000
+    tax += ([ income, 1_000_000 ].min - 500_000) * 0.20 if income > 500_000
     tax += (income - 1_000_000) * 0.30 if income > 1_000_000
 
     # Section 87A rebate for Old Regime up to 5 Lakhs
@@ -163,5 +163,10 @@ class TaxCalculatorService
       cess = (tax * 0.04).round(2)
       { slab_tax: tax.round(2), rebate: 0.0, total_tax: (tax + cess).round(2) }
     end
+  end
+
+  def default_financial_year
+    today = Date.current
+    today.month >= 4 ? today.year + 1 : today.year
   end
 end

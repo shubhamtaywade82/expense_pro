@@ -120,7 +120,7 @@ class Income < ApplicationRecord
                         .where(end_date: nil)
 
     older_ongoing.each do |old_template|
-      old_template.update_columns(end_date: income_date - 1.day)
+      old_template.update!(end_date: income_date - 1.day)
     end
   end
 end

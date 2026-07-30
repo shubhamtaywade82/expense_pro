@@ -16,6 +16,15 @@ module Api
           investments = investments.where(status: params[:status])
         end
 
+        if params[:financial_year].present?
+          fy = params[:financial_year].to_i
+          fy_start = Date.new(fy - 1, 4, 1)
+          fy_end = Date.new(fy, 3, 31)
+          investments = investments
+            .where(purchase_date: fy_start..fy_end)
+            .or(investments.where(status: "realized", sell_date: fy_start..fy_end))
+        end
+
         total_invested = investments.sum(&:invested_amount)
         total_pnl = investments.sum(&:total_pnl)
         current_value = investments.sum(&:current_value)

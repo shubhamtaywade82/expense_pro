@@ -4,5 +4,5 @@
 # DhanHQ's access_token_provider (config/initializers/dhanhq.rb), which has
 # no other way to know which user's broker credentials to use.
 class Current < ActiveSupport::CurrentAttributes
-  attribute :user
+  attribute :user, :dhan_access_token
 end

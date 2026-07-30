@@ -78,3 +78,4 @@ end
 gem "ollama-client"
 gem "DhanHQ", "~> 3.3"
 gem "httparty"
+gem "rack-attack"

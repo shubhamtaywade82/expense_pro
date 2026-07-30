@@ -85,11 +85,12 @@ module Api
       private
 
       def enqueue_processing(doc)
-        # Mock for now, will implement active jobs later
         if doc.requires_decryption?
-          doc.update!(status: :decrypting)
+          DocumentDecryptJob.perform_later(doc.id)
+        elsif doc.document_type == "ais_json"
+          AisParseJob.perform_later(doc.id)
         elsif doc.requires_ocr?
-          doc.update!(status: :processing)
+          OcrProcessingJob.perform_later(doc.id)
         else
           doc.update!(status: :verified)
         end

@@ -7,7 +7,7 @@ class NetWorthService
     assets = compute_assets
     liabilities = compute_liabilities
     total_assets = assets.values.sum
-    total_liabilities = liabilities.values.sum
+    total_liabilities = liabilities[:total]
 
     {
       assets: assets,
@@ -24,7 +24,9 @@ class NetWorthService
   private
 
   def compute_assets
-    investments_total = @user.investments.where(status: "active").sum(:current_value).to_f
+    investments_total = @user.investments.where(status: "active").sum do |i|
+      i.current_value.to_f
+    end
     realized_investments = @user.investments.where(status: "realized").sum(:realized_pnl).to_f
 
     # EPF/PPF/NPS: stored as investments with those asset classes

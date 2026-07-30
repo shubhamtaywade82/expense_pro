@@ -998,7 +998,7 @@ export default function Dhan() {
                 rows={tradeHistory.data?.trades}
                 isLoading={tradeHistory.isLoading}
                 emptyLabel="No trades in this range"
-                keys={["trading_symbol", "transaction_type", "traded_quantity", "traded_price", "brokerage_charges", "stt", "create_time"]}
+                keys={["trading_symbol", "exchange_segment", "product_type", "transaction_type", "traded_quantity", "traded_price", "brokerage_charges", "stt", "sebi_tax", "exchange_transaction_charges", "service_tax", "stamp_duty", "create_time"]}
               />
             </CardContent>
           </Card>

@@ -1,7 +1,12 @@
 class DhanSyncJob < ApplicationJob
   queue_as :default
+  retry_on DhanHQ::RateLimitError, wait: 30.seconds, attempts: 5
 
   def perform(user_id:, from_date:, to_date:)
+    lock_key = "dhan_sync_lock:#{user_id}"
+    return if Rails.cache.exist?(lock_key)
+    Rails.cache.write(lock_key, true, expires_in: 10.minutes)
+
     cache_key = "dhan_sync:#{user_id}"
 
     user = User.find(user_id)
@@ -27,5 +32,11 @@ class DhanSyncJob < ApplicationJob
 
     Rails.cache.write("#{cache_key}:status", "completed", expires_in: 5.minutes)
     Rails.cache.write("#{cache_key}:trades", imported.size, expires_in: 5.minutes)
+  rescue => e
+    Rails.cache.write("#{cache_key}:status", "error", expires_in: 5.minutes)
+    Rails.cache.write("#{cache_key}:error", e.message, expires_in: 1.hour)
+    raise
+  ensure
+    Rails.cache.delete(lock_key)
   end
 end

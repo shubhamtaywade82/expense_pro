@@ -281,10 +281,15 @@ export type ItrSummary = {
   financial_year: string;
   assessment_year: string;
   gross_salary: number;
+  gross_freelance: number;
+  tds_already_paid: number;
   trading_summary: {
     speculative_intraday_pnl: number;
     non_speculative_fo_pnl: number;
     crypto_pnl: number;
+    fixed_income_pnl: number;
+    gold_stcg_pnl: number;
+    gold_ltcg_pnl: number;
     stcg_pnl: number;
     ltcg_pnl: number;
     total_pnl: number;
@@ -292,6 +297,10 @@ export type ItrSummary = {
   deductions: {
     section_80c: number;
     section_24b_home_loan_interest: number;
+    hra_exemption: number;
+    section_80d: number;
+    section_80ccd_1b: number;
+    section_80tta: number;
     standard_deduction_new: number;
     standard_deduction_old: number;
   };
@@ -299,17 +308,22 @@ export type ItrSummary = {
     taxable_income: number;
     slab_tax: number;
     rebate_87a: number;
+    surcharge: number;
+    cess: number;
     total_tax: number;
   };
   old_regime: {
     taxable_income: number;
     slab_tax: number;
     rebate_87a: number;
+    surcharge: number;
+    cess: number;
     total_tax: number;
   };
   special_taxes: {
     stcg_tax_sec111a: number;
     ltcg_tax_sec112a: number;
+    gold_ltcg_tax_sec112: number;
     crypto_tax_sec115bbh: number;
   };
   recommendation: {

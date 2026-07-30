@@ -1,7 +1,11 @@
 class ApplicationJob < ActiveJob::Base
-  # Automatically retry jobs that encountered a deadlock
-  # retry_on ActiveRecord::Deadlocked
+  retry_on ActiveRecord::Deadlocked, wait: :polynomially_longer, attempts: 3
+  retry_on Net::OpenTimeout, wait: :polynomially_longer, attempts: 3
+  discard_on ActiveJob::DeserializationError
 
-  # Most jobs are safe to ignore if the underlying records are no longer available
-  # discard_on ActiveJob::DeserializationError
+  around_perform do |_job, block|
+    block.call
+  ensure
+    Current.reset
+  end
 end

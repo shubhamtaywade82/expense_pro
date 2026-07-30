@@ -82,5 +82,9 @@ USER 1000:1000
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server via Thruster by default, this can be overwritten at runtime
+# For production with background jobs, deploy a second container:
+#   docker run <args> --entrypoint ./bin/jobs expense_pro
+# or use a process manager (foreman/overmind) to run both:
+#   CMD ["foreman", "start"]
 EXPOSE 80
 CMD ["./bin/thrust", "./bin/rails", "server"]

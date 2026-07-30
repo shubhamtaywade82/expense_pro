@@ -33,6 +33,7 @@ Rails.application.routes.draw do
 
       resources :investments, except: [ :show ]
       get "tax/itr_summary", to: "tax#itr_summary"
+      delete "tax/cache", to: "tax#invalidate_cache"
       get "broker_snapshots", to: "broker_snapshots#index"
 
       resources :employments, except: [:show] do

@@ -1,12 +1,13 @@
 class Income < ApplicationRecord
   FREQUENCIES = %w[weekly monthly quarterly yearly one_time].freeze
+  enum :income_type, { salary: "salary", freelance: "freelance", bonus: "bonus", fnf: "fnf", other: "other" }
 
   belongs_to :user
   belongs_to :parent, class_name: "Income", optional: true
   has_many :instances, class_name: "Income", foreign_key: :parent_id, dependent: :destroy
 
   validates :source, presence: true
-  validates :amount, numericality: { greater_than: 0 }
+  validates :amount, numericality: { greater_than_or_equal_to: 0 }
   validates :income_date, presence: true
   validates :frequency, inclusion: { in: FREQUENCIES }
 
@@ -17,6 +18,15 @@ class Income < ApplicationRecord
   validate :validate_recurring_rules
 
   before_save :close_older_ongoing_templates, if: :template?
+  before_validation :calculate_net_amount
+
+  def calculate_net_amount
+    if gross_amount.present?
+      self.amount = gross_amount.to_d - tax_deducted.to_d - pf_deducted.to_d - other_deductions.to_d
+    else
+      self.gross_amount = amount
+    end
+  end
 
   def template?
     is_recurring? && parent_id.nil?
@@ -81,7 +91,13 @@ class Income < ApplicationRecord
       "amount_difference" => amount_difference,
       "is_latest_recurring" => latest_recurring?,
       "is_ongoing" => ongoing?,
-      "gap_info" => gap_info
+      "gap_info" => gap_info,
+      "income_type" => income_type,
+      "gross_amount" => gross_amount,
+      "tax_deducted" => tax_deducted,
+      "pf_deducted" => pf_deducted,
+      "other_deductions" => other_deductions,
+      "metadata" => metadata
     )
   end
 

@@ -12,8 +12,18 @@ class TaxCalculatorService
 
     # 1. Salary & Other Incomes
     incomes = IncomeProjectionService.new(@user, start_d, end_d).call
-    gross_salary = incomes.sum { |inc| inc.amount.to_f }
+    
+    # Calculate Salary Gross
+    salary_incomes = incomes.select { |i| %w[salary bonus fnf].include?(i.income_type) || i.income_type.blank? }
+    gross_salary = salary_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
+    
+    # Calculate Freelance (Sec 44ADA Presumptive Taxation - 50% of gross)
+    freelance_incomes = incomes.select { |i| i.income_type == "freelance" }
+    gross_freelance = freelance_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
+    taxable_freelance = gross_freelance * 0.50
 
+    # Total TDS Paid
+    tds_paid = incomes.sum { |inc| inc.tax_deducted.to_f }
     # 2. Investments & Capital Gains breakdown
     # Active positions count in the FY they were opened; realized ones count
     # in the FY they were actually sold (not the FY they were bought) — a
@@ -51,10 +61,10 @@ class TaxCalculatorService
 
     # Taxable Income calculation
     # New Regime: Salary - 75,000 + Business/Trading P&L
-    taxable_new = [ gross_salary - std_deduction_new, 0 ].max + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
+    taxable_new = [ gross_salary - std_deduction_new, 0 ].max + taxable_freelance + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
 
     # Old Regime: Salary - 50,000 - 80C - 24b + Trading P&L
-    taxable_old = [ gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0 ].max + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
+    taxable_old = [ gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0 ].max + taxable_freelance + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
 
     # Tax liability calculations
     tax_new = calculate_new_regime_tax(taxable_new)
@@ -72,11 +82,14 @@ class TaxCalculatorService
     total_tax_new = (tax_new[:total_tax] + stcg_tax + ltcg_tax + crypto_tax).round(2)
     total_tax_old = (tax_old[:total_tax] + stcg_tax + ltcg_tax + crypto_tax).round(2)
 
+    tax_payable_new = [ total_tax_new - tds_paid, 0 ].max.round(2)
+    tax_payable_old = [ total_tax_old - tds_paid, 0 ].max.round(2)
+
     recommended_regime = total_tax_new <= total_tax_old ? "New Tax Regime" : "Old Tax Regime"
     tax_saved = (total_tax_old - total_tax_new).abs.round(2)
 
-    recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0
-                        "ITR-3 (F&O / Speculative Trading Business Income)"
+    recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0 || gross_freelance > 0
+                        "ITR-3 / ITR-4 (Business & Professional Income)"
     elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0
                         "ITR-2 (Capital Gains & Crypto Income)"
     else
@@ -87,6 +100,8 @@ class TaxCalculatorService
       financial_year: "FY #{@year - 1}-#{String(@year)[2..3]}",
       assessment_year: "AY #{@year}-#{String(@year + 1)[2..3]}",
       gross_salary: gross_salary,
+      gross_freelance: gross_freelance,
+      tds_already_paid: tds_paid,
       trading_summary: {
         speculative_intraday_pnl: speculative_pnl,
         non_speculative_fo_pnl: non_speculative_fo_pnl,
@@ -105,13 +120,15 @@ class TaxCalculatorService
         taxable_income: taxable_new,
         slab_tax: tax_new[:slab_tax],
         rebate_87a: tax_new[:rebate],
-        total_tax: total_tax_new
+        total_tax: total_tax_new,
+        tax_payable: tax_payable_new
       },
       old_regime: {
         taxable_income: taxable_old,
         slab_tax: tax_old[:slab_tax],
         rebate_87a: tax_old[:rebate],
-        total_tax: total_tax_old
+        total_tax: total_tax_old,
+        tax_payable: tax_payable_old
       },
       special_taxes: {
         stcg_tax_sec111a: stcg_tax,
@@ -167,6 +184,14 @@ class TaxCalculatorService
 
   def default_financial_year
     today = Date.current
-    today.month >= 4 ? today.year + 1 : today.year
+    # Apr-Nov → previous completed FY (ITR filing season)
+    # Dec-Mar → current FY (early filers)
+    if today.month >= 4 && today.month <= 11
+      today.year      # e.g., Jul 2026 → FY 2025-26 (ending 2026)
+    elsif today.month == 12
+      today.year + 1  # e.g., Dec 2026 → FY 2026-27 (ending 2027)
+    else
+      today.year      # e.g., Jan 2027 → FY 2026-27 (ending 2027)
+    end
   end
 end

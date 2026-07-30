@@ -23,7 +23,9 @@ export default function Reports() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
-  const [fyYear, setFyYear] = useState(now.getFullYear());
+  // Apr-Nov → prev FY. Dec-Mar → current FY.
+  const defaultFyYear = (now.getMonth() >= 3 && now.getMonth() <= 10) ? now.getFullYear() : (now.getMonth() >= 11 ? now.getFullYear() + 1 : now.getFullYear());
+  const [fyYear, setFyYear] = useState(defaultFyYear);
 
   const { data: monthlyReport, isLoading: monthlyLoading } = useQuery({
     queryKey: ["reports", "monthly", { month, year }],

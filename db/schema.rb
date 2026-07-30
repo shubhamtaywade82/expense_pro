@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_140000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -129,6 +129,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140000) do
     t.boolean "is_custom", default: false, null: false
     t.string "change_reason"
     t.decimal "original_amount", precision: 14, scale: 2
+    t.string "income_type", default: "salary", null: false
+    t.decimal "gross_amount", precision: 14, scale: 2
+    t.decimal "tax_deducted", precision: 14, scale: 2, default: "0.0"
+    t.decimal "pf_deducted", precision: 14, scale: 2, default: "0.0"
+    t.decimal "other_deductions", precision: 14, scale: 2, default: "0.0"
+    t.jsonb "metadata", default: {}
+    t.index ["income_type"], name: "index_incomes_on_income_type"
     t.index ["parent_id"], name: "index_incomes_on_parent_id"
     t.index ["user_id", "income_date"], name: "index_incomes_on_user_id_and_income_date"
     t.index ["user_id"], name: "index_incomes_on_user_id"

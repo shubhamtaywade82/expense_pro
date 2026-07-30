@@ -276,9 +276,20 @@ type PeriodPreset = "week" | "month" | "quarter" | "fy" | "custom";
 
 function currentFyYear() {
   const now = new Date();
-  // Returns the ending year of the ongoing Indian FY.
-  // Jul 2026 → 2027 (FY 2026-27), Jan 2026 → 2026 (FY 2025-26)
-  return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  // Apr-Nov: default to PREVIOUS completed FY (ITR filing season).
+  // Dec-Mar: default to current FY (early filers for the new year).
+  // e.g., Jul 2026 → FY 2025-26 (AY 2026-27), Jan 2027 → FY 2026-27 (AY 2027-28)
+  if (month >= 3 && month <= 10) return year;      // Apr-Nov → prev FY
+  if (month >= 11) return year + 1;                 // Dec → current FY
+  return year;                                       // Jan-Mar → current FY
+}
+
+function fyDates(fyEndYear: number) {
+  const from = new Date(fyEndYear - 1, 3, 1);  // Apr 1 of FY start year
+  const to = new Date(fyEndYear, 2, 31);        // Mar 31 of FY end year
+  return { fromDate: format(from, "yyyy-MM-dd"), toDate: format(to, "yyyy-MM-dd") };
 }
 
 function PeriodPicker({ onChange }: { onChange: (from: string, to: string) => void }) {
@@ -682,8 +693,9 @@ function PnlReportPanel({ fromDate, toDate }: { fromDate: string; toDate: string
 
 export default function Dhan() {
   const queryClient = useQueryClient();
-  const [fromDate, setFromDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
-  const [toDate, setToDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const defaultFy = fyDates(currentFyYear());
+  const [fromDate, setFromDate] = useState(defaultFy.fromDate);
+  const [toDate, setToDate] = useState(defaultFy.toDate);
 
   const tokenStatus = useQuery({
     queryKey: ["dhan", "token_status"],

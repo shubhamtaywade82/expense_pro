@@ -144,7 +144,11 @@ function BrokerHoldingsPanel() {
 
 function currentFy() {
   const now = new Date();
-  return now.getMonth() >= 3 ? now.getFullYear() + 1 : now.getFullYear();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  // Apr-Nov → prev FY (ITR filing season). Dec-Mar → current FY.
+  if (month >= 3 && month <= 10) return year;
+  return month >= 11 ? year + 1 : year;
 }
 
 export default function Investments() {

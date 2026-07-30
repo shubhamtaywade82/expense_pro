@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_144029) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_145637) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -146,6 +146,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_144029) do
     t.index ["user_id"], name: "index_emi_payments_on_user_id"
   end
 
+  create_table "emi_schedules", force: :cascade do |t|
+    t.bigint "loan_account_id", null: false
+    t.date "due_date"
+    t.integer "installment_number"
+    t.decimal "opening_balance", precision: 15, scale: 2
+    t.decimal "emi_amount", precision: 15, scale: 2
+    t.decimal "principal_component", precision: 15, scale: 2
+    t.decimal "interest_component", precision: 15, scale: 2
+    t.decimal "closing_balance", precision: 15, scale: 2
+    t.string "status"
+    t.date "paid_on"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_account_id"], name: "index_emi_schedules_on_loan_account_id"
+  end
+
   create_table "employments", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "employer_name", null: false
@@ -233,6 +249,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_144029) do
     t.index ["user_id"], name: "index_investments_on_user_id"
   end
 
+  create_table "loan_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name"
+    t.string "lender"
+    t.string "loan_type"
+    t.decimal "principal_amount", precision: 15, scale: 2
+    t.decimal "interest_rate", precision: 5, scale: 2
+    t.integer "tenure_months"
+    t.decimal "emi_amount", precision: 15, scale: 2
+    t.date "start_date"
+    t.string "status"
+    t.decimal "outstanding_principal", precision: 15, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_loan_accounts_on_user_id"
+  end
+
   create_table "loans", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "category_id", null: false
@@ -265,6 +298,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_144029) do
     t.index ["category_id"], name: "index_monthly_bills_on_category_id"
     t.index ["user_id", "is_active"], name: "index_monthly_bills_on_user_id_and_is_active"
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
+  end
+
+  create_table "prepayments", force: :cascade do |t|
+    t.bigint "loan_account_id", null: false
+    t.decimal "amount", precision: 15, scale: 2
+    t.date "date"
+    t.string "impact"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_account_id"], name: "index_prepayments_on_loan_account_id"
   end
 
   create_table "salary_components", force: :cascade do |t|
@@ -502,16 +545,19 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_144029) do
   add_foreign_key "debt_plans", "users"
   add_foreign_key "emi_payments", "loans"
   add_foreign_key "emi_payments", "users"
+  add_foreign_key "emi_schedules", "loan_accounts"
   add_foreign_key "employments", "users"
   add_foreign_key "expenses", "categories"
   add_foreign_key "expenses", "users"
   add_foreign_key "incomes", "employments"
   add_foreign_key "incomes", "users"
   add_foreign_key "investments", "users"
+  add_foreign_key "loan_accounts", "users"
   add_foreign_key "loans", "categories"
   add_foreign_key "loans", "users"
   add_foreign_key "monthly_bills", "categories"
   add_foreign_key "monthly_bills", "users"
+  add_foreign_key "prepayments", "loan_accounts"
   add_foreign_key "salary_components", "employments"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

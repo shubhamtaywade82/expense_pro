@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  loan_account: one
+  amount: 9.99
+  date: 2026-07-30
+  impact: MyString
+
+two:
+  loan_account: two
+  amount: 9.99
+  date: 2026-07-30
+  impact: MyString

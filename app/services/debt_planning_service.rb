@@ -4,7 +4,7 @@ class DebtPlanningService
   end
 
   def debt_summary
-    loans = @user.loans.includes(:emi_payments).select { |l| l.outstanding_principal > 0 }
+    loans = @user.loan_accounts.includes(:emi_schedules).select { |l| l.outstanding_principal > 0 }
 
     {
       total_outstanding: loans.sum(&:outstanding_principal).to_f,
@@ -17,7 +17,7 @@ class DebtPlanningService
   end
 
   def simulate_payoff(strategy:, extra_monthly: 0)
-    loans = @user.loans.includes(:emi_payments)
+    loans = @user.loan_accounts.includes(:emi_schedules)
       .select { |l| l.outstanding_principal > 0 }
     return { error: "No active loans" } if loans.empty?
 
@@ -115,14 +115,15 @@ class DebtPlanningService
     {
       id: loan.id,
       name: loan.name,
+      lender: loan.lender,
       type: loan.loan_type,
       principal: loan.principal_amount.to_f,
       outstanding: loan.outstanding_principal.to_f,
+      interest_rate: loan.interest_rate.to_f,
       emi: loan.emi_amount.to_f,
-      rate: loan.interest_rate.to_f,
-      tenure: loan.tenure_months,
-      remaining_emis: loan.emi_payments.where(is_paid: false).count,
-      paid_emis: loan.emi_payments.where(is_paid: true).count
+      progress_pct: progress.round(1),
+      remaining_emis: loan.emi_schedules.where(status: "pending").count,
+      paid_emis: loan.emi_schedules.where(status: "paid").count
     }
   end
 end

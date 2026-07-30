@@ -44,7 +44,7 @@ class NetWorthService
   end
 
   def compute_liabilities
-    loans = @user.loans.includes(:emi_payments)
+    loans = @user.loan_accounts.includes(:emi_schedules)
 
     loan_details = loans.map do |l|
       outstanding = l.outstanding_principal.to_f
@@ -73,7 +73,7 @@ class NetWorthService
     total_income = @user.incomes.sum(:amount).to_f
     total_expenses = @user.expenses.sum(:amount).to_f
     total_bills_paid = @user.monthly_bills.where(is_paid: true).sum(:amount).to_f
-    total_emis_paid = @user.emi_payments.where(is_paid: true).sum(:amount).to_f
+    total_emis_paid = @user.loan_accounts.joins(:emi_schedules).where(emi_schedules: { status: "paid" }).sum(:emi_amount).to_f
 
     [total_income - total_expenses - total_bills_paid - total_emis_paid, 0].max
   end

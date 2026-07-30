@@ -9,4 +9,14 @@ class BrokerCredential < ApplicationRecord
   encrypts :client_id
   encrypts :token_service_secret
   encrypts :fallback_access_token
+  encrypts :api_key
+  encrypts :api_secret
+  encrypts :api_passphrase
+
+  scope :for_broker, ->(broker) { where(broker: broker) }
+  scope :configured, -> { where.not(client_id: nil) }
+
+  def configured?
+    client_id.present? || api_key.present?
+  end
 end

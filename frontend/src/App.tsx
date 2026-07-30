@@ -13,6 +13,7 @@ import AiAssistant from "./pages/AiAssistant";
 import Investments from "./pages/Investments";
 import ITR from "./pages/ITR";
 import Dhan from "./pages/Dhan";
+import DebtPlanner from "./pages/DebtPlanner";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -121,6 +122,14 @@ export default function App() {
         element={
           <LayoutWrapper>
             <Dhan />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/debt-planner"
+        element={
+          <LayoutWrapper>
+            <DebtPlanner />
           </LayoutWrapper>
         }
       />

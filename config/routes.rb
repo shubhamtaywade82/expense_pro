@@ -43,29 +43,56 @@ Rails.application.routes.draw do
         resources :salary_components, except: [:show]
       end
 
-      get "dhan/token_status", to: "dhan/token#status"
-      post "dhan/refresh_token", to: "dhan/token#refresh"
-      get "dhan/credential", to: "dhan/credential#show"
-      put "dhan/credential", to: "dhan/credential#update"
-      get "dhan/profile", to: "dhan/portfolio#profile"
-      get "dhan/positions", to: "dhan/portfolio#positions"
-      get "dhan/holdings", to: "dhan/portfolio#holdings"
-      get "dhan/orders", to: "dhan/trades#orders"
-      get "dhan/trade_book", to: "dhan/trades#trade_book"
-      get "dhan/trade_history", to: "dhan/trades#trade_history"
-      get "dhan/fund_limits", to: "dhan/portfolio#fund_limits"
-      get "dhan/ledger", to: "dhan/portfolio#ledger"
-      get "dhan/pnl_summary", to: "dhan/investments#pnl_summary"
-      post "dhan/import_to_investments", to: "dhan/investments#import_to_investments"
-      post "dhan/sync_investments", to: "dhan/investments#sync"
-      get "dhan/sync_status", to: "dhan/investments#sync_status"
-      post "dhan/import_trades", to: "dhan/trades#import"
-      get "dhan/pnl_report", to: "dhan/trades#pnl_report"
+      # Multi-broker routes (generic, broker-agnostic)
+      get "brokers", to: "brokers#index"
+      get "brokers/:broker/token_status", to: "brokers#token_status"
+      post "brokers/:broker/refresh_token", to: "brokers#refresh_token"
+      get "brokers/:broker/credential", to: "brokers#credential_show"
+      put "brokers/:broker/credential", to: "brokers#credential_update"
+      get "brokers/:broker/profile", to: "brokers#profile"
+      get "brokers/:broker/positions", to: "brokers#positions"
+      get "brokers/:broker/holdings", to: "brokers#holdings"
+      get "brokers/:broker/orders", to: "brokers#orders"
+      get "brokers/:broker/trade_book", to: "brokers#trade_book"
+      get "brokers/:broker/trade_history", to: "brokers#trade_history"
+      get "brokers/:broker/fund_limits", to: "brokers#fund_limits"
+      get "brokers/:broker/ledger", to: "brokers#ledger"
+      get "brokers/:broker/pnl_summary", to: "brokers#pnl_summary"
+      post "brokers/:broker/import_to_investments", to: "brokers#import_to_investments"
+      post "brokers/:broker/sync", to: "brokers#sync"
+      get "brokers/:broker/sync_status", to: "brokers#sync_status"
+      post "brokers/:broker/import_trades", to: "brokers#import_trades"
+      get "brokers/:broker/pnl_report", to: "brokers#pnl_report"
+
+      # Backward-compatible Dhan aliases (delegate to generic broker routes)
+      get "dhan/token_status", to: redirect("/api/v1/brokers/dhan/token_status")
+      post "dhan/refresh_token", to: redirect("/api/v1/brokers/dhan/refresh_token")
+      get "dhan/credential", to: redirect("/api/v1/brokers/dhan/credential")
+      put "dhan/credential", to: redirect("/api/v1/brokers/dhan/credential")
+      get "dhan/profile", to: redirect("/api/v1/brokers/dhan/profile")
+      get "dhan/positions", to: redirect("/api/v1/brokers/dhan/positions")
+      get "dhan/holdings", to: redirect("/api/v1/brokers/dhan/holdings")
+      get "dhan/orders", to: redirect("/api/v1/brokers/dhan/orders")
+      get "dhan/trade_book", to: redirect("/api/v1/brokers/dhan/trade_book")
+      get "dhan/trade_history", to: redirect("/api/v1/brokers/dhan/trade_history")
+      get "dhan/fund_limits", to: redirect("/api/v1/brokers/dhan/fund_limits")
+      get "dhan/ledger", to: redirect("/api/v1/brokers/dhan/ledger")
+      get "dhan/pnl_summary", to: redirect("/api/v1/brokers/dhan/pnl_summary")
+      post "dhan/import_to_investments", to: redirect("/api/v1/brokers/dhan/import_to_investments")
+      post "dhan/sync_investments", to: redirect("/api/v1/brokers/dhan/sync")
+      get "dhan/sync_status", to: redirect("/api/v1/brokers/dhan/sync_status")
+      post "dhan/import_trades", to: redirect("/api/v1/brokers/dhan/import_trades")
+      get "dhan/pnl_report", to: redirect("/api/v1/brokers/dhan/pnl_report")
 
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"
       get "reports/financial_year", to: "reports#financial_year"
       post "ai/chat", to: "ai#chat"
+
+      get "net_worth", to: "net_worth#show"
+      get "debt_plans/summary", to: "debt_plans#summary"
+      get "debt_plans/simulate", to: "debt_plans#simulate"
+      resources :debt_plans, only: %i[index create]
     end
   end
 

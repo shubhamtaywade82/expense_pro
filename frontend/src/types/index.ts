@@ -169,6 +169,76 @@ export type User = {
   id: number;
   name: string;
   email: string;
+  persona?: "salaried" | "trader" | "business" | "mixed";
+};
+
+export type NetWorth = {
+  assets: {
+    liquidCash: number;
+    investments: number;
+    realizedInvestmentPnl: number;
+    retirementAccounts: number;
+    total: number;
+  };
+  liabilities: {
+    loans: {
+      id: number;
+      name: string;
+      loanType: string;
+      outstanding: number;
+      emi: number;
+      interestRate: number;
+    }[];
+    total: number;
+  };
+  netWorth: number;
+  liquidAssets: number;
+  emergencyFundMonths: number;
+  debtToAssetRatio: number;
+  trend: unknown;
+};
+
+export type DebtLoanDetail = {
+  id: number;
+  name: string;
+  type: string;
+  principal: number;
+  outstanding: number;
+  emi: number;
+  rate: number;
+  tenure: number;
+  remainingEmis: number;
+  paidEmis: number;
+};
+
+export type DebtSummary = {
+  totalOutstanding: number;
+  securedDebt: number;
+  unsecuredDebt: number;
+  debtToIncomeRatio: number;
+  loans: DebtLoanDetail[];
+  monthlySurplus: number;
+};
+
+export type DebtSimulation = {
+  strategy: string;
+  totalMonths: number;
+  projectedPayoffDate: string;
+  totalInterestPaid: number;
+  timeline: { month: number; balances: Record<string, number> }[];
+  error?: string;
+};
+
+export type DebtPlan = {
+  id: number;
+  userId: number;
+  name: string;
+  strategy: string;
+  monthlyExtra: string;
+  status: string;
+  projectedPayoffDate: string | null;
+  totalInterestSaved: string;
+  createdAt: string;
 };
 
 // Generic Create/Update Payloads
@@ -216,6 +286,11 @@ export type DashboardOverview = {
     totalExpense: string;
     totalEmiPaid: string;
     netBalance: string;
+  };
+  netWorth?: {
+    netWorth: number;
+    emergencyFundMonths: number;
+    debtToAssetRatio: number;
   };
 };
 
@@ -333,7 +408,19 @@ export type ItrSummary = {
   };
 };
 
-export type DhanTokenStatus = {
+export type BrokerInfo = {
+  broker: string;
+  name: string;
+  connected: boolean;
+  configured: boolean;
+  client_id: string | null;
+};
+
+export type BrokerListResponse = {
+  brokers: BrokerInfo[];
+};
+
+export type BrokerTokenStatus = {
   connected: boolean;
   expires_at?: string;
   client_id?: string;
@@ -342,21 +429,26 @@ export type DhanTokenStatus = {
   error?: string;
 };
 
-export type DhanCredential = {
+export type BrokerCredential = {
   client_id: string | null;
   token_service_url: string | null;
   has_token_service_secret: boolean;
   has_fallback_access_token: boolean;
   auto_import_pnl: boolean;
   message?: string;
+  api_key?: string | null;
+  has_api_key?: boolean;
 };
 
-export type DhanCredentialUpdate = {
+export type BrokerCredentialUpdate = {
   clientId?: string;
   tokenServiceUrl?: string;
   tokenServiceSecret?: string;
   fallbackAccessToken?: string;
   autoImportPnl?: boolean;
+  apiKey?: string;
+  apiSecret?: string;
+  apiPassphrase?: string;
 };
 
 export type DhanPnlBucket = {
@@ -380,17 +472,17 @@ export type DhanPnlSummary = {
   };
 };
 
-export type DhanImportResult = {
+export type BrokerImportResult = {
   imported_count: number;
   investments: { id: number; name: string; asset_class: string; realized_pnl: string }[];
 };
 
-export type DhanSyncResult = {
+export type BrokerSyncResult = {
   message: string;
   status: string;
 };
 
-export type DhanSyncStatus = {
+export type BrokerSyncStatus = {
   status: "none" | "running" | "completed" | "truncated";
   trades_imported: number;
 };

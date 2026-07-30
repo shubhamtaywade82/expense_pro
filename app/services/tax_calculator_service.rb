@@ -167,11 +167,47 @@ class TaxCalculatorService
         gold_ltcg_tax_sec112: gold_ltcg_tax,
         crypto_tax_sec115bbh: crypto_tax
       },
+      advance_tax: calculate_advance_tax(total_tax_new, tds_paid),
+      tax_audit: check_tax_audit(speculative_pnl, non_speculative_fo_pnl),
       recommendation: {
         best_regime: recommended_regime,
         tax_saved: tax_saved,
         itr_form: recommended_itr
       }
+    }
+  end
+
+  def calculate_advance_tax(total_tax, tds_paid)
+    net_payable = [total_tax - tds_paid, 0].max
+    return { required: false, message: "Net tax payable below threshold" } if net_payable <= 10_000
+
+    installments = [
+      { due_month: "June 15", percentage: 15, amount: (net_payable * 0.15).round(0) },
+      { due_month: "September 15", percentage: 45, amount: (net_payable * 0.45).round(0) },
+      { due_month: "December 15", percentage: 75, amount: (net_payable * 0.75).round(0) },
+      { due_month: "March 15", percentage: 100, amount: net_payable.round(0) }
+    ]
+
+    {
+      required: true,
+      total_liability: net_payable.round(0),
+      installments: installments,
+      interest_234b: "1% per month for delay in paying advance tax (simple interest)",
+      interest_234c: "1% per month on shortfall in each installment"
+    }
+  end
+
+  def check_tax_audit(speculative, non_speculative)
+    turnover = speculative.abs + non_speculative.abs
+    return { required: false } if turnover <= 10_00_00_000
+
+    {
+      required: true,
+      turnover: turnover.round(2),
+      threshold: "₹10 Crore",
+      section: "44AB",
+      due_date: "#{@year}-09-30",
+      penalty: "0.5% of turnover or ₹1,50,000 whichever lower"
     }
   end
 
@@ -227,7 +263,9 @@ class TaxCalculatorService
   def compute_surcharge(tax, income)
     return 0.0 if income <= 5_000_000
 
-    rate = if income > 20_000_000
+    rate = if income > 50_000_000
+      0.37
+    elsif income > 20_000_000
       0.25
     elsif income > 10_000_000
       0.15

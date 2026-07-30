@@ -4,13 +4,14 @@ import type {
   CreatePayload,
   DashboardOverview,
   BrokerSnapshots,
-  DhanCredential,
-  DhanCredentialUpdate,
-  DhanImportResult,
+  BrokerCredential,
+  BrokerCredentialUpdate,
+  BrokerImportResult,
+  BrokerSyncResult,
+  BrokerSyncStatus,
+  BrokerTokenStatus,
+  BrokerListResponse,
   DhanPnlSummary,
-  DhanSyncResult,
-  DhanSyncStatus,
-  DhanTokenStatus,
   EmiPayment,
   Employment,
   Expense,
@@ -22,6 +23,10 @@ import type {
   LoanDetail,
   MonthlyBill,
   MonthlyReport,
+  NetWorth,
+  DebtSummary,
+  DebtSimulation,
+  DebtPlan,
   PnlReport,
   SalaryComponent,
   TaxDeduction,
@@ -263,6 +268,19 @@ export const api = {
     update: (employmentId: number, id: number, data: Partial<SalaryComponent>) =>
       patch<SalaryComponent>(`/employments/${employmentId}/salary_components/${id}`, data),
     delete: (employmentId: number, id: number) => del(`/employments/${employmentId}/salary_components/${id}`),
+  },
+
+  netWorth: {
+    show: () => get<NetWorth>("/net_worth"),
+  },
+
+  debtPlans: {
+    summary: () => get<DebtSummary>("/debt_plans/summary"),
+    simulate: (params: { strategy?: string; extraMonthly?: number } = {}) =>
+      get<DebtSimulation>(`/debt_plans/simulate${buildQuery(params)}`),
+    list: () => get<DebtPlan[]>("/debt_plans"),
+    create: (data: { name: string; strategy?: string; monthlyExtra?: number }) =>
+      post<{ plan: DebtPlan; simulation: DebtSimulation }>("/debt_plans", data),
   },
 
   taxDeductions: {

@@ -96,6 +96,7 @@ export default function Dashboard() {
   const totalEMI = parseFloat(data?.emis.total ?? "0");
   const netSavings = totalIncome - totalExpense - totalBills - totalEMI;
   const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
+  const nw = data?.netWorth;
 
   // Custom tooltips for graphs with glassmorphic style
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -133,20 +134,17 @@ export default function Dashboard() {
                       <div>
                         <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider font-display">Net Worth Overview</h3>
                         <div className="flex items-baseline gap-2">
-                          <span className={`text-3xl font-black font-sans tracking-tight ${parseFloat(data.overall.netBalance) >= 0 ? "text-gradient-emerald" : "text-red-500"}`}>
-                            {formatCurrency(data.overall.netBalance)}
+                          <span className={`text-3xl font-black font-sans tracking-tight ${(nw?.netWorth ?? 0) >= 0 ? "text-gradient-emerald" : "text-red-500"}`}>
+                            {formatCurrency(nw?.netWorth ?? data.overall.netBalance)}
                           </span>
-                          <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/40">LTD Balance</span>
+                          <span className="text-xs font-medium text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/40">Net Worth</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-muted-foreground">Savings Progress (Goal: ₹10L)</span>
-                        <span className="text-primary">{Math.min(100, (parseFloat(data.overall.netBalance) / 1000000) * 100).toFixed(1)}%</span>
-                      </div>
-                      <Progress value={Math.min(100, (parseFloat(data.overall.netBalance) / 1000000) * 100)} className="h-2.5 bg-primary/5" />
+                    <div className="flex gap-4 text-[10px] font-bold">
+                      <span className="text-muted-foreground">Emergency Fund: <span className="text-foreground">{nw?.emergencyFundMonths ?? 0} months</span></span>
+                      <span className="text-muted-foreground">Debt/Asset: <span className={nw && nw.debtToAssetRatio > 50 ? "text-red-500" : "text-emerald-500"}>{nw?.debtToAssetRatio ?? 0}%</span></span>
                     </div>
                   </div>
 

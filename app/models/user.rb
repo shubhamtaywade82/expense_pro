@@ -12,6 +12,29 @@ class User < ApplicationRecord
   has_many :broker_snapshots, dependent: :destroy
   has_many :trades, dependent: :destroy
   has_many :employments, dependent: :destroy
+  has_many :debt_plans, dependent: :destroy
+
+  PERSONAS = %w[salaried trader business mixed].freeze
+
+  def persona
+    self[:persona].presence || detect_persona
+  end
+
+  def detect_persona
+    income_types = incomes.pluck(:income_type).uniq
+    has_trades = trades.exists?
+    has_business = false # placeholder for future Business model
+
+    if has_trades && income_types.include?("salary")
+      "mixed"
+    elsif has_trades
+      "trader"
+    elsif has_business
+      "business"
+    else
+      "salaried"
+    end
+  end
 
   def revoke_all_tokens!
     update!(token_revoked_at: Time.current)

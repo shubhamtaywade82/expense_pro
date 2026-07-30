@@ -10,6 +10,8 @@ class DashboardService
     investments = investment_summary
     tax_est = tax_estimate(investments[:total_pnl].to_f)
 
+    nw = NetWorthService.new(@user).calculate
+
     {
       expenses: expense_summary,
       income: income_summary,
@@ -21,7 +23,12 @@ class DashboardService
       overall: overall_summary,
       monthlyTrend: monthly_trend,
       categoryBreakdown: category_breakdown,
-      recentExpenses: recent_expenses
+      recentExpenses: recent_expenses,
+      netWorth: {
+        netWorth: nw[:net_worth],
+        emergencyFundMonths: nw[:emergency_fund_months],
+        debtToAssetRatio: nw[:debt_to_asset_ratio]
+      }
     }
   end
 

@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -69,6 +70,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
     t.string "api_passphrase"
     t.string "broker_type", default: "dhan", null: false
     t.index ["user_id", "broker"], name: "index_broker_credentials_on_user_id_and_broker", unique: true
+  end
+
+  create_table "broker_format_profiles", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "broker_name"
+    t.jsonb "mapping"
+    t.jsonb "normalization"
+    t.boolean "approved"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_broker_format_profiles_on_user_id"
   end
 
   create_table "broker_snapshots", force: :cascade do |t|
@@ -291,6 +303,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "occupancy", default: "self_occupied"
     t.index ["category_id"], name: "index_loans_on_category_id"
     t.index ["user_id"], name: "index_loans_on_user_id"
   end
@@ -523,6 +536,26 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
     t.index ["user_id"], name: "index_trades_on_user_id"
   end
 
+  create_table "transactions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "financial_account_id", null: false
+    t.bigint "category_id", null: false
+    t.bigint "loan_account_id", null: false
+    t.string "taggable_type", null: false
+    t.bigint "taggable_id", null: false
+    t.string "txn_type"
+    t.integer "status"
+    t.decimal "amount"
+    t.datetime "txn_date"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_transactions_on_category_id"
+    t.index ["financial_account_id"], name: "index_transactions_on_financial_account_id"
+    t.index ["loan_account_id"], name: "index_transactions_on_loan_account_id"
+    t.index ["taggable_type", "taggable_id"], name: "index_transactions_on_taggable"
+    t.index ["user_id"], name: "index_transactions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name", null: false
     t.string "email", null: false
@@ -550,6 +583,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "broker_access_tokens", "users"
   add_foreign_key "broker_credentials", "users"
+  add_foreign_key "broker_format_profiles", "users"
   add_foreign_key "broker_snapshots", "users"
   add_foreign_key "budgets", "categories"
   add_foreign_key "budgets", "users"
@@ -581,4 +615,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
   add_foreign_key "tax_deductions", "incomes"
   add_foreign_key "tax_documents", "users"
   add_foreign_key "trades", "users"
+  add_foreign_key "transactions", "categories"
+  add_foreign_key "transactions", "financial_accounts"
+  add_foreign_key "transactions", "loan_accounts"
+  add_foreign_key "transactions", "users"
 end

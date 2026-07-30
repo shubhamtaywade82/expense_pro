@@ -38,7 +38,8 @@ module Api
                            .order(created_at: :desc)
 
         render json: {
-          documents: docs.map { |d| document_json(d) }
+          documents: docs.map { |d| document_json(d) },
+          checklist: DocumentChecklistService.new(current_user, params[:financial_year] || TaxCalculatorService.default_financial_year).status
         }
       end
 
@@ -49,6 +50,8 @@ module Api
           extracted_data: params[:extracted_data] || doc.extracted_data,
           verified_at: Time.current
         )
+
+        ReconciliationJob.perform_later(user_id: current_user.id, financial_year: doc.financial_year) if defined?(ReconciliationJob)
 
         render json: document_json(doc)
       end
@@ -61,6 +64,8 @@ module Api
           verified_at: Time.current,
           metadata: (doc.metadata || {}).merge("corrected_by_user" => true)
         )
+
+        ReconciliationJob.perform_later(user_id: current_user.id, financial_year: doc.financial_year) if defined?(ReconciliationJob)
 
         render json: document_json(doc)
       end

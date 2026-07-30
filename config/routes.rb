@@ -46,46 +46,27 @@ Rails.application.routes.draw do
         resources :salary_components, except: [:show]
       end
 
-      # Multi-broker routes (generic, broker-agnostic)
-      get "brokers", to: "brokers#index"
-      get "brokers/:broker/token_status", to: "brokers#token_status"
-      post "brokers/:broker/refresh_token", to: "brokers#refresh_token"
-      get "brokers/:broker/credential", to: "brokers#credential_show"
-      put "brokers/:broker/credential", to: "brokers#credential_update"
-      get "brokers/:broker/profile", to: "brokers#profile"
-      get "brokers/:broker/positions", to: "brokers#positions"
-      get "brokers/:broker/holdings", to: "brokers#holdings"
-      get "brokers/:broker/orders", to: "brokers#orders"
-      get "brokers/:broker/trade_book", to: "brokers#trade_book"
-      get "brokers/:broker/trade_history", to: "brokers#trade_history"
-      get "brokers/:broker/fund_limits", to: "brokers#fund_limits"
-      get "brokers/:broker/ledger", to: "brokers#ledger"
-      get "brokers/:broker/pnl_summary", to: "brokers#pnl_summary"
-      post "brokers/:broker/import_to_investments", to: "brokers#import_to_investments"
-      post "brokers/:broker/sync", to: "brokers#sync"
-      get "brokers/:broker/sync_status", to: "brokers#sync_status"
-      post "brokers/:broker/import_trades", to: "brokers#import_trades"
-      get "brokers/:broker/pnl_report", to: "brokers#pnl_report"
+      # ── Unified Broker API ──
+      get "brokers/available", to: "brokers#available"
+      get "brokers/connected", to: "brokers#connected"
+      post "brokers/connect", to: "brokers#connect"
 
-      # Backward-compatible Dhan aliases (delegate to generic broker routes)
-      get "dhan/token_status", to: redirect("/api/v1/brokers/dhan/token_status")
-      post "dhan/refresh_token", to: redirect("/api/v1/brokers/dhan/refresh_token")
-      get "dhan/credential", to: redirect("/api/v1/brokers/dhan/credential")
-      put "dhan/credential", to: redirect("/api/v1/brokers/dhan/credential")
-      get "dhan/profile", to: redirect("/api/v1/brokers/dhan/profile")
-      get "dhan/positions", to: redirect("/api/v1/brokers/dhan/positions")
-      get "dhan/holdings", to: redirect("/api/v1/brokers/dhan/holdings")
-      get "dhan/orders", to: redirect("/api/v1/brokers/dhan/orders")
-      get "dhan/trade_book", to: redirect("/api/v1/brokers/dhan/trade_book")
-      get "dhan/trade_history", to: redirect("/api/v1/brokers/dhan/trade_history")
-      get "dhan/fund_limits", to: redirect("/api/v1/brokers/dhan/fund_limits")
-      get "dhan/ledger", to: redirect("/api/v1/brokers/dhan/ledger")
-      get "dhan/pnl_summary", to: redirect("/api/v1/brokers/dhan/pnl_summary")
-      post "dhan/import_to_investments", to: redirect("/api/v1/brokers/dhan/import_to_investments")
-      post "dhan/sync_investments", to: redirect("/api/v1/brokers/dhan/sync")
-      get "dhan/sync_status", to: redirect("/api/v1/brokers/dhan/sync_status")
-      post "dhan/import_trades", to: redirect("/api/v1/brokers/dhan/import_trades")
-      get "dhan/pnl_report", to: redirect("/api/v1/brokers/dhan/pnl_report")
+      scope "brokers/:broker_type" do
+        get "status",            to: "brokers#status"
+        get "profile",           to: "brokers#profile"
+        get "holdings",          to: "brokers#holdings"
+        get "positions",         to: "brokers#positions"
+        get "fund_limits",       to: "brokers#fund_limits"
+        get "pnl_summary",       to: "brokers#pnl_summary"
+        get "sync_status",       to: "brokers#sync_status"
+
+        post "import_investments", to: "brokers#import_investments"
+        post "import_trades",      to: "brokers#import_trades"
+        post "sync",               to: "brokers#sync"
+
+        patch "credential",      to: "brokers#update_credential"
+        delete "",               to: "brokers#destroy_credential"
+      end
 
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"

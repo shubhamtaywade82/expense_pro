@@ -37,7 +37,7 @@ class NetWorthService
     # Fetch latest broker ledger balances if available
     broker_cash = 0
     if defined?(BrokerSnapshot)
-      broker_cash = @user.broker_snapshots.where(date: Date.today).sum(:ledger_balance).to_f
+      # broker_cash = @user.broker_snapshots.where(date: Date.today).sum(:ledger_balance).to_f
     end
 
     {

@@ -2,8 +2,9 @@ class ReconciliationJob < ApplicationJob
   queue_as :default
   
   def perform(user_id:, financial_year:)
-    ReconciliationService.new(user_id: user_id, financial_year: financial_year).reconcile!
+    user = User.find(user_id)
+    ReconciliationService.new(user, financial_year).call
   ensure
-    Current.reset
+    Current.reset if defined?(Current)
   end
 end

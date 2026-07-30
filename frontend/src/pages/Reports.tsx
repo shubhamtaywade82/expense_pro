@@ -90,12 +90,29 @@ export default function Reports() {
             </div>
 
             {/* Monthly Summary Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Total Expense</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-red-600">{formatCurrency(monthlyReport?.summary.totalExpense ?? "0")}</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Total Income</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-green-600">{formatCurrency(monthlyReport?.summary.totalIncome ?? "0")}</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Bills + EMIs</CardTitle></CardHeader><CardContent><div className="text-xl font-bold">{formatCurrency((parseFloat(monthlyReport?.summary.totalBills ?? "0") + parseFloat(monthlyReport?.summary.totalEMI ?? "0")))}</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Net Savings</CardTitle></CardHeader><CardContent><div className={`text-xl font-bold ${parseFloat(monthlyReport?.summary.netSavings ?? "0") >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(monthlyReport?.summary.netSavings ?? "0")}</div></CardContent></Card>
-            </div>
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Total Expense</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-red-600">{formatCurrency(monthlyReport?.summary.totalExpense ?? "0")}</div></CardContent></Card>
+                <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Total Income</CardTitle></CardHeader><CardContent><div className="text-xl font-bold text-green-600">{formatCurrency(monthlyReport?.summary.totalIncome ?? "0")}</div></CardContent></Card>
+                <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Bills + EMIs</CardTitle></CardHeader><CardContent><div className="text-xl font-bold">{formatCurrency((parseFloat(monthlyReport?.summary.totalBills ?? "0") + parseFloat(monthlyReport?.summary.totalEMI ?? "0")))}</div></CardContent></Card>
+                <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Net Savings</CardTitle></CardHeader><CardContent><div className={`text-xl font-bold ${parseFloat(monthlyReport?.summary.netSavings ?? "0") >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(monthlyReport?.summary.netSavings ?? "0")}</div></CardContent></Card>
+              </div>
+
+              {/* Income by Type */}
+              {monthlyReport?.incomeByType && Object.keys(monthlyReport.incomeByType).length > 0 && (
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Income by Source</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {Object.entries(monthlyReport.incomeByType).map(([type, amount]) => (
+                        <div key={type} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border border-border/50">
+                          <span className="text-xs font-medium capitalize text-muted-foreground">{type.replace(/_/g, " ")}</span>
+                          <span className="text-sm font-semibold text-green-600">{formatCurrency(amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
             <div className="grid gap-4 lg:grid-cols-2">
               {/* Daily Expenses Chart */}
@@ -198,6 +215,23 @@ export default function Reports() {
               <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Bills + EMIs</CardTitle></CardHeader><CardContent><div className="text-xl font-bold">{formatCurrency(parseFloat(fyReport?.summary.totalBills ?? "0") + parseFloat(fyReport?.summary.totalEMI ?? "0"))}</div></CardContent></Card>
               <Card><CardHeader className="pb-2"><CardTitle className="text-xs">Net Savings</CardTitle></CardHeader><CardContent><div className={`text-xl font-bold ${parseFloat(fyReport?.summary.netSavings ?? "0") >= 0 ? "text-green-600" : "text-red-600"}`}>{formatCurrency(fyReport?.summary.netSavings ?? "0")}</div></CardContent></Card>
             </div>
+
+            {/* FY Income by Type */}
+            {fyReport?.incomeByType && Object.keys(fyReport.incomeByType).length > 0 && (
+              <Card>
+                <CardHeader><CardTitle className="text-sm">Income by Source</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.entries(fyReport.incomeByType).map(([type, amount]) => (
+                      <div key={type} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border border-border/50">
+                        <span className="text-xs font-medium capitalize text-muted-foreground">{type.replace(/_/g, " ")}</span>
+                        <span className="text-sm font-semibold text-green-600">{formatCurrency(amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader><CardTitle className="text-sm">Monthly Breakdown - FY {fyYear}-{fyYear + 1}</CardTitle></CardHeader>

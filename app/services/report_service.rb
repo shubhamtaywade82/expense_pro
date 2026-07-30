@@ -24,6 +24,7 @@ class ReportService
         netSavings: (total_income - total_expense - total_bills - total_emi).to_s
       },
       categoryExpenses: category_expenses(expenses),
+      incomeByType: income_by_type(incomes),
       dailyExpenses: daily_expenses(expenses, period),
       billsSummary: bills.map { |bill| { name: bill.name, amount: bill.amount.to_s, isPaid: bill.is_paid } },
       emiSummary: emis.map { |emi| { loanName: emi.loan.name, emiAmount: emi.amount.to_s, isPaid: emi.is_paid } }
@@ -54,6 +55,7 @@ class ReportService
         netSavings: (total_income - total_expense - total_bills_yearly - total_emi).to_s
       },
       monthlyData: monthly_breakdown(fy_start, expenses, all_incomes, bills, emis),
+      incomeByType: income_by_type(all_incomes),
       categoryYearly: category_expenses(expenses),
       loanSummary: loan_summary
     }
@@ -81,6 +83,13 @@ class ReportService
   def daily_expenses(expenses, period)
     totals = expenses.group(:expense_date).sum(:amount)
     period.map { |date| { date: date, total: (totals[date] || 0).to_s } }
+  end
+
+  def income_by_type(incomes)
+    incomes.group_by { |i| i.income_type.presence || "salary" }
+           .transform_values { |incs| incs.sum(&:amount).to_f }
+           .sort_by { |_, v| -v }
+           .to_h
   end
 
   def monthly_breakdown(fy_start, expenses, all_incomes, bills, emis)

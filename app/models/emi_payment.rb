@@ -8,6 +8,20 @@ class EmiPayment < ApplicationRecord
   scope :ordered, -> { order(:emi_number) }
 
   def mark_paid!(paid_on = Date.current)
-    update!(is_paid: true, paid_date: paid_on)
+    return false if is_paid?
+
+    transaction do
+      update!(is_paid: true, paid_date: paid_on)
+
+      user.expenses.create!(
+        category: loan.category,
+        amount: amount,
+        description: "EMI #{emi_number} — #{loan.name}",
+        expense_date: paid_on,
+        payment_method: "other",
+        is_recurring: false
+      )
+    end
+    true
   end
 end

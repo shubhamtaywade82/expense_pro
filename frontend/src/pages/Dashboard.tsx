@@ -418,6 +418,53 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Investment & Tax Estimate Cards */}
+        {data?.investments && (
+          <div className="grid gap-4 md:grid-cols-2 animate-stagger-fade" style={{ animationDelay: "150ms" }}>
+            <Card className="glass-card hover-lift border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-transparent">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Investment Portfolio</CardTitle>
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-black ${parseFloat(data.investments.totalPnl) >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                    {formatCurrency(data.investments.totalPnl)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">P&L</span>
+                </div>
+                <div className="flex gap-4 mt-2 text-[10px] font-medium text-muted-foreground">
+                  <span>Invested: {formatCurrency(data.investments.totalInvested)}</span>
+                  <span>Value: {formatCurrency(data.investments.currentValue)}</span>
+                  <span>{data.investments.count} positions</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {data?.taxEstimate && (
+              <Card className="glass-card hover-lift border-amber-500/10 bg-gradient-to-br from-amber-500/5 to-transparent">
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tax Estimate (FY)</CardTitle>
+                  <IndianRupee className="w-4 h-4 text-amber-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-baseline gap-2">
+                    <span className={`text-2xl font-black ${data.taxEstimate.taxPayable > 0 ? "text-red-500" : "text-emerald-500"}`}>
+                      {data.taxEstimate.taxPayable > 0 ? formatCurrency(data.taxEstimate.taxPayable) : "No tax due"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">Payable</span>
+                  </div>
+                  <div className="flex gap-4 mt-2 text-[10px] font-medium text-muted-foreground">
+                    <span>Gross income: {formatCurrency(data.taxEstimate.grossIncome)}</span>
+                    <span>TDS paid: {formatCurrency(data.taxEstimate.tdsPaid)}</span>
+                    <span>Eff. rate: {data.taxEstimate.effectiveRate}%</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
         {/* EMI and Recent Transactions row */}
         <div className="grid gap-6 lg:grid-cols-3 animate-stagger-fade" style={{ animationDelay: "200ms" }}>
           {/* Quick Stats Panel */}

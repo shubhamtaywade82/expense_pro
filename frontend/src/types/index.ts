@@ -18,6 +18,18 @@ export type Category = CommonFields & {
   isDefault: boolean;
 };
 
+export type PaginationMeta = {
+  page: number;
+  perPage: number;
+  total: number;
+  pages: number;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
 export type Expense = CommonFields & {
   categoryId: number;
   amount: string;
@@ -98,6 +110,8 @@ export type MonthlyBill = CommonFields & {
   isPaid: boolean;
   isActive: boolean;
   categoryName: string;
+  categoryColor?: string;
+  categoryIcon?: string;
 };
 
 export type EmiPayment = Omit<CommonFields, "createdAt" | "updatedAt"> & {
@@ -180,6 +194,20 @@ export type DashboardOverview = {
   bills: { total: string; paid: number; unpaid: number };
   emis: { total: string; paid: number; totalCount: number };
   loans: { activeCount: number; outstandingTotal: string; totalEMI: string };
+  investments?: {
+    totalInvested: string;
+    currentValue: string;
+    totalPnl: string;
+    count: number;
+    assetClasses: Record<string, number>;
+  };
+  taxEstimate?: {
+    grossIncome: number;
+    estimatedTax: number;
+    tdsPaid: number;
+    taxPayable: number;
+    effectiveRate: number;
+  };
   monthlyTrend: { month: string; expenses: string; income: string }[];
   categoryBreakdown: { categoryName: string; categoryColor: string; total: string }[];
   recentExpenses: Pick<Expense, "id" | "description" | "amount" | "expenseDate" | "categoryName" | "categoryColor">[];
@@ -200,6 +228,7 @@ export type MonthlyReport = {
     netSavings: string;
   };
   categoryExpenses: { categoryName: string; categoryColor: string; total: string; count: number }[];
+  incomeByType?: Record<string, number>;
   dailyExpenses: { date: DateString; total: string }[];
   billsSummary: { name: string; amount: string; isPaid: boolean }[];
   emiSummary: { loanName: string; emiAmount: string; isPaid: boolean }[];
@@ -208,6 +237,7 @@ export type MonthlyReport = {
 export type FinancialYearReport = {
   summary: MonthlyReport["summary"];
   monthlyData: { month: string; expenses: string; income: string; bills: string; emis: string }[];
+  incomeByType?: Record<string, number>;
   categoryYearly: { categoryName: string; categoryColor: string; total: string }[];
   loanSummary: Pick<Loan, "name" | "isActive" | "principalAmount" | "emiAmount" | "outstandingPrincipal" | "paidEmiCount" | "remainingEmiCount">[];
 };

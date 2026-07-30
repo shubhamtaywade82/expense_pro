@@ -190,7 +190,10 @@ export default function Bills() {
                             {isOverdue && <Badge variant="destructive" className="text-[10px] h-4">Overdue</Badge>}
                             {bill.isPaid && <Badge variant="default" className="text-[10px] h-4 bg-green-600">Paid</Badge>}
                           </div>
-                          <p className="text-xs text-muted-foreground">Due on {bill.dueDate}{getDaySuffix(bill.dueDate)} · {bill.categoryName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {bill.categoryColor && <span className="inline-block w-2 h-2 rounded-full mr-1 align-middle" style={{ backgroundColor: bill.categoryColor }} />}
+                            Due on {bill.dueDate}{getDaySuffix(bill.dueDate)} · {bill.categoryName}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">

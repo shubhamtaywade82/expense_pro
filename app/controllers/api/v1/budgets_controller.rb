@@ -9,13 +9,20 @@ module Api
 
         budgets = current_user.budgets.includes(:category).for_period(month, year).to_a
 
-        # One grouped query for every budget's spend instead of Budget#actual_spent
-        # issuing its own SELECT per row (they all share this index's month/year).
         spent_by_category = current_user.expenses
           .where(category_id: budgets.map(&:category_id))
           .for_month(month, year)
           .group(:category_id)
           .sum(:amount)
+
+        bill_category_ids = budgets.select { |b| b.category.category_type == "bill" }.map(&:category_id)
+        if bill_category_ids.any?
+          bill_spent = current_user.monthly_bills
+            .where(category_id: bill_category_ids, is_paid: true)
+            .group(:category_id)
+            .sum(:amount)
+          bill_spent.each { |cid, amt| spent_by_category[cid] = (spent_by_category[cid] || 0) + amt }
+        end
 
         render json: budgets.map { |budget| serialize(budget, spent: spent_by_category[budget.category_id] || 0) }
       end

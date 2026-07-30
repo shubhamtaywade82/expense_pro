@@ -33,7 +33,11 @@ module Api
         token = header.split(" ").last
         begin
           decoded = JWT.decode(token, jwt_secret, true, { algorithm: "HS256" })
-          @current_user = User.find_by(id: decoded[0]["user_id"])
+          payload = decoded[0]
+          user = User.find_by(id: payload["user_id"])
+          return nil unless user&.token_valid?(payload["iat"] || 0)
+
+          @current_user = user
         rescue JWT::DecodeError
           nil
         end

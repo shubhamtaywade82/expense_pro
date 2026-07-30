@@ -23,13 +23,14 @@ module Api
       end
 
       def destroy
+        current_user&.revoke_all_tokens!
         head :no_content
       end
 
       private
 
       def generate_token(user_id)
-        JWT.encode({ user_id: user_id, exp: 24.hours.from_now.to_i }, jwt_secret, "HS256")
+        JWT.encode({ user_id: user_id, exp: 24.hours.from_now.to_i, iat: Time.current.to_i }, jwt_secret, "HS256")
       end
 
       def serialize(user)

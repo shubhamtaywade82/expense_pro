@@ -22,8 +22,10 @@ class TaxCalculatorService
     gross_freelance = freelance_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
     taxable_freelance = gross_freelance * 0.50
 
-    # Total TDS Paid
-    tds_paid = incomes.sum { |inc| inc.tax_deducted.to_f }
+    # Total TDS Paid (from Income records + TaxDeduction model)
+    tds_from_incomes = incomes.sum { |inc| inc.tax_deducted.to_f }
+    tds_from_deductions = TaxDeduction.for_fy(@year).sum(:tds_amount).to_f
+    tds_paid = tds_from_incomes + tds_from_deductions
     # 2. Investments & Capital Gains breakdown
     # Active positions count in the FY they were opened; realized ones count
     # in the FY they were actually sold (not the FY they were bought) — a
@@ -35,6 +37,12 @@ class TaxCalculatorService
     speculative_pnl = investments.select { |i| i.asset_class == "speculative_intraday" }.sum(&:total_pnl).to_f
     non_speculative_fo_pnl = investments.select { |i| i.asset_class == "non_speculative_fo" }.sum(&:total_pnl).to_f
     crypto_pnl = investments.select { |i| i.asset_class == "crypto" }.sum(&:total_pnl).to_f
+    fixed_income_pnl = investments.select { |i| i.asset_class == "fixed_income" }.sum(&:total_pnl).to_f
+
+    # Gold/SGB: LTCG at 20% with indexation for holding > 36 months
+    gold_investments = investments.select { |i| i.asset_class == "gold" }
+    gold_stcg = gold_investments.select { |i| (i.sell_date || Date.current) - i.purchase_date < 1095 }.sum(&:total_pnl).to_f
+    gold_ltcg = gold_investments.select { |i| (i.sell_date || Date.current) - i.purchase_date >= 1095 }.sum(&:total_pnl).to_f
 
     # STCG & LTCG
     stcg_investments = investments.select(&:stcg?)
@@ -61,10 +69,10 @@ class TaxCalculatorService
 
     # Taxable Income calculation
     # New Regime: Salary - 75,000 + Business/Trading P&L
-    taxable_new = [ gross_salary - std_deduction_new, 0 ].max + taxable_freelance + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
+    taxable_new = [ gross_salary - std_deduction_new, 0 ].max + taxable_freelance + non_speculative_fo_pnl + [ speculative_pnl, 0 ].max + [ fixed_income_pnl, 0 ].max
 
     # Old Regime: Salary - 50,000 - 80C - 24b + Trading P&L
-    taxable_old = [ gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0 ].max + taxable_freelance + [ non_speculative_fo_pnl, 0 ].max + [ speculative_pnl, 0 ].max
+    taxable_old = [ gross_salary - std_deduction_old - sec_80c - sec_24b_old, 0 ].max + taxable_freelance + non_speculative_fo_pnl + [ speculative_pnl, 0 ].max + [ fixed_income_pnl, 0 ].max
 
     # Tax liability calculations
     tax_new = calculate_new_regime_tax(taxable_new)
@@ -76,11 +84,14 @@ class TaxCalculatorService
     # LTCG (Sec 112A) @ 12.5% on gains exceeding ₹1,25,000
     taxable_ltcg = [ ltcg_pnl - 125_000.0, 0 ].max
     ltcg_tax = taxable_ltcg > 0 ? (taxable_ltcg * 0.125).round(2) : 0.0
+    # Gold STCG (at slab rate — already included in taxable income above)
+    # Gold LTCG with indexation @ 20%
+    gold_ltcg_tax = gold_ltcg > 0 ? (gold_ltcg * 0.20).round(2) : 0.0
     # Crypto (Sec 115BBH) @ 30%
     crypto_tax = crypto_pnl > 0 ? (crypto_pnl * 0.30).round(2) : 0.0
 
-    total_tax_new = (tax_new[:total_tax] + stcg_tax + ltcg_tax + crypto_tax).round(2)
-    total_tax_old = (tax_old[:total_tax] + stcg_tax + ltcg_tax + crypto_tax).round(2)
+    total_tax_new = (tax_new[:total_tax] + stcg_tax + ltcg_tax + gold_ltcg_tax + crypto_tax).round(2)
+    total_tax_old = (tax_old[:total_tax] + stcg_tax + ltcg_tax + gold_ltcg_tax + crypto_tax).round(2)
 
     tax_payable_new = [ total_tax_new - tds_paid, 0 ].max.round(2)
     tax_payable_old = [ total_tax_old - tds_paid, 0 ].max.round(2)
@@ -88,9 +99,9 @@ class TaxCalculatorService
     recommended_regime = total_tax_new <= total_tax_old ? "New Tax Regime" : "Old Tax Regime"
     tax_saved = (total_tax_old - total_tax_new).abs.round(2)
 
-    recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0 || gross_freelance > 0
+    recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0 || gross_freelance > 0 || fixed_income_pnl != 0
                         "ITR-3 / ITR-4 (Business & Professional Income)"
-    elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0
+    elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0 || gold_stcg != 0 || gold_ltcg != 0
                         "ITR-2 (Capital Gains & Crypto Income)"
     else
                         "ITR-1 (Sahaj - Salary & Interest Income)"
@@ -106,9 +117,12 @@ class TaxCalculatorService
         speculative_intraday_pnl: speculative_pnl,
         non_speculative_fo_pnl: non_speculative_fo_pnl,
         crypto_pnl: crypto_pnl,
+        fixed_income_pnl: fixed_income_pnl,
+        gold_stcg_pnl: gold_stcg,
+        gold_ltcg_pnl: gold_ltcg,
         stcg_pnl: stcg_pnl,
         ltcg_pnl: ltcg_pnl,
-        total_pnl: speculative_pnl + non_speculative_fo_pnl + crypto_pnl + stcg_pnl + ltcg_pnl
+        total_pnl: speculative_pnl + non_speculative_fo_pnl + crypto_pnl + fixed_income_pnl + gold_stcg + gold_ltcg + stcg_pnl + ltcg_pnl
       },
       deductions: {
         section_80c: sec_80c,
@@ -133,6 +147,7 @@ class TaxCalculatorService
       special_taxes: {
         stcg_tax_sec111a: stcg_tax,
         ltcg_tax_sec112a: ltcg_tax,
+        gold_ltcg_tax_sec112: gold_ltcg_tax,
         crypto_tax_sec115bbh: crypto_tax
       },
       recommendation: {

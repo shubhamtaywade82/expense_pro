@@ -13,6 +13,14 @@ class User < ApplicationRecord
   has_many :trades, dependent: :destroy
   has_many :employments, dependent: :destroy
 
+  def revoke_all_tokens!
+    update!(token_revoked_at: Time.current)
+  end
+
+  def token_valid?(iat)
+    token_revoked_at.nil? || Time.zone.at(iat) > token_revoked_at
+  end
+
   normalizes :email, with: ->(email) { email.strip.downcase }
 
   validates :name, presence: true

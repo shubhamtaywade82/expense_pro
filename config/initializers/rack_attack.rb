@@ -1,13 +1,19 @@
 class Rack::Attack
-  throttle("logins/ip", limit: 5, period: 60) do |req|
-    req.ip if req.path == "/api/v1/session" && req.post?
+  throttle("auth/login", limit: 10, period: 60) do |req|
+    if req.path == "/api/v1/session" && req.post?
+      req.ip
+    end
   end
 
-  throttle("registrations/ip", limit: 3, period: 300) do |req|
-    req.ip if req.path == "/api/v1/registrations" && req.post?
+  throttle("auth/register", limit: 3, period: 300) do |req|
+    if req.path == "/api/v1/registrations" && req.post?
+      req.ip
+    end
   end
 
-  throttle("api/ip", limit: 100, period: 60) do |req|
-    req.ip if req.path.start_with?("/api/v1/")
+  throttle("api/requests", limit: 300, period: 60) do |req|
+    if req.path.start_with?("/api/")
+      req.ip
+    end
   end
 end

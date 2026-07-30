@@ -11,6 +11,7 @@ Rails.application.routes.draw do
       resources :categories, except: [ :show ]
       resources :expenses, except: [ :show ]
       resources :incomes, except: [ :show ] do
+        resources :tax_deductions, except: [:show]
         collection do
           get :summary
           get :yearly
@@ -40,35 +41,25 @@ Rails.application.routes.draw do
         end
         resources :salary_components, except: [:show]
       end
-      resources :incomes, except: [:show] do
-        resources :tax_deductions, except: [:show]
-        collection do
-          get :summary
-          get :yearly
-        end
-        member do
-          patch :toggle_received
-        end
-      end
 
-      get "dhan/token_status", to: "dhan#token_status"
-      post "dhan/refresh_token", to: "dhan#refresh_token"
-      get "dhan/credential", to: "dhan#credential"
-      put "dhan/credential", to: "dhan#update_credential"
-      get "dhan/profile", to: "dhan#profile"
-      get "dhan/positions", to: "dhan#positions"
-      get "dhan/holdings", to: "dhan#holdings"
-      get "dhan/orders", to: "dhan#orders"
-      get "dhan/trade_book", to: "dhan#trade_book"
-      get "dhan/trade_history", to: "dhan#trade_history"
-      get "dhan/fund_limits", to: "dhan#fund_limits"
-      get "dhan/ledger", to: "dhan#ledger"
-      get "dhan/pnl_summary", to: "dhan#pnl_summary"
-      post "dhan/import_to_investments", to: "dhan#import_to_investments"
-      post "dhan/sync_investments", to: "dhan#sync_investments"
-      get "dhan/sync_status", to: "dhan#sync_status"
-      post "dhan/import_trades", to: "dhan#import_trades"
-      get "dhan/pnl_report", to: "dhan#pnl_report"
+      get "dhan/token_status", to: "dhan/token#status"
+      post "dhan/refresh_token", to: "dhan/token#refresh"
+      get "dhan/credential", to: "dhan/credential#show"
+      put "dhan/credential", to: "dhan/credential#update"
+      get "dhan/profile", to: "dhan/portfolio#profile"
+      get "dhan/positions", to: "dhan/portfolio#positions"
+      get "dhan/holdings", to: "dhan/portfolio#holdings"
+      get "dhan/orders", to: "dhan/trades#orders"
+      get "dhan/trade_book", to: "dhan/trades#trade_book"
+      get "dhan/trade_history", to: "dhan/trades#trade_history"
+      get "dhan/fund_limits", to: "dhan/portfolio#fund_limits"
+      get "dhan/ledger", to: "dhan/portfolio#ledger"
+      get "dhan/pnl_summary", to: "dhan/investments#pnl_summary"
+      post "dhan/import_to_investments", to: "dhan/investments#import_to_investments"
+      post "dhan/sync_investments", to: "dhan/investments#sync"
+      get "dhan/sync_status", to: "dhan/investments#sync_status"
+      post "dhan/import_trades", to: "dhan/trades#import"
+      get "dhan/pnl_report", to: "dhan/trades#pnl_report"
 
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"

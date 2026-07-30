@@ -94,6 +94,7 @@ export const api = {
       return data;
     },
     logout: async () => {
+      await del<void>("/session");
       localStorage.removeItem("jwt");
     },
     register: async (data: { name: string; email: string; password: string }) => {
@@ -111,8 +112,10 @@ export const api = {
   },
 
   expenses: {
-    list: (params: { month?: number; year?: number; categoryId?: number; search?: string } = {}) =>
-      get<Expense[]>(`/expenses${buildQuery(params)}`),
+    list: async (params: { month?: number; year?: number; categoryId?: number; search?: string } = {}) => {
+      const res = await request<{ data: Expense[]; meta: { page: number; per_page: number; total: number; pages: number } }>(`/expenses${buildQuery(params)}`);
+      return res.data;
+    },
     create: (data: CreatePayload<Expense>) => post<Expense>("/expenses", data),
     update: (data: UpdatePayload<Expense>) => patch<Expense>(`/expenses/${data.id}`, data),
     delete: (id: number) => del<void>(`/expenses/${id}`),
@@ -234,7 +237,8 @@ export const api = {
       get<PnlReport>(`/dhan/pnl_report${buildQuery(params)}`),
     pnlReportCsv: (params: { fromDate?: string; toDate?: string } = {}) => {
       const search = buildQuery(params);
-      return `${BASE_URL}/dhan/pnl_report${search}&format=csv`;
+      const separator = search ? "&" : "?";
+      return `${BASE_URL}/dhan/pnl_report${search}${separator}format=csv`;
     },
   },
 

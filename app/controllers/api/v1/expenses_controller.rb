@@ -16,8 +16,16 @@ module Api
         scope = scope.search(params[:search]) if params[:search].present?
 
         @pagy, @expenses = pagy(scope)
-        
-        render json: ExpenseBlueprint.render_as_hash(@expenses)
+
+        render json: {
+          data: ExpenseBlueprint.render_as_hash(@expenses),
+          meta: {
+            page: @pagy.page,
+            per_page: @pagy.limit,
+            total: @pagy.count,
+            pages: @pagy.pages
+          }
+        }
       end
 
       def create

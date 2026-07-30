@@ -12,6 +12,12 @@ class Budget < ApplicationRecord
   scope :for_period, ->(month, year) { where(month: month, year: year) }
 
   def actual_spent
-    category.expenses.for_month(month, year).sum(:amount)
+    spent = category.expenses.for_month(month, year).sum(:amount)
+
+    if category.category_type == "bill"
+      spent += category.monthly_bills.active.where(is_paid: true).sum(:amount)
+    end
+
+    spent
   end
 end

@@ -39,7 +39,11 @@ module Api
       end
 
       def serialize(bill)
-        bill.as_json.merge("categoryName" => bill.category.name)
+        bill.as_json.merge(
+          "categoryName" => bill.category.name,
+          "categoryColor" => bill.category.color,
+          "categoryIcon" => bill.category.icon
+        )
       end
     end
   end

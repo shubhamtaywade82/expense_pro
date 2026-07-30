@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_140010) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_140012) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -36,6 +36,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140010) do
     t.datetime "updated_at", null: false
     t.string "broker", default: "dhan", null: false
     t.boolean "auto_import_pnl", default: false, null: false
+    t.text "api_key"
+    t.text "api_secret"
+    t.string "api_passphrase"
+    t.string "broker_type", default: "dhan", null: false
     t.index ["user_id", "broker"], name: "index_broker_credentials_on_user_id_and_broker", unique: true
   end
 
@@ -414,6 +418,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140010) do
     t.datetime "exchange_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "broker_type", default: "securities", null: false
     t.index ["user_id", "broker", "trade_date"], name: "index_trades_on_user_id_and_broker_and_trade_date"
     t.index ["user_id", "exchange_segment"], name: "index_trades_on_user_id_and_exchange_segment"
     t.index ["user_id", "exchange_trade_id"], name: "index_trades_on_user_id_and_exchange_trade_id", unique: true, where: "(exchange_trade_id IS NOT NULL)"

@@ -4,7 +4,9 @@ class Income < ApplicationRecord
 
   belongs_to :user
   belongs_to :parent, class_name: "Income", optional: true
+  belongs_to :employment, optional: true
   has_many :instances, class_name: "Income", foreign_key: :parent_id, dependent: :destroy
+  has_many :tax_deductions, dependent: :destroy
 
   validates :source, presence: true
   validates :amount, numericality: { greater_than_or_equal_to: 0 }

@@ -34,6 +34,23 @@ Rails.application.routes.draw do
       get "tax/itr_summary", to: "tax#itr_summary"
       get "broker_snapshots", to: "broker_snapshots#index"
 
+      resources :employments, except: [:show] do
+        member do
+          post :fnf_settlement
+        end
+        resources :salary_components, except: [:show]
+      end
+      resources :incomes, except: [:show] do
+        resources :tax_deductions, except: [:show]
+        collection do
+          get :summary
+          get :yearly
+        end
+        member do
+          patch :toggle_received
+        end
+      end
+
       get "dhan/token_status", to: "dhan#token_status"
       post "dhan/refresh_token", to: "dhan#refresh_token"
       get "dhan/credential", to: "dhan#credential"

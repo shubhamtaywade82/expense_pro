@@ -32,8 +32,10 @@ export type Expense = CommonFields & {
 
 export type IncomeFrequency = "weekly" | "monthly" | "quarterly" | "yearly" | "one_time";
 
+export type IncomeCategory = "salary" | "freelance" | "bonus" | "fnf_settlement" | "interest" | "rental" | "other";
+
 export type Income = Omit<CommonFields, "id"> & {
-  id: number | null; // Projected incomes have null id
+  id: number | null;
   source: string;
   amount: string;
   incomeDate: DateString;
@@ -50,6 +52,40 @@ export type Income = Omit<CommonFields, "id"> & {
   isLatestRecurring?: boolean;
   isOngoing?: boolean;
   gapInfo?: string | null;
+  incomeType?: IncomeCategory | null;
+  grossAmount?: string | null;
+  taxDeducted?: string | null;
+  pfDeducted?: string | null;
+  otherDeductions?: string | null;
+  metadata?: Record<string, unknown> | null;
+  employmentId?: number | null;
+};
+
+export type Employment = CommonFields & {
+  employerName: string;
+  designation: string | null;
+  startDate: DateString;
+  endDate: DateString | null;
+  isCurrent: boolean;
+  monthlyCtc: string | null;
+  panOfEmployer: string | null;
+};
+
+export type SalaryComponent = {
+  id?: number;
+  incomeId?: number;
+  componentType: string;
+  amount: string;
+  isEmployerContribution: boolean;
+};
+
+export type TaxDeduction = CommonFields & {
+  incomeId: number | null;
+  deductionType: "tds" | "advance_tax" | "self_assessment";
+  amount: string;
+  deductionDate: DateString;
+  section: string | null;
+  notes: string | null;
 };
 
 export type MonthlyBill = CommonFields & {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Income as IncomeType } from "@/types";
+import EmploymentSection from "@/components/EmploymentSection";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,11 @@ export default function Income() {
     amount: "",
     originalAmount: "",
     incomeDate: format(now, "yyyy-MM-dd"),
+    incomeType: "salary" as string,
+    grossAmount: "",
+    taxDeducted: "",
+    pfDeducted: "",
+    otherDeductions: "",
     isRecurring: false,
     frequency: "monthly" as string,
     notes: "",
@@ -174,6 +180,11 @@ export default function Income() {
       amount: "",
       originalAmount: "",
       incomeDate: format(new Date(), "yyyy-MM-dd"),
+      incomeType: "salary",
+      grossAmount: "",
+      taxDeducted: "",
+      pfDeducted: "",
+      otherDeductions: "",
       isRecurring: false,
       frequency: "monthly",
       notes: "",
@@ -200,6 +211,7 @@ export default function Income() {
       source: form.source,
       amount: form.amount,
       incomeDate: form.incomeDate,
+      incomeType: form.incomeType,
       isRecurring: form.isRecurring,
       frequency: form.frequency as "monthly" | "quarterly" | "yearly" | "one_time",
       notes: form.notes || undefined,
@@ -209,6 +221,10 @@ export default function Income() {
       isCustom: isCustomFlag,
       changeReason: form.changeReason || (hasAmountChanged ? "Month Custom Adjustment" : undefined),
       originalAmount: form.originalAmount || undefined,
+      grossAmount: form.grossAmount || undefined,
+      taxDeducted: form.taxDeducted || undefined,
+      pfDeducted: form.pfDeducted || undefined,
+      otherDeductions: form.otherDeductions || undefined,
     };
 
     if (editingId) updateMutation.mutate({ id: editingId, ...payload });
@@ -238,6 +254,11 @@ export default function Income() {
       endDate: inc.endDate ? format(new Date(inc.endDate), "yyyy-MM-dd") : "",
       isCustom: inc.isCustom || isOverride,
       changeReason: inc.changeReason || "",
+      incomeType: inc.incomeType || "salary",
+      grossAmount: inc.grossAmount ? String(inc.grossAmount) : "",
+      taxDeducted: inc.taxDeducted ? String(inc.taxDeducted) : "",
+      pfDeducted: inc.pfDeducted ? String(inc.pfDeducted) : "",
+      otherDeductions: inc.otherDeductions ? String(inc.otherDeductions) : "",
     });
     setDialogOpen(true);
   };
@@ -335,6 +356,28 @@ export default function Income() {
                     />
                   </div>
 
+                  {/* Income Category */}
+                  <div>
+                    <Label className="text-sm font-medium">Income Category</Label>
+                    <Select
+                      value={form.incomeType}
+                      onValueChange={(v) => setForm({ ...form, incomeType: v })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="salary">Salary / Employment</SelectItem>
+                        <SelectItem value="freelance">Freelance / Consulting</SelectItem>
+                        <SelectItem value="bonus">Bonus / Incentive</SelectItem>
+                        <SelectItem value="fnf_settlement">FNF Settlement</SelectItem>
+                        <SelectItem value="interest">Interest Income</SelectItem>
+                        <SelectItem value="rental">Rental Income</SelectItem>
+                        <SelectItem value="other">Other Income</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium">Amount (₹)</Label>
@@ -365,6 +408,57 @@ export default function Income() {
                       />
                     </div>
                   </div>
+
+                  {/* Salary Structure (gross amount + deductions for salary/freelance) */}
+                  {(form.incomeType === "salary" || form.incomeType === "freelance") && (
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/50 space-y-3">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        {form.incomeType === "salary" ? "Salary Structure" : "Freelance / Gross Revenue"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label className="text-xs">Gross / CTC Amount (₹)</Label>
+                          <Input
+                            type="number" step="0.01" className="mt-1 h-9"
+                            value={form.grossAmount}
+                            onChange={(e) => setForm({ ...form, grossAmount: e.target.value })}
+                            placeholder="Same as net if leave blank"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Net Take-Home (₹)</Label>
+                          <p className="mt-2 text-sm font-semibold text-emerald-600">
+                            ₹{parseFloat(form.amount || "0").toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
+                      {form.incomeType === "salary" && (
+                        <div className="grid grid-cols-3 gap-2 pt-1">
+                          <div>
+                            <Label className="text-[10px] text-muted-foreground">TDS Deducted</Label>
+                            <Input type="number" step="0.01" className="mt-0.5 h-8 text-xs"
+                              value={form.taxDeducted}
+                              onChange={(e) => setForm({ ...form, taxDeducted: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] text-muted-foreground">PF Deducted</Label>
+                            <Input type="number" step="0.01" className="mt-0.5 h-8 text-xs"
+                              value={form.pfDeducted}
+                              onChange={(e) => setForm({ ...form, pfDeducted: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] text-muted-foreground">Other Deductions</Label>
+                            <Input type="number" step="0.01" className="mt-0.5 h-8 text-xs"
+                              value={form.otherDeductions}
+                              onChange={(e) => setForm({ ...form, otherDeductions: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Change Reason / Custom Note (for Increments / Bonuses / Deductions) */}
                   {(form.parentId || form.isCustom || (form.originalAmount && parseFloat(form.amount) !== parseFloat(form.originalAmount))) && (
@@ -721,6 +815,11 @@ export default function Income() {
                                 <Badge variant="outline" className="text-[10px] h-5 capitalize">
                                   {inc.frequency}
                                 </Badge>
+                                {inc.incomeType && inc.incomeType !== "salary" && (
+                                  <Badge className="text-[10px] h-5 bg-purple-500/10 text-purple-600 border-purple-500/30 capitalize">
+                                    {inc.incomeType.replace(/_/g, " ")}
+                                  </Badge>
+                                )}
                                 {inc.isRecurring && (
                                   <Badge
                                     variant="secondary"
@@ -1285,6 +1384,7 @@ export default function Income() {
             </Card>
           </TabsContent>
         </Tabs>
+        <EmploymentSection />
       </div>
     </div>
   );

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_140006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
     t.index ["user_id"], name: "index_emi_payments_on_user_id"
   end
 
+  create_table "employments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "employer_name", null: false
+    t.string "designation"
+    t.date "start_date", null: false
+    t.date "end_date"
+    t.boolean "is_current", default: true
+    t.decimal "monthly_ctc", precision: 12, scale: 2
+    t.string "pan_of_employer"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "fnf_settled_at"
+    t.index ["user_id", "employer_name"], name: "index_employments_on_user_id_and_employer_name"
+    t.index ["user_id", "is_current"], name: "index_employments_on_user_id_and_is_current"
+    t.index ["user_id"], name: "index_employments_on_user_id"
+  end
+
   create_table "expenses", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "category_id", null: false
@@ -135,6 +152,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
     t.decimal "pf_deducted", precision: 14, scale: 2, default: "0.0"
     t.decimal "other_deductions", precision: 14, scale: 2, default: "0.0"
     t.jsonb "metadata", default: {}
+    t.bigint "employment_id"
+    t.index ["employment_id"], name: "index_incomes_on_employment_id"
     t.index ["income_type"], name: "index_incomes_on_income_type"
     t.index ["parent_id"], name: "index_incomes_on_parent_id"
     t.index ["user_id", "income_date"], name: "index_incomes_on_user_id_and_income_date"
@@ -198,6 +217,32 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
     t.index ["category_id"], name: "index_monthly_bills_on_category_id"
     t.index ["user_id", "is_active"], name: "index_monthly_bills_on_user_id_and_is_active"
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
+  end
+
+  create_table "salary_components", force: :cascade do |t|
+    t.bigint "employment_id", null: false
+    t.string "component_type", null: false
+    t.string "component_label"
+    t.decimal "monthly_amount", precision: 12, scale: 2, default: "0.0"
+    t.boolean "is_taxable", default: true
+    t.boolean "is_exempt_under_80c", default: false
+    t.decimal "hra_rent_paid", precision: 12, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["employment_id", "component_type"], name: "index_salary_components_on_employment_id_and_component_type"
+    t.index ["employment_id"], name: "index_salary_components_on_employment_id"
+  end
+
+  create_table "tax_deductions", force: :cascade do |t|
+    t.bigint "income_id", null: false
+    t.string "deduction_type", null: false
+    t.decimal "tds_amount", precision: 12, scale: 2, null: false
+    t.date "paid_on"
+    t.string "remarks"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["income_id", "deduction_type"], name: "index_tax_deductions_on_income_id_and_deduction_type"
+    t.index ["income_id"], name: "index_tax_deductions_on_income_id"
   end
 
   create_table "trades", force: :cascade do |t|
@@ -267,13 +312,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_140001) do
   add_foreign_key "categories", "users"
   add_foreign_key "emi_payments", "loans"
   add_foreign_key "emi_payments", "users"
+  add_foreign_key "employments", "users"
   add_foreign_key "expenses", "categories"
   add_foreign_key "expenses", "users"
+  add_foreign_key "incomes", "employments"
   add_foreign_key "incomes", "users"
   add_foreign_key "investments", "users"
   add_foreign_key "loans", "categories"
   add_foreign_key "loans", "users"
   add_foreign_key "monthly_bills", "categories"
   add_foreign_key "monthly_bills", "users"
+  add_foreign_key "salary_components", "employments"
+  add_foreign_key "tax_deductions", "incomes"
   add_foreign_key "trades", "users"
 end

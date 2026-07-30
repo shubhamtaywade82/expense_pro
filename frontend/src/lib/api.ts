@@ -12,6 +12,7 @@ import type {
   DhanSyncStatus,
   DhanTokenStatus,
   EmiPayment,
+  Employment,
   Expense,
   FinancialYearReport,
   Income,
@@ -22,6 +23,8 @@ import type {
   MonthlyBill,
   MonthlyReport,
   PnlReport,
+  SalaryComponent,
+  TaxDeduction,
   UpdatePayload,
   User,
 } from "@/types";
@@ -238,5 +241,33 @@ export const api = {
   brokerSnapshots: {
     // Reads persisted holdings/positions from Postgres — no live broker call.
     list: () => get<BrokerSnapshots>("/broker_snapshots"),
+  },
+
+  employments: {
+    list: () => get<Employment[]>("/employments"),
+    create: (data: Partial<Employment>) => post<Employment>("/employments", data),
+    update: (data: UpdatePayload<Employment>) => patch<Employment>(`/employments/${data.id}`, data),
+    delete: (id: number) => del(`/employments/${id}`),
+    fnfSettlement: (id: number) =>
+      get<Record<string, unknown>>(`/employments/${id}/fnf_settlement`),
+  },
+
+  salaryComponents: {
+    list: (employmentId: number) => get<SalaryComponent[]>(`/employments/${employmentId}/salary_components`),
+    create: (employmentId: number, data: Partial<SalaryComponent>) =>
+      post<SalaryComponent>(`/employments/${employmentId}/salary_components`, data),
+    update: (employmentId: number, id: number, data: Partial<SalaryComponent>) =>
+      patch<SalaryComponent>(`/employments/${employmentId}/salary_components/${id}`, data),
+    delete: (employmentId: number, id: number) => del(`/employments/${employmentId}/salary_components/${id}`),
+  },
+
+  taxDeductions: {
+    list: (incomeId: number) =>
+      get<TaxDeduction[]>(`/incomes/${incomeId}/tax_deductions`),
+    create: (incomeId: number, data: Partial<TaxDeduction>) =>
+      post<TaxDeduction>(`/incomes/${incomeId}/tax_deductions`, data),
+    update: (incomeId: number, id: number, data: Partial<TaxDeduction>) =>
+      patch<TaxDeduction>(`/incomes/${incomeId}/tax_deductions/${id}`, data),
+    delete: (incomeId: number, id: number) => del(`/incomes/${incomeId}/tax_deductions/${id}`),
   },
 };

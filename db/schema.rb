@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_145637) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_30_145911) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -192,6 +192,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145637) do
     t.index ["category_id"], name: "index_expenses_on_category_id"
     t.index ["user_id", "expense_date"], name: "index_expenses_on_user_id_and_expense_date"
     t.index ["user_id"], name: "index_expenses_on_user_id"
+  end
+
+  create_table "financial_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "account_name"
+    t.string "institution"
+    t.string "account_type"
+    t.decimal "balance", precision: 15, scale: 2
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_financial_accounts_on_user_id"
   end
 
   create_table "incomes", force: :cascade do |t|
@@ -549,6 +561,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_145637) do
   add_foreign_key "employments", "users"
   add_foreign_key "expenses", "categories"
   add_foreign_key "expenses", "users"
+  add_foreign_key "financial_accounts", "users"
   add_foreign_key "incomes", "employments"
   add_foreign_key "incomes", "users"
   add_foreign_key "investments", "users"

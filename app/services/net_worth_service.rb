@@ -34,12 +34,19 @@ class NetWorthService
       i.name.match?(/(epf|ppf|nps)/i) ? i.current_value.to_f : 0
     end
 
+    # Fetch latest broker ledger balances if available
+    broker_cash = 0
+    if defined?(BrokerSnapshot)
+      broker_cash = @user.broker_snapshots.where(date: Date.today).sum(:ledger_balance).to_f
+    end
+
     {
-      liquid_cash: current_account_balance,
+      liquid_cash: current_account_balance + broker_cash,
       investments: investments_total,
       realized_investment_pnl: realized_investments,
       retirement_accounts: epf,
-      total: investments_total + realized_investments + current_account_balance + epf
+      broker_ledger: broker_cash,
+      total: investments_total + realized_investments + current_account_balance + epf + broker_cash
     }
   end
 
@@ -69,13 +76,19 @@ class NetWorthService
   end
 
   def current_account_balance
-    # Best estimate from income - expenses - bills - emis (life-to-date)
-    total_income = @user.incomes.sum(:amount).to_f
-    total_expenses = @user.expenses.sum(:amount).to_f
-    total_bills_paid = @user.monthly_bills.where(is_paid: true).sum(:amount).to_f
-    total_emis_paid = @user.loan_accounts.joins(:emi_schedules).where(emi_schedules: { status: "paid" }).sum(:emi_amount).to_f
-
-    [total_income - total_expenses - total_bills_paid - total_emis_paid, 0].max
+    # Use real FinancialAccount balances
+    total = @user.financial_accounts.where(account_type: %w[savings checking cash wallet]).sum(:balance).to_f
+    
+    # Fallback to estimation if no financial accounts are linked
+    if total == 0 && @user.financial_accounts.empty?
+      total_income = @user.incomes.sum(:amount).to_f
+      total_expenses = @user.expenses.sum(:amount).to_f
+      total_bills_paid = @user.monthly_bills.where(is_paid: true).sum(:amount).to_f
+      total_emis_paid = @user.loan_accounts.joins(:emi_schedules).where(emi_schedules: { status: "paid" }).sum(:emi_amount).to_f
+      total = [total_income - total_expenses - total_bills_paid - total_emis_paid, 0].max
+    end
+    
+    total
   end
 
   def emergency_fund_coverage(liquid)

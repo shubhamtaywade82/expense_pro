@@ -1,0 +1,30 @@
+services:
+  web:
+    build: .
+    command: ./bin/thrust ./bin/rails server
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/expense_pro_production
+      - RAILS_ENV=production
+
+  worker:
+    build: .
+    command: ./bin/jobs
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgres://postgres:password@db:5432/expense_pro_production
+      - RAILS_ENV=production
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

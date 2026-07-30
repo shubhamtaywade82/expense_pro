@@ -25,6 +25,8 @@ import {
   LineChart,
   Vault,
   ScrollText,
+  Calculator,
+  Building,
 } from "lucide-react";
 
 const navItems = [
@@ -35,9 +37,11 @@ const navItems = [
   { path: "/debt-planner", label: "Debt Planner", icon: Target },
   { path: "/income", label: "Income", icon: Wallet },
   { path: "/budget", label: "Budget", icon: PiggyBank },
+  { path: "/net-worth", label: "Net Worth", icon: Building },
   { path: "/investments", label: "Investments", icon: TrendingUp },
   { path: "/brokers", label: "Brokers", icon: LineChart },
   { path: "/tax-documents", label: "Tax Vault", icon: Vault },
+  { path: "/itr", label: "Tax Calculator", icon: Calculator },
   { path: "/itr-filing", label: "ITR Filing", icon: ScrollText },
   { path: "/reports", label: "Reports", icon: BarChart3 },
   { path: "/categories", label: "Categories", icon: Tags },

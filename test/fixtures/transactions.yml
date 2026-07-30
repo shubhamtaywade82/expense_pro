@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  financial_account: one
+  category: one
+  loan_account: one
+  taggable: one
+  taggable_type: Taggable
+  txn_type: MyString
+  status: 1
+  amount: 9.99
+  txn_date: 2026-07-30 21:46:54
+
+two:
+  user: two
+  financial_account: two
+  category: two
+  loan_account: two
+  taggable: two
+  taggable_type: Taggable
+  txn_type: MyString
+  status: 1
+  amount: 9.99
+  txn_date: 2026-07-30 21:46:54

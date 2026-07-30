@@ -1,3 +1,5 @@
 # frozen_string_literal: true
 
-Brokers::Registry.register_all!
+Rails.application.reloader.to_prepare do
+  Brokers::Registry.register_all!
+end

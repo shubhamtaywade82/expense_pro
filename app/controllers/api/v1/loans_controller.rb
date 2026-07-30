@@ -4,10 +4,9 @@ module Api
       before_action :set_loan, only: [ :show, :destroy ]
 
       def index
-        loans = current_user.loans.includes(:category).to_a
-        aggregates = Loan.batch_aggregates(loans)
+        loans = current_user.loan_accounts.includes(:emi_schedules).to_a
 
-        render json: loans.map { |loan| serialize_summary(loan, **aggregates[loan]) }
+        render json: loans.map { |loan| serialize_summary(loan) }
       end
 
       def show
@@ -15,9 +14,13 @@ module Api
       end
 
       def create
-        loan = current_user.loans.build(loan_params)
+        loan = current_user.loan_accounts.build(loan_params)
+        loan.status = "active"
         loan.save!
-        render json: serialize_summary(loan), status: :created
+        
+        AmortizationService.new(loan).generate_schedule!
+        
+        render json: serialize_summary(loan.reload), status: :created
       end
 
       def destroy
@@ -28,37 +31,33 @@ module Api
       private
 
       def set_loan
-        @loan = current_user.loans.find(params[:id])
+        @loan = current_user.loan_accounts.find(params[:id])
       end
 
       def loan_params
-        params.permit(:category_id, :name, :lender, :principal_amount, :interest_rate,
-                      :tenure_months, :start_date, :loan_type, :notes)
+        params.permit(:name, :lender, :principal_amount, :interest_rate,
+                      :tenure_months, :start_date, :loan_type)
       end
 
-      # paid_count/total_interest/outstanding_principal are batched by #index
-      # (Loan.batch_aggregates); when absent (show/create — a single loan),
-      # each falls back to its own lightweight scalar query.
-      def serialize_summary(loan, paid_count: nil, total_interest: nil, outstanding_principal: nil)
-        paid_count ||= loan.emi_payments.where(is_paid: true).count
-        total_interest ||= loan.emi_payments.sum(:interest_amount)
-        outstanding_principal ||= loan.outstanding_principal
+      def serialize_summary(loan)
+        paid_schedules = loan.emi_schedules.where(status: "paid")
+        paid_count = paid_schedules.count
+        total_interest = loan.emi_schedules.sum(:interest_component)
+        outstanding_principal = loan.outstanding_principal.presence || loan.principal_amount
 
         loan.as_json.merge(
-          "categoryName" => loan.category.name,
-          "categoryColor" => loan.category.color,
           "emiAmount" => loan.emi_amount.to_s,
           "outstandingPrincipal" => outstanding_principal.to_s,
           "totalInterest" => total_interest.to_s,
           "totalAmount" => (loan.principal_amount.to_d + total_interest).to_s,
-          "isActive" => paid_count < loan.tenure_months,
+          "isActive" => loan.status == "active",
           "paidEmiCount" => paid_count,
           "remainingEmiCount" => loan.tenure_months - paid_count
         )
       end
 
       def serialize_detail(loan)
-        serialize_summary(loan).merge("emis" => loan.emi_payments.ordered)
+        serialize_summary(loan).merge("emis" => loan.emi_schedules.order(:installment_number))
       end
     end
   end

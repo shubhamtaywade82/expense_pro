@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import TaxDocuments from "./pages/TaxDocuments";
 import ItrFiling from "./pages/ItrFiling";
+import NetWorth from "./pages/NetWorth";
 
 function LayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
@@ -148,6 +149,14 @@ export default function App() {
         element={
           <LayoutWrapper>
             <ItrFiling />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/net-worth"
+        element={
+          <LayoutWrapper>
+            <NetWorth />
           </LayoutWrapper>
         }
       />

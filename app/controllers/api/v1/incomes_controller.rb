@@ -7,14 +7,14 @@ module Api
         if params[:month].present? && params[:year].present?
           start_date = Date.new(params[:year].to_i, params[:month].to_i, 1)
           incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month, include_parent: true).call
-          render json: incomes
+          render json: IncomeBlueprint.render_as_hash(incomes)
         elsif params[:year].present?
           start_date = Date.new(params[:year].to_i, 1, 1)
           end_date = Date.new(params[:year].to_i, 12, 31)
           incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
-          render json: incomes
+          render json: IncomeBlueprint.render_as_hash(incomes)
         else
-          render json: current_user.incomes.includes(:parent).recent_first
+          render json: IncomeBlueprint.render_as_hash(current_user.incomes.includes(:parent).recent_first)
         end
       end
 
@@ -79,12 +79,12 @@ module Api
       def create
         income = current_user.incomes.build(income_params)
         income.save!
-        render json: income, status: :created
+        render json: IncomeBlueprint.render_as_hash(income), status: :created
       end
 
       def update
         @income.update!(income_params)
-        render json: @income
+        render json: IncomeBlueprint.render_as_hash(@income)
       end
 
       def destroy
@@ -94,7 +94,7 @@ module Api
 
       def toggle_received
         @income.update!(is_received: !@income.is_received)
-        render json: @income
+        render json: IncomeBlueprint.render_as_hash(@income)
       end
 
       private

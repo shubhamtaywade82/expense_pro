@@ -19,15 +19,15 @@ class DashboardService
       emis: emi_summary,
       loans: loan_summary,
       investments: investments,
-      taxEstimate: tax_est,
+      tax_estimate: tax_est,
       overall: overall_summary,
-      monthlyTrend: monthly_trend,
-      categoryBreakdown: category_breakdown,
-      recentExpenses: recent_expenses,
-      netWorth: {
-        netWorth: nw[:net_worth],
-        emergencyFundMonths: nw[:emergency_fund_months],
-        debtToAssetRatio: nw[:debt_to_asset_ratio]
+      monthly_trend: monthly_trend,
+      category_breakdown: category_breakdown,
+      recent_expenses: recent_expenses,
+      net_worth: {
+        net_worth: nw[:net_worth],
+        emergency_fund_months: nw[:emergency_fund_months],
+        debt_to_asset_ratio: nw[:debt_to_asset_ratio]
       }
     }
   end
@@ -45,10 +45,10 @@ class DashboardService
     total_emi_paid = user.emi_payments.where(is_paid: true).sum(:amount)
     
     {
-      totalIncome: total_income.to_s,
-      totalExpense: total_expense.to_s,
-      totalEmiPaid: total_emi_paid.to_s,
-      netBalance: (total_income - total_expense - total_emi_paid).to_s
+      total_income: total_income.to_s,
+      total_expense: total_expense.to_s,
+      total_emi_paid: total_emi_paid.to_s,
+      net_balance: (total_income - total_expense - total_emi_paid).to_s
     }
   end
 
@@ -83,7 +83,7 @@ class DashboardService
     {
       total: (stats.total_amount || 0).to_s,
       paid: stats.paid_count || 0,
-      totalCount: stats.total_count || 0
+      total_count: stats.total_count || 0
     }
   end
 
@@ -93,9 +93,9 @@ class DashboardService
     total_paid_principal = user.emi_payments.where(loan_id: loans.map(&:id), is_paid: true).sum(:principal_amount)
 
     {
-      activeCount: loans.size,
-      outstandingTotal: (total_principal - total_paid_principal).to_s,
-      totalEMI: loans.sum(&:emi_amount).to_s
+      active_count: loans.size,
+      outstanding_total: (total_principal - total_paid_principal).to_s,
+      total_emi: loans.sum(&:emi_amount).to_s
     }
   end
 
@@ -131,7 +131,7 @@ class DashboardService
       .limit(limit)
       .sum(:amount)
       .map do |(_id, name, color), total|
-        { categoryName: name, categoryColor: color, total: total.to_s }
+        { category_name: name, category_color: color, total: total.to_s }
       end
   end
 
@@ -141,9 +141,9 @@ class DashboardService
         id: expense.id,
         description: expense.description,
         amount: expense.amount.to_s,
-        expenseDate: expense.expense_date,
-        categoryName: expense.category.name,
-        categoryColor: expense.category.color
+        expense_date: expense.expense_date,
+        category_name: expense.category.name,
+        category_color: expense.category.color
       }
     end
   end
@@ -161,11 +161,11 @@ class DashboardService
     total_pnl = investments.sum(&:total_pnl).to_f
 
     {
-      totalInvested: total_invested.to_s,
-      currentValue: current_value.to_s,
-      totalPnl: total_pnl.to_s,
+      total_invested: total_invested.to_s,
+      current_value: current_value.to_s,
+      total_pnl: total_pnl.to_s,
       count: investments.size,
-      assetClasses: investments.group_by(&:asset_class).transform_values(&:size)
+      asset_classes: investments.group_by(&:asset_class).transform_values(&:size)
     }
   end
 
@@ -197,11 +197,11 @@ class DashboardService
     tax_payable = [ total_tax - tds_paid, 0 ].max.round(2)
 
     {
-      grossIncome: gross_income,
-      estimatedTax: total_tax,
-      tdsPaid: tds_paid,
-      taxPayable: tax_payable,
-      effectiveRate: gross_income > 0 ? ((total_tax / gross_income) * 100).round(1) : 0
+      gross_income: gross_income,
+      estimated_tax: total_tax,
+      tds_paid: tds_paid,
+      tax_payable: tax_payable,
+      effective_rate: gross_income > 0 ? ((total_tax / gross_income) * 100).round(1) : 0
     }
   end
 end

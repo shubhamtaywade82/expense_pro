@@ -85,23 +85,6 @@ class Income < ApplicationRecord
     end
   end
 
-  def as_json(options = {})
-    super(options).merge(
-      "is_custom" => is_custom || (parent_id.present? && amount != parent&.amount),
-      "change_reason" => change_reason,
-      "original_amount" => base_amount.to_s,
-      "amount_difference" => amount_difference,
-      "is_latest_recurring" => latest_recurring?,
-      "is_ongoing" => ongoing?,
-      "gap_info" => gap_info,
-      "income_type" => income_type,
-      "gross_amount" => gross_amount,
-      "tax_deducted" => tax_deducted,
-      "pf_deducted" => pf_deducted,
-      "other_deductions" => other_deductions,
-      "metadata" => metadata
-    )
-  end
 
   private
 

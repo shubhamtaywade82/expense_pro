@@ -1,70 +1,46 @@
 ```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
-*.class
-*.exe
-*.dll
-*.so
-*.a
-*.out
-
-# Dependencies
-node_modules/
-vendor/bundle/
-.bundle/
-Gemfile.lock
-*.gem
-*.rbc
-coverage/
-lib/bundler/man/
+# CI/CD
+.github/
 
 # Logs and temp files
 *.log
 *.tmp
 *.swp
-*.swo
 
 # Environment
 .env
 .env.local
 .env.*
 
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.julia/
+zig*/
 
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Build outputs
+# Build artifacts
 dist/
 build/
 target/
-*.tar*
-*.zip
-*.gz
-*.rar
-*.7z
+*.pyc
+*.class
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.out
 
-# Ruby specific
-*.rbx
-*.rbi
-.rake_tasks~
-pkg/
-*.sqlite3
-*.sqlite3-journal
+# Editors
+.vscode/
+.idea/
 
-# Rails specific
-/db/*.sqlite3
-/db/*.sqlite3-journal
-/public/system/
-tmp/
-.rvmrc
-.secret
+# System files
+.DS_Store
+Thumbs.db
 ```

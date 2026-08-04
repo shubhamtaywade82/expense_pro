@@ -1,15 +1,11 @@
 ```
-# Compiled Python files
-*.pyc
+# Python
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-# Dependencies
-venv/
-.venv/
-pip-log.txt
-pipenv.lock
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.*
@@ -20,24 +16,22 @@ pipenv.lock
 # Temporary files
 *.tmp
 *.swp
-*~
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Dependencies
+.venv/
+venv/
+node_modules/
 
-# Coverage reports
-.coverage
-htmlcov/
-coverage/
+# Build artifacts
+dist/
+build/
+target/
 
-# IDE specific
+# Editors
 .vscode/
 .idea/
 
-# Distribution / packaging
-dist/
-build/
-*.egg
-*.egg-info/
+# System
+.DS_Store
+Thumbs.db
 ```

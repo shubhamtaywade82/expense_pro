@@ -492,6 +492,50 @@ class AiChatService
           }
         }
       }
+    },
+    {
+      type: "function",
+      function: {
+        name: "calculate_tax_with_copilot",
+        description: "Calculate accurate Indian income tax using the india-itr-copilot engine. Handles F&O losses, surcharge caps, marginal relief on 87A rebate and surcharge boundaries, section 288B rounding, and all Chapter VI-A deductions. Returns comparison of old vs new regime with precise tax liability.",
+        parameters: {
+          type: "object",
+          properties: {
+            financial_year: { type: "integer", description: "Assessment year (e.g., 2026 for FY 2025-26)." },
+            gross_salary: { type: "number", description: "Gross salary income in INR." },
+            freelance_income: { type: "number", description: "Freelance/business income in INR." },
+            interest_income: { type: "number", description: "Interest income from FD/savings in INR." },
+            dividend_income: { type: "number", description: "Dividend income in INR." },
+            speculative_pnl: { type: "number", description: "P&L from speculative intraday trading." },
+            non_speculative_fo_pnl: { type: "number", description: "P&L from F&O trading (non-speculative business income)." },
+            stcg_111a: { type: "number", description: "Short-term capital gains u/s 111A (equity sold within 1 year)." },
+            ltcg_112a: { type: "number", description: "Long-term capital gains u/s 112A (equity sold after 1 year, above 1.25L exemption)." },
+            crypto_pnl: { type: "number", description: "P&L from crypto/virtual digital assets." },
+            deduction_80c: { type: "number", description: "Investments u/s 80C (ELSS, PPF, EPF, home loan principal, etc.)." },
+            deduction_80d: { type: "number", description: "Health insurance premium u/s 80D (self/family + parents)." },
+            deduction_80ccd_1b: { type: "number", description: "NPS contribution u/s 80CCD(1B) (additional 50k over 80C)." },
+            deduction_80tta: { type: "number", description: "Savings account interest u/s 80TTA (max 10k) or 80TTB for senior citizens." },
+            hra_exemption: { type: "number", description: "HRA exemption amount (calculated separately)." },
+            home_loan_interest: { type: "number", description: "Home loan interest u/s 24(b) (max 2L for self-occupied)." }
+          },
+          required: ["financial_year"]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "explain_tax_provision",
+        description: "Explain Indian tax provisions, sections, and concepts in simple language. Use this when user asks about tax rules, deductions, exemptions, or filing requirements.",
+        parameters: {
+          type: "object",
+          properties: {
+            section: { type: "string", description: "Tax section or concept (e.g., '80C', '111A', 'marginal relief', 'surcharge', 'advance tax')." },
+            context: { type: "string", description: "User's specific situation or question context." }
+          },
+          required: ["section"]
+        }
+      }
     }
   ].freeze
 

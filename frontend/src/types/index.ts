@@ -531,3 +531,33 @@ export type PnlReport = {
     trade_count: number;
   }>;
 };
+
+export type NotificationCategory = 'tax' | 'cash_flow' | 'investment' | 'info' | 'document';
+
+export type Notification = {
+  id: number;
+  subject: string;
+  message: string;
+  category: NotificationCategory;
+  read: boolean;
+  archived: boolean;
+  payload: {
+    action_url?: string;
+    action_label?: string;
+    priority?: number;
+    metadata?: Record<string, any>;
+  };
+  createdAt: ISOString;
+  readAt?: ISOString;
+};
+
+export type NotificationsResponse = {
+  notifications: Notification[];
+  meta: {
+    page: number;
+    per_page: number;
+    count: number;
+    pages: number;
+  };
+  unread_count: number;
+};

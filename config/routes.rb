@@ -93,6 +93,18 @@ Rails.application.routes.draw do
       get "debt_plans/summary", to: "debt_plans#summary"
       get "debt_plans/simulate", to: "debt_plans#simulate"
       resources :debt_plans, only: %i[index create]
+
+      # Notification Center
+      resources :notifications, only: [:index, :destroy] do
+        collection do
+          get :unread_count
+          post :mark_all_read
+        end
+        member do
+          patch :mark_read
+          patch :archive
+        end
+      end
     end
   end
 

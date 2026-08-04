@@ -6,6 +6,23 @@ ExpensePro is a next-generation personal finance platform built with Rails 8, fe
 
 ## 🚀 Key Features
 
+### 1. **Smart Document Upload & Auto-Prefill**
+   - **Upload**: Drag-and-drop PDFs (Bank Statements, Form 16, Brokerage Notes), CSVs, or Excels with multiple sheets.
+   - **AI Parsing Engine**:
+     - **LLM Schema Detection**: Automatically detects columns, headers, and data types without templates using `qwen3.5:4b`.
+     - **Multi-Sheet Support**: Iterates through all Excel sheets, skipping metadata sheets.
+     - **Contextual Extraction**: Extracts transactions from unstructured PDF text (e.g., "NEFT Credit Salary" → Income).
+     - **Deduplication**: Matches by Date + Amount to update existing records instead of creating duplicates.
+   - **Auto-Categorization**: AI guesses categories (Food, Travel, Salary, Investment) based on description patterns.
+   - **Result**: Instantly populates Expenses, Incomes, Investments, and Loans with zero manual entry.
+
+### 2. **ITR Filing Wizard**
+   - **Guided Flow**: Step-by-step chat interface to collect missing tax data interactively.
+   - **Data Aggregation**: Pulls salary, home loan interest, donations, and investments from existing records automatically.
+   - **Gap Analysis**: Identifies missing deductions (e.g., "You haven't added 80C investments yet") and prompts user.
+   - **Regime Optimization**: Calculates Old vs. New regime based on *your actual data* for maximum savings.
+   - **JSON Generation**: Creates official ITR-1/ITR-2 JSON files ready for direct upload to Income Tax Portal.
+
 ### 💰 Comprehensive Financial Tracking
 - **Expenses**: Multi-category tracking with UPI/Card/Cash support
 - **Income**: Salary, freelance, rental, and investment income
@@ -14,19 +31,22 @@ ExpensePro is a next-generation personal finance platform built with Rails 8, fe
 - **Budgets**: Category-wise budgeting with alerts
 - **Investments**: Stocks, mutual funds, and crypto tracking
 
-### 🧠 AI-Powered Chat Assistant (30 Tools)
+### 🧠 AI-Powered Chat Assistant (32 Tools)
 Interact with your finances naturally using our AI chatbot:
+- **"Upload my bank statement PDF"** → Auto-extracts and categorizes 100s of transactions
 - **"Show me my expenses last month"** → Lists expenses with filters
 - **"Create a budget of ₹20k for groceries"** → Sets up budgets instantly
-- **"Calculate my tax for FY 2025-26"** → Uses india-itr-copilot engine
+- **"Calculate my tax for FY 2025-26"** → Uses india-itr-copilot engine with actual data
 - **"Explain Section 87A rebate"** → LLM explains tax provisions simply
-- **"Pay my electricity bill"** → Triggers bill payment workflows
+- **"Start ITR filing"** → Launches guided wizard to generate JSON for portal
 
 **Supported Intents**:
 - Create/List/Update/Delete Expenses, Income, Bills, Loans, Investments
 - Budget management and financial summaries
+- **Smart Document Parsing**: PDF/CSV/Excel auto-detection, multi-sheet support, LLM schema inference
 - **Tax Calculations**: Old vs New regime, F&O loss set-off, surcharge caps, marginal relief
 - **Tax Explanations**: Plain English explanations of complex sections (80C, 80D, 112A, etc.)
+- **ITR Filing**: Guided data collection, gap analysis, official JSON generation
 
 ### 🇮🇳 Accurate Indian Tax Engine
 Integrated **india-itr-copilot** microservice ensures 100% tax compliance:
@@ -54,10 +74,10 @@ Integrated **india-itr-copilot** microservice ensures 100% tax compliance:
 │                     EXPENSEPRO (Rails 8)                        │
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │ Document     │  │ Broker       │  │ UI (React/Hotwire)   │  │
-│  │ Vault        │  │ Adapters     │  │                      │  │
-│  │ (Active      │  │ (Dhan/CoinDCX│  │  Uploads / Review /  │  │
-│  │  Storage)    │  │  /Zerodha)   │  │  Reconciliation view │  │
+│  │ Smart Doc    │  │ Broker       │  │ UI (React/Hotwire)   │  │
+│  │ Parser       │  │ Adapters     │  │                      │  │
+│  │ (LLM+Ruby)   │  │ (Dhan/CoinDCX│  │  Uploads / Review /  │  │
+│  │ PDF/CSV/XLSX │  │  /Zerodha)   │  │  Reconciliation view │  │
 │  └──────┬───────┘  └──────┬───────┘  └──────────────────────┘  │
 │         │                 │                                     │
 │         └────────┬────────┘                                     │
@@ -65,12 +85,13 @@ Integrated **india-itr-copilot** microservice ensures 100% tax compliance:
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │ Data Assembly Service  (Ruby)                            │  │
 │  │ - Normalizes broker trades                               │  │
-│  │ - Parses 26AS/AIS PDFs                                   │  │
+│  │ - LLM extracts PDF transactions                          │  │
+│  │ - Auto-categorizes & deduplicates                        │  │
 │  │ - Builds deduction ledger                                │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
            │
-           │ HTTP POST /calculate-tax
+           │ HTTP POST /calculate-tax (with pre-filled data)
            ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │              ITR SERVICE (Python + FastAPI)                     │
@@ -92,13 +113,15 @@ Integrated **india-itr-copilot** microservice ensures 100% tax compliance:
 │  Response: { old_regime: {...}, new_regime: {...} }            │
 └─────────────────────────────────────────────────────────────────┘
            │
-           │ Optional: Explain provision
+           │ Optional: Explain provision / Structure PDF
            ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    OLLAMA (Local LLM)                           │
 │  Model: qwen3.5:4b                                              │
 │  - Explains tax sections in plain language                      │
-│  - Answers user queries about deductions                        │
+│  - Structures unstructured PDF text into JSON                   │
+│  - Detects schemas in CSV/Excel headers                         │
+│  - Powers ITR Filing Wizard conversation                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

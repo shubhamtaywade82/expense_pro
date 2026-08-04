@@ -6,9 +6,11 @@ services:
       - "3000:3000"
     depends_on:
       - db
+      - itr_service
     environment:
       - DATABASE_URL=postgres://postgres:password@db:5432/expense_pro_production
       - RAILS_ENV=production
+      - ITR_SERVICE_URL=http://itr_service:8000
 
   worker:
     build: .
@@ -18,6 +20,16 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:password@db:5432/expense_pro_production
       - RAILS_ENV=production
+
+  itr_service:
+    build: ./itr_service
+    ports:
+      - "8000:8000"
+    environment:
+      - COPILOT_ROOT=/app
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./itr_service/rules:/app/rules:ro
 
   db:
     image: postgres:16

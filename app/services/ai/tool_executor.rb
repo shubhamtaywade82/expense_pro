@@ -34,6 +34,8 @@ module Ai
       when "update_investment" then update_investment(tool_call.arguments)
       when "delete_investment" then delete_investment(tool_call.arguments)
       when "get_financial_summary" then get_financial_summary(tool_call.arguments)
+      when "calculate_tax_with_copilot" then calculate_tax_with_copilot(tool_call.arguments)
+      when "explain_tax_provision" then explain_tax_provision(tool_call.arguments)
       else { success: false, message: "Unknown tool: #{tool_call.name}" }
       end
     rescue StandardError => e
@@ -341,6 +343,121 @@ module Ai
       else
         today.year
       end
+    end
+
+    # ── Tax Calculation with india-itr-copilot ───────────────────────────
+
+    def calculate_tax_with_copilot(args)
+      financial_year = args["financial_year"] || default_fy
+      
+      # Option 1: Call Python FastAPI service directly (preferred if running)
+      copilot_host = ENV.fetch("ITR_SERVICE_HOST", "http://localhost:8000")
+      
+      input_data = {
+        assessment_year: "AY#{financial_year}-#{(financial_year % 100) + 1}",
+        gross_salary: (args["gross_salary"] || 0).to_f,
+        freelance_income: (args["freelance_income"] || 0).to_f,
+        interest_income: (args["interest_income"] || 0).to_f,
+        dividend_income: (args["dividend_income"] || 0).to_f,
+        speculative_pnl: (args["speculative_pnl"] || 0).to_f,
+        non_speculative_fo_pnl: (args["non_speculative_fo_pnl"] || 0).to_f,
+        stcg_111a: (args["stcg_111a"] || 0).to_f,
+        ltcg_112a: (args["ltcg_112a"] || 0).to_f,
+        crypto_pnl: (args["crypto_pnl"] || 0).to_f,
+        deduction_80c: (args["deduction_80c"] || 0).to_f,
+        deduction_80d: (args["deduction_80d"] || 0).to_f,
+        deduction_80ccd_1b: (args["deduction_80ccd_1b"] || 0).to_f,
+        deduction_80tta: (args["deduction_80tta"] || 0).to_f,
+        hra_exemption: (args["hra_exemption"] || 0).to_f,
+        home_loan_interest: (args["home_loan_interest"] || 0).to_f
+      }
+
+      begin
+        require "net/http"
+        require "uri"
+        
+        uri = URI("#{copilot_host}/compare-regimes")
+        req = Net::HTTP::Post.new(uri.path, "Content-Type" => "application/json")
+        req.body = input_data.to_json
+        
+        res = Net::HTTP.start(uri.hostname, uri.port, read_timeout: 30) do |http|
+          http.request(req)
+        end
+        
+        if res.is_a?(Net::HTTPSuccess)
+          result = JSON.parse(res.body)
+          return {
+            success: true,
+            engine: "india-itr-copilot",
+            assessment_year: result["assessment_year"],
+            new_regime: result["new_regime"],
+            old_regime: result["old_regime"],
+            recommendation: result["recommendation"],
+            marginal_relief_applied: result["marginal_relief_applied"],
+            section_288b_rounding_applied: result["section_288b_rounding_applied"],
+            f_o_loss_setoff: result["f_o_loss_setoff"],
+            surcharge_cap_applied: result["surcharge_cap_applied"]
+          }
+        end
+      rescue StandardError => e
+        Rails.logger.warn "[Copilot HTTP] Error: #{e.message}, falling back to Ruby calculator"
+      end
+
+      # Fallback: Use existing Ruby tax calculator
+      summary = get_financial_summary({ "financial_year" => financial_year })
+      {
+        success: true,
+        engine: "ruby_fallback",
+        message: "Using Ruby tax calculator (india-itr-copilot service unavailable)",
+        tax_result: summary[:tax],
+        fallback_used: true
+      }
+    end
+
+    def explain_tax_provision(args)
+      section = args["section"]
+      context = args["context"]
+
+      prompt = <<~PROMPT
+        You are a helpful Indian tax assistant. Explain the following tax provision in simple, clear language:
+
+        Section/Concept: #{section}
+        User Context: #{context || "General inquiry"}
+
+        Provide:
+        1. What this section/concept means in plain English
+        2. Who it applies to
+        3. Key limits, thresholds, or conditions
+        4. A practical example if relevant
+        5. Any common mistakes or pitfalls to avoid
+
+        Keep the explanation concise but complete. Use INR (₹) for amounts.
+      PROMPT
+
+      config = Ollama::Config.new
+      config.base_url = ENV.fetch("OLLAMA_HOST", "http://localhost:11434")
+      config.api_key = ENV["OLLAMA_API_KEY"]
+      config.model = ENV.fetch("OLLAMA_MODEL", "qwen3.5:4b")
+      config.provider = :ollama
+      config.temperature = 0.3
+      config.timeout = 60
+
+      client = Ollama::Client.new(config: config)
+
+      response = client.chat(messages: [{ role: "user", content: prompt }])
+
+      {
+        success: true,
+        section: section,
+        explanation: response.message.content,
+        disclaimer: "This is general guidance. Consult a CA for personalized tax advice."
+      }
+    rescue StandardError => e
+      {
+        success: false,
+        message: "Error explaining provision: #{e.message}",
+        suggestion: "Try rephrasing your question or ask about a specific section number."
+      }
     end
   end
 end

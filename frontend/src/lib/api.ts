@@ -292,4 +292,14 @@ export const api = {
       patch<TaxDeduction>(`/incomes/${incomeId}/tax_deductions/${id}`, data),
     delete: (incomeId: number, id: number) => del(`/incomes/${incomeId}/tax_deductions/${id}`),
   },
+
+  notifications: {
+    list: (params: { page?: number; archived?: boolean } = {}) =>
+      get<{ notifications: Notification[]; meta: { page: number; per_page: number; count: number; pages: number }; unread_count: number }>(`/notifications${buildQuery(params)}`),
+    unreadCount: () => get<{ count: number }>('/notifications/unread_count'),
+    markAsRead: (id: number) => patch<{ success: boolean; notification: Notification }>(`/notifications/${id}/mark_read`),
+    markAllAsRead: () => post<{ success: boolean }>('/notifications/mark_all_read'),
+    archive: (id: number) => patch<{ success: boolean; notification: Notification }>(`/notifications/${id}/archive`),
+    delete: (id: number) => del<{ success: boolean }>(`/notifications/${id}`),
+  },
 };

@@ -6,7 +6,7 @@
 # Temp files
 /tmp/*
 !/tmp/.keep
-!/tmp/pids/
+/tmp/pids/*
 !/tmp/pids/.keep
 
 # Storage (uploaded files in development)
@@ -32,6 +32,9 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /public/assets
+
+# Vite frontend build output
+/public/frontend/
 
 # Dependencies
 node_modules/
@@ -66,3 +69,5 @@ Thumbs.db
 # Temp
 *.swp
 *.tmp
+tmp
+public

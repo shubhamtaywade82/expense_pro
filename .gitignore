@@ -1,16 +1,37 @@
-```
-# CI/CD
-.github/
-
-# Logs and temp files
+# Logs
+/log/*
+!/log/.keep
 *.log
-*.tmp
-*.swp
+
+# Temp files
+/tmp/*
+!/tmp/.keep
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Storage (uploaded files in development)
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
 
 # Environment
-.env
-.env.local
-.env.*
+/.env*
+!/.env.example
+
+# Secrets
+/config/master.key
+
+# Credentials
+*.pem
+*.key
+*.p12
+
+# Assets built with esbuild/jsbundling
+/app/assets/builds/*
+!/app/assets/builds/.keep
+/public/assets
 
 # Dependencies
 node_modules/
@@ -19,8 +40,6 @@ venv/
 __pycache__/
 .mypy_cache/
 .pytest_cache/
-.julia/
-zig*/
 
 # Build artifacts
 dist/
@@ -43,4 +62,7 @@ target/
 # System files
 .DS_Store
 Thumbs.db
-```
+
+# Temp
+*.swp
+*.tmp

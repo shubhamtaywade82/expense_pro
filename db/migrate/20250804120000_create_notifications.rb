@@ -16,7 +16,7 @@ class CreateNotifications < ActiveRecord::Migration[8.0]
 
       t.index [:user_id, :read]
       t.index [:user_id, :archived]
-      t.index [:user_id, :created_at, order: :desc]
+      t.index [:user_id, :created_at], order: { created_at: :desc }
       t.index :category
     end
 

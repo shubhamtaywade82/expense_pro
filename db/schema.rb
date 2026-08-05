@@ -325,6 +325,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
     t.index ["user_id"], name: "index_monthly_bills_on_user_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "notifiable_type"
+    t.bigint "notifiable_id"
+    t.string "subject", null: false
+    t.text "message", null: false
+    t.string "category", default: "info", null: false
+    t.boolean "read", default: false, null: false
+    t.boolean "archived", default: false, null: false
+    t.jsonb "payload", default: {}, null: false
+    t.datetime "viewed_at", precision: nil
+    t.datetime "read_at", precision: nil
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category"], name: "index_notifications_on_category"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable"
+    t.index ["payload"], name: "index_notifications_on_payload", using: :gin
+    t.index ["user_id", "archived"], name: "index_notifications_on_user_id_and_archived"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_id_and_created_at", order: { created_at: :desc }
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "prepayments", force: :cascade do |t|
     t.bigint "loan_account_id", null: false
     t.decimal "amount", precision: 15, scale: 2
@@ -604,6 +627,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
   add_foreign_key "loans", "users"
   add_foreign_key "monthly_bills", "categories"
   add_foreign_key "monthly_bills", "users"
+  add_foreign_key "notifications", "users"
   add_foreign_key "prepayments", "loan_accounts"
   add_foreign_key "salary_components", "employments"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

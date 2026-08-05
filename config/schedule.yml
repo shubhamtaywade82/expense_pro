@@ -1,0 +1,7 @@
+# config/schedule.yml
+# GoodJob cron schedule configuration
+
+notification_analysis:
+  cron: "0 */6 * * *" # Every 6 hours
+  class: "NotificationAnalysisJob"
+  description: "Run intelligent notification analysis for all users"

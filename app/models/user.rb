@@ -15,6 +15,8 @@ class User < ApplicationRecord
   has_many :trades, dependent: :destroy
   has_many :employments, dependent: :destroy
   has_many :debt_plans, dependent: :destroy
+  has_many :notifications, dependent: :destroy
+  has_many :unread_notifications, -> { where(read: false) }, class_name: 'Notification'
 
   PERSONAS = %w[salaried trader business mixed].freeze
 
@@ -44,6 +46,14 @@ class User < ApplicationRecord
 
   def token_valid?(iat)
     token_revoked_at.nil? || Time.zone.at(iat) > token_revoked_at
+  end
+
+  def unread_notification_count
+    @unread_notification_count ||= unread_notifications.count
+  end
+
+  def mark_all_notifications_read!
+    unread_notifications.update_all(read: true, read_at: Time.current)
   end
 
   normalizes :email, with: ->(email) { email.strip.downcase }

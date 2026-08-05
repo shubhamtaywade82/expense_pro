@@ -1,0 +1,80 @@
+{
+  "assessment_year": "2026-27",
+  "source": "Finance Act 2025",
+  "last_updated": "2025-04-01",
+  "old_regime": {
+    "slabs": [
+      {"limit": 250000, "rate": 0.0, "note": "Basic exemption for general taxpayers"},
+      {"limit": 500000, "rate": 0.05, "note": "5% on income between 2.5L-5L"},
+      {"limit": 1000000, "rate": 0.20, "note": "20% on income between 5L-10L"},
+      {"limit": null, "rate": 0.30, "note": "30% on income above 10L"}
+    ],
+    "standard_deduction": 50000,
+    "rebate_87a_threshold": 500000,
+    "rebate_87a_max": 12500,
+    "senior_basic_exemption": 300000,
+    "super_senior_basic_exemption": 500000,
+    "surcharge_thresholds": {
+      "50L": {"threshold": 5000000, "rate": 0.10},
+      "1Cr": {"threshold": 10000000, "rate": 0.15},
+      "2Cr": {"threshold": 20000000, "rate": 0.25},
+      "5Cr": {"threshold": 50000000, "rate": 0.37}
+    }
+  },
+  "new_regime": {
+    "slabs": [
+      {"limit": 400000, "rate": 0.0, "note": "Nil tax up to ₹4L"},
+      {"limit": 800000, "rate": 0.05, "note": "5% on ₹4L-₹8L"},
+      {"limit": 1200000, "rate": 0.10, "note": "10% on ₹8L-₹12L"},
+      {"limit": 1600000, "rate": 0.15, "note": "15% on ₹12L-₹16L"},
+      {"limit": 2000000, "rate": 0.20, "note": "20% on ₹16L-₹20L"},
+      {"limit": 2400000, "rate": 0.25, "note": "25% on ₹20L-₹24L"},
+      {"limit": null, "rate": 0.30, "note": "30% above ₹24L"}
+    ],
+    "standard_deduction": 75000,
+    "rebate_87a_threshold": 1200000,
+    "rebate_87a_max": 60000,
+    "surcharge_thresholds": {
+      "50L": {"threshold": 5000000, "rate": 0.10},
+      "1Cr": {"threshold": 10000000, "rate": 0.15},
+      "2Cr": {"threshold": 20000000, "rate": 0.25},
+      "5Cr": {"threshold": 50000000, "rate": 0.37}
+    }
+  },
+  "capital_gains": {
+    "stcg_111a_rate": 0.20,
+    "stcg_111a_note": "STCG on equity shares u/s 111A (increased from 15% to 20% in FY25)",
+    "ltcg_112a_rate": 0.125,
+    "ltcg_112a_exemption": 125000,
+    "ltcg_112a_note": "LTCG on equity u/s 112A with ₹1.25L exemption (increased from ₹1L)",
+    "crypto_115bbh_rate": 0.30,
+    "crypto_115bbh_note": "Virtual digital assets taxed at flat 30% u/s 115BBH"
+  },
+  "deductions": {
+    "section_80c_limit": 150000,
+    "section_80c_instruments": ["EPF", "PPF", "ELSS", "NSC", "Life Insurance Premium", "Home Loan Principal"],
+    "section_80d_self_limit": 25000,
+    "section_80d_parents_limit": 25000,
+    "section_80d_senior_parents_limit": 50000,
+    "section_80d_note": "Medical insurance premium - higher limit for senior citizens",
+    "section_80ccd_1b_limit": 50000,
+    "section_80ccd_1b_note": "Additional NPS contribution over and above 80C",
+    "section_80tta_limit": 10000,
+    "section_80tta_note": "Savings account interest deduction (not available for seniors)",
+    "section_80ttb_limit": 50000,
+    "section_80ttb_note": "Senior citizen interest income deduction (replaces 80TTA)",
+    "home_loan_interest_limit": 200000,
+    "home_loan_interest_note": "Self-occupied property interest u/s 24(b)"
+  },
+  "marginal_relief_rules": {
+    "87a_relief": "Tax payable cannot exceed income exceeding ₹5L (old) or ₹12L (new)",
+    "surcharge_relief": "Additional surcharge cannot exceed additional income over threshold",
+    "applicable_at": [5000000, 10000000, 20000000, 50000000]
+  },
+  "rounding_rule": {
+    "section": "288B",
+    "method": "nearest_10",
+    "ties": "round_up",
+    "example": "₹12,345 → ₹12,350; ₹12,344 → ₹12,340"
+  }
+}

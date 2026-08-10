@@ -177,6 +177,7 @@ export type NetWorth = {
     liquidCash: number;
     investments: number;
     realizedInvestmentPnl: number;
+    brokerLedger: number;
     retirementAccounts: number;
     total: number;
   };
@@ -201,12 +202,13 @@ export type NetWorth = {
 export type DebtLoanDetail = {
   id: number;
   name: string;
+  lender: string | null;
   type: string;
   principal: number;
   outstanding: number;
+  interestRate: number;
   emi: number;
-  rate: number;
-  tenure: number;
+  progressPct: number;
   remainingEmis: number;
   paidEmis: number;
 };
@@ -225,6 +227,7 @@ export type DebtSimulation = {
   totalMonths: number;
   projectedPayoffDate: string;
   totalInterestPaid: number;
+  interestSaved: number;
   timeline: { month: number; balances: Record<string, number> }[];
   error?: string;
 };
@@ -263,13 +266,13 @@ export type DashboardOverview = {
   income: { total: string; count: number; received: number; expected: number };
   bills: { total: string; paid: number; unpaid: number };
   emis: { total: string; paid: number; totalCount: number };
-  loans: { activeCount: number; outstandingTotal: string; totalEMI: string };
+  loans: { activeCount: number; outstandingTotal: string; totalEmi: string };
   investments?: {
     totalInvested: string;
     currentValue: string;
     totalPnl: string;
     count: number;
-    assetClasses: Record<string, number>;
+    assetClasses: { name: string; count: number }[];
   };
   taxEstimate?: {
     grossIncome: number;
@@ -560,4 +563,54 @@ export type NotificationsResponse = {
     pages: number;
   };
   unread_count: number;
+};
+
+// ── ITR filing / tax document vault ──
+// These endpoints return the service hashes verbatim, so the keys stay snake_case.
+
+export type FilingReadiness = {
+  financial_year: number;
+  can_file_self: boolean;
+  ca_required: boolean;
+  ca_required_reasons: { reason: string; detail: string; what_app_prepared: string }[];
+  blockers: { type: string; item: string; resolution: string }[];
+  blocker_count: number;
+  reconciliation_status: string;
+  recommended_form: string | null;
+  due_date: string | null;
+  estimated_tax: number;
+  next_steps: unknown[];
+};
+
+export type ChecklistItem = {
+  document_type: string;
+  label: string;
+  status: "verified" | "pending_verification" | "missing";
+  mandatory: boolean;
+  tip?: string | null;
+};
+
+export type DocumentChecklist = {
+  financial_year: number;
+  persona: string;
+  total_required: number;
+  total_uploaded: number;
+  total_verified: number;
+  completion_pct: number;
+  missing_required: string[];
+  pending_verification: string[];
+  checklist: ChecklistItem[];
+};
+
+export type TaxDocumentRow = {
+  id: number;
+  document_type: string;
+  display_name: string | null;
+  financial_year: number;
+  status: string;
+  size_kb: number;
+  extracted_data: Record<string, unknown> | null;
+  reconciliation: Record<string, unknown> | null;
+  preview_url: string;
+  created_at: string;
 };

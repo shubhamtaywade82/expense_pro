@@ -1,18 +1,6 @@
 module Api
   module V1
     class DebtPlansController < BaseController
-      def summary
-        render json: DebtPlanningService.new(current_user).debt_summary
-      end
-
-      def simulate
-        result = DebtPlanningService.new(current_user).simulate_payoff(
-          strategy: params[:strategy] || "avalanche",
-          extra_monthly: params[:extra_monthly].to_f
-        )
-        render json: result
-      end
-
       def create
         plan = current_user.debt_plans.create!(
           name: params[:name],
@@ -31,11 +19,11 @@ module Api
         else
           plan.update(
             projected_payoff_date: simulation[:projected_payoff_date],
-            total_interest_saved: simulation[:total_interest_paid]
+            total_interest_saved: simulation[:interest_saved]
           )
         end
 
-        render json: { plan: plan, simulation: simulation }, status: :created
+        render_camel_json({ plan: plan, simulation: simulation }, status: :created)
       end
 
       def index

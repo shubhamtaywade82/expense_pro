@@ -44,7 +44,6 @@ class DebtPlanningService
     timeline = []
     month = 0
     total_interest_paid = 0.0
-    monthly_rate = rates.values.first.to_f / 12.0 / 100.0
 
     while balances.values.any? { |b| b > 0 } && month < 600
       month += 1
@@ -81,11 +80,21 @@ class DebtPlanningService
       total_months: month,
       projected_payoff_date: (Date.current + month.months).to_s,
       total_interest_paid: total_interest_paid.round(2),
+      # "Interest saved" is measured against the same plan without the extra
+      # monthly contribution, which is the baseline the UI slider starts from.
+      interest_saved: interest_saved_against_baseline(strategy, extra_monthly, total_interest_paid),
       timeline: timeline
     }
   end
 
   private
+
+  def interest_saved_against_baseline(strategy, extra_monthly, interest_paid)
+    return 0.0 if extra_monthly.to_f <= 0
+
+    baseline = simulate_payoff(strategy: strategy, extra_monthly: 0)
+    (baseline[:total_interest_paid].to_f - interest_paid).round(2)
+  end
 
   def calculate_dti(loans)
     monthly_income = @user.incomes
@@ -112,13 +121,17 @@ class DebtPlanningService
   end
 
   def loan_detail(loan)
+    principal = loan.principal_amount.to_f
+    outstanding = loan.outstanding_principal.to_f
+    progress = principal.positive? ? (principal - outstanding) / principal * 100 : 0.0
+
     {
       id: loan.id,
       name: loan.name,
       lender: loan.lender,
       type: loan.loan_type,
-      principal: loan.principal_amount.to_f,
-      outstanding: loan.outstanding_principal.to_f,
+      principal: principal,
+      outstanding: outstanding,
       interest_rate: loan.interest_rate.to_f,
       emi: loan.emi_amount.to_f,
       progress_pct: progress.round(1),

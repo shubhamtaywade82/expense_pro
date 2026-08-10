@@ -1,9 +1,8 @@
-require 'pagy/backend'
+require "pagy/backend"
 
 module Api
   module V1
     class BaseController < ActionController::API
-
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       rescue_from ActiveRecord::RecordInvalid, with: :render_unprocessable
       rescue_from ActionController::ParameterMissing, with: :render_bad_request
@@ -30,6 +29,13 @@ module Api
 
       def set_current_user
         Current.user = current_user
+      end
+
+      # Services return plain hashes; the frontend expects camelCase keys.
+      # Model JSON is already camelized via ApplicationRecord#as_json, so
+      # translate plain-hash payloads here, at the boundary.
+      def render_camel_json(payload, status: :ok)
+        render json: payload.deep_transform_keys { |key| key.to_s.camelize(:lower) }, status: status
       end
 
       # The React frontend speaks camelCase (categoryId, expenseDate, ...);

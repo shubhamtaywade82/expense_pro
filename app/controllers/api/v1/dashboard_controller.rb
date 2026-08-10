@@ -6,7 +6,7 @@ module Api
         month = params[:month].presence || now.month
         year = params[:year].presence || now.year
 
-        render json: DashboardService.new(current_user, month: month, year: year).overview
+        render_camel_json DashboardService.new(current_user, month: month, year: year).overview
       end
     end
   end

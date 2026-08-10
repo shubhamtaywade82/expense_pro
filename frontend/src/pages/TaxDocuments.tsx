@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import type { DocumentChecklist, TaxDocumentRow } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -28,7 +29,7 @@ export default function TaxDocuments() {
 
   const { data } = useQuery({
     queryKey: ['tax-documents', fy],
-    queryFn: () => api.get(`/tax_documents?financial_year=${fy}`).then(res => res.data),
+    queryFn: () => api.get<{ documents: TaxDocumentRow[]; checklist: DocumentChecklist }>(`/tax_documents?financial_year=${fy}`),
   });
 
   const uploadMutation = useMutation({
@@ -37,10 +38,7 @@ export default function TaxDocuments() {
       formData.append('document_type', docType);
       formData.append('financial_year', String(fy));
       files.forEach(f => formData.append('files[]', f));
-      // Using axios post for multipart/form-data
-      return api.post('/tax_documents', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      return api.post('/tax_documents', formData);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tax-documents'] }),
   });
@@ -151,7 +149,7 @@ function ExtractedDataReview({ fy }: { fy: number }) {
   const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: ['tax-documents', fy],
-    queryFn: () => api.get(`/tax_documents?financial_year=${fy}`).then(res => res.data),
+    queryFn: () => api.get<{ documents: TaxDocumentRow[]; checklist: DocumentChecklist }>(`/tax_documents?financial_year=${fy}`),
   });
 
   const actionable = (data?.documents || []).filter(

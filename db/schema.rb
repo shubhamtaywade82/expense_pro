@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_10_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -68,7 +68,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
     t.text "api_key"
     t.text "api_secret"
     t.string "api_passphrase"
-    t.string "broker_type", default: "dhan", null: false
+    t.string "broker_type", default: "dhanhq", null: false
+    t.integer "status", default: 0, null: false
+    t.text "access_token"
+    t.text "refresh_token"
+    t.text "passphrase"
+    t.jsonb "config", default: {}, null: false
+    t.datetime "token_expires_at"
+    t.datetime "last_authenticated_at"
+    t.datetime "last_sync_at"
     t.index ["user_id", "broker"], name: "index_broker_credentials_on_user_id_and_broker", unique: true
   end
 
@@ -587,6 +595,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_30_162642) do
     t.datetime "updated_at", null: false
     t.datetime "token_revoked_at"
     t.string "persona", default: "mixed", null: false
+    t.string "pan"
+    t.date "date_of_birth"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["persona"], name: "index_users_on_persona"
   end

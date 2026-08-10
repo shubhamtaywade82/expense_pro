@@ -3,12 +3,12 @@ module Api
     class TaxController < BaseController
       def itr_summary
         year = (params[:financial_year] || Date.current.year).to_i
-        
+
         # Try the new Python microservice first, fall back to Ruby service
         begin
           summary = ItrClientService.instance.calculate_tax(current_user, year)
           render json: summary
-        rescue ItrClientService::ServiceUnavailableError => e
+        rescue ItrClientService::ServiceUnavailableError, ItrClientService::CalculationError => e
           Rails.logger.warn "ITR microservice unavailable, falling back to Ruby: #{e.message}"
           summary = TaxCalculatorService.new(current_user, year).call
           render json: summary
@@ -20,11 +20,11 @@ module Api
         Rails.cache.delete("itr:#{current_user.id}:#{year}")
         head :no_content
       end
-      
+
       def compare_regimes
         gross_income = params[:gross_income].to_f
-        assessment_year = params[:assessment_year] || 'AY2026-27'
-        
+        assessment_year = params[:assessment_year] || "AY2026-27"
+
         begin
           result = ItrClientService.instance.compare_regimes(gross_income, assessment_year)
           render json: result

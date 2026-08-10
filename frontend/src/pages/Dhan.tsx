@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { DhanCredentialUpdate } from "@/types";
+import type { BrokerCredentialUpdate } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -131,7 +131,7 @@ function DhanSettingsForm() {
     queryFn: api.dhan.getCredential,
   });
 
-  const [form, setForm] = useState<DhanCredentialUpdate>({
+  const [form, setForm] = useState<BrokerCredentialUpdate>({
     clientId: "",
     tokenServiceUrl: "",
     tokenServiceSecret: "",
@@ -159,7 +159,7 @@ function DhanSettingsForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const payload: DhanCredentialUpdate = {
+    const payload: BrokerCredentialUpdate = {
       clientId: form.clientId,
       tokenServiceUrl: form.tokenServiceUrl,
     };
@@ -615,7 +615,7 @@ function PnlReportPanel({ fromDate, toDate }: { fromDate: string; toDate: string
         )}
       </div>
 
-      {report.data?.trades.length > 0 && (
+      {!!report.data?.trades.length && (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(PNL_SEGMENT_LABELS).map(([key, meta]) => {

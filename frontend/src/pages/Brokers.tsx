@@ -18,8 +18,8 @@ interface BrokerInfo {
   asset_classes: string[];
   auth_type: string;
   required_credentials: string[];
-  tax_category: string;
-  tds_applicable: boolean;
+  tax_category?: string;
+  tds_applicable?: boolean;
   documentation_url: string | null;
 }
 
@@ -58,12 +58,12 @@ export default function Brokers() {
 
   const { data: available } = useQuery({
     queryKey: ['brokers', 'available'],
-    queryFn: () => api.get('/brokers/available').then(res => res.data),
+    queryFn: () => api.get<{ brokers: BrokerInfo[] }>('/brokers/available'),
   });
 
   const { data: connected } = useQuery({
     queryKey: ['brokers', 'connected'],
-    queryFn: () => api.get('/brokers/connected').then(res => res.data),
+    queryFn: () => api.get<{ brokers: ConnectedBroker[] }>('/brokers/connected'),
   });
 
   const connectMutation = useMutation({
@@ -118,16 +118,16 @@ export default function Brokers() {
       </div>
 
       {/* Connected Brokers */}
-      {(connected?.brokers || []).length > 0 && (
+      {!!connected?.brokers.length && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-500" />
-              Connected ({connected.brokers.length})
+              Connected ({connected!.brokers.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {connected.brokers.map((broker: ConnectedBroker) => {
+            {connected!.brokers.map((broker: ConnectedBroker) => {
               const Icon = BROKER_ICONS[broker.broker_type] || Link2;
               return (
                 <div key={broker.id} className="flex items-center justify-between p-3 rounded-lg border">

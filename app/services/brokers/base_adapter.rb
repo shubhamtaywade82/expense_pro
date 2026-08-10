@@ -68,7 +68,10 @@ module Brokers
     # Instance methods
     def initialize(credential = nil)
       @credential = credential
-      @rate_limiter = RateLimiter.new(self.class.rate_limit)
+      @rate_limiter = RateLimiter.new(
+        broker_key: self.class.broker_type,
+        max_requests: self.class.rate_limit.fetch(:requests_per_second)
+      )
     end
 
     def broker_key

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import type { FilingReadiness } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { AlertTriangle, ShieldCheck, FileJson } from 'lucide-react';
@@ -11,12 +12,12 @@ export default function ItrFiling() {
 
   const { data: readiness } = useQuery({
     queryKey: ['itr-readiness', fy],
-    queryFn: () => api.get(`/itr_filing/readiness?financial_year=${fy}`).then(res => res.data),
+    queryFn: () => api.get<FilingReadiness>(`/itr_filing/readiness?financial_year=${fy}`),
   });
 
   const { data: prefill } = useQuery({
     queryKey: ['itr-prefill', fy],
-    queryFn: () => api.get(`/itr_filing/prefill?financial_year=${fy}`).then(res => res.data),
+    queryFn: () => api.get<Record<string, unknown>>(`/itr_filing/prefill?financial_year=${fy}`),
     enabled: !!readiness?.can_file_self,
   });
 
@@ -54,11 +55,11 @@ export default function ItrFiling() {
       )}
 
       {/* Blockers that must be resolved */}
-      {readiness?.blockers?.length > 0 && (
+      {!!readiness?.blockers?.length && (
         <Card>
-          <CardHeader><CardTitle>Resolve Before Filing ({readiness.blockers.length})</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Resolve Before Filing ({readiness!.blockers.length})</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {readiness.blockers.map((b: any, i: number) => (
+            {readiness!.blockers.map((b, i) => (
               <div key={i} className="text-sm border-l-4 border-amber-400 pl-3 py-1">
                 <strong>{b.item}:</strong> {b.resolution}
               </div>

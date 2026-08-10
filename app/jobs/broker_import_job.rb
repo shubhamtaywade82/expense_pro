@@ -11,7 +11,7 @@ class BrokerImportJob < ApplicationJob
     user = User.find(user_id)
     Current.user = user
 
-    adapter = Brokers::Registry.for(broker)
+    adapter = user.broker_credentials.find_by!(broker_type: broker).adapter
     result = adapter.trade_history_all(from_date: from_date, to_date: to_date)
     return if result[:truncated]
 

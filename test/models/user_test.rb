@@ -18,4 +18,12 @@ class UserTest < ActiveSupport::TestCase
     @user.revoke_all_tokens!
     assert @user.token_valid?(1.minute.from_now.to_i)
   end
+
+  test "has many tax documents" do
+    assert_respond_to @user, :tax_documents
+  end
+
+  test "has many transactions" do
+    assert_respond_to @user, :transactions
+  end
 end

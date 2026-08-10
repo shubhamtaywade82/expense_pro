@@ -5,7 +5,6 @@ class AiChatService
     config.base_url = ENV.fetch("OLLAMA_HOST", "http://localhost:11434")
     config.api_key = ENV["OLLAMA_API_KEY"]
     config.model = ENV.fetch("OLLAMA_MODEL", "qwen3.5:4b")
-    config.provider = :ollama
     config.temperature = 0.2
     config.timeout = 60
     @client = Ollama::Client.new(config: config)

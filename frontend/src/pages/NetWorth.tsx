@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { NetWorth as NetWorthData } from '../types';
 import { api } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -12,7 +13,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, B
 export default function NetWorth() {
   const { data: netWorthData, isLoading } = useQuery({
     queryKey: ['net-worth'],
-    queryFn: () => api.get('/net_worth').then(res => res.data),
+    queryFn: () => api.get<NetWorthData>('/net_worth'),
   });
 
   const formatCurrency = (val: number) => `₹${(val || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
@@ -20,13 +21,13 @@ export default function NetWorth() {
   if (isLoading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Computing your financial footprint...</div>;
   if (!netWorthData) return null;
 
-  const { assets, liabilities, net_worth, emergency_fund_months, debt_to_asset_ratio } = netWorthData;
+  const { assets, liabilities, netWorth, emergencyFundMonths, debtToAssetRatio } = netWorthData;
 
   const assetData = [
-    { name: 'Liquid Cash & Bank', value: assets.liquid_cash || 0, color: '#10b981' },
+    { name: 'Liquid Cash & Bank', value: assets.liquidCash || 0, color: '#10b981' },
     { name: 'Investments', value: assets.investments || 0, color: '#3b82f6' },
-    { name: 'Retirement (EPF/NPS)', value: assets.retirement_accounts || 0, color: '#8b5cf6' },
-    { name: 'Broker Ledger', value: assets.broker_ledger || 0, color: '#f59e0b' },
+    { name: 'Retirement (EPF/NPS)', value: assets.retirementAccounts || 0, color: '#8b5cf6' },
+    { name: 'Broker Ledger', value: assets.brokerLedger || 0, color: '#f59e0b' },
   ].filter(a => a.value > 0);
 
   const liabilityData = liabilities.loans?.map((l: any, i: number) => ({
@@ -52,8 +53,8 @@ export default function NetWorth() {
         <Card className="md:col-span-1 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 shadow-lg">
           <CardContent className="p-6 flex flex-col justify-center h-full space-y-2">
             <p className="text-sm font-bold uppercase tracking-widest text-primary/80">True Net Worth</p>
-            <h2 className={`text-5xl font-black tracking-tighter ${net_worth >= 0 ? 'text-primary' : 'text-destructive'}`}>
-              {formatCurrency(net_worth)}
+            <h2 className={`text-5xl font-black tracking-tighter ${netWorth >= 0 ? 'text-primary' : 'text-destructive'}`}>
+              {formatCurrency(netWorth)}
             </h2>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
               Calculated by taking your total verifiable assets and subtracting all outstanding loan principals.
@@ -107,7 +108,7 @@ export default function NetWorth() {
                 </span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{emergency_fund_months} Months</p>
+                <p className="text-2xl font-bold text-foreground">{emergencyFundMonths} Months</p>
                 <p className="text-xs text-muted-foreground mt-1">Emergency Fund Coverage</p>
               </div>
             </CardContent>
@@ -124,7 +125,7 @@ export default function NetWorth() {
                 </span>
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{debt_to_asset_ratio}%</p>
+                <p className="text-2xl font-bold text-foreground">{debtToAssetRatio}%</p>
                 <p className="text-xs text-muted-foreground mt-1">Debt to Asset Ratio</p>
               </div>
             </CardContent>

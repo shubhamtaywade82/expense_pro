@@ -1,8 +1,6 @@
 module Api
   module V1
-    class TaxDocumentsController < ApplicationController
-      before_action :authenticate_request
-
+    class TaxDocumentsController < BaseController
       def create
         documents = []
         errors_list = []

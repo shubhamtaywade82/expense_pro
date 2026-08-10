@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import type { Income as IncomeType } from "@/types";
+import type { Income as IncomeType, IncomeCategory } from "@/types";
 import EmploymentSection from "@/components/EmploymentSection";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export default function Income() {
     amount: "",
     originalAmount: "",
     incomeDate: format(now, "yyyy-MM-dd"),
-    incomeType: "salary" as string,
+    incomeType: "salary" as IncomeCategory,
     grossAmount: "",
     taxDeducted: "",
     pfDeducted: "",
@@ -361,7 +361,7 @@ export default function Income() {
                     <Label className="text-sm font-medium">Income Category</Label>
                     <Select
                       value={form.incomeType}
-                      onValueChange={(v) => setForm({ ...form, incomeType: v })}
+                      onValueChange={(v) => setForm({ ...form, incomeType: v as IncomeCategory })}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select category" />

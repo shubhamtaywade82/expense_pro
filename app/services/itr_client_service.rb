@@ -16,6 +16,7 @@
 
 class ItrClientService
   include Singleton
+  include HTTParty
 
   class ServiceUnavailableError < StandardError; end
   class CalculationError < StandardError; end
@@ -23,12 +24,10 @@ class ItrClientService
   BASE_URL = ENV.fetch('ITR_SERVICE_URL', 'http://localhost:8000')
   TIMEOUT = ENV.fetch('ITR_SERVICE_TIMEOUT', '10').to_i
   RETRY_COUNT = ENV.fetch('ITR_SERVICE_RETRY', '2').to_i
+  NETWORK_ERRORS = [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError ].freeze
 
-  def initialize
-    @http = HTTPClient.new
-    @http.receive_timeout = TIMEOUT
-    @http.connect_timeout = TIMEOUT
-  end
+  base_uri BASE_URL
+  default_timeout TIMEOUT
 
   # Calculate tax for both regimes and return recommendation
   # @param user [User]
@@ -48,7 +47,7 @@ class ItrClientService
       Rails.logger.error "ITR service error: #{response.body}"
       raise CalculationError, "Tax calculation failed: #{response.code}"
     end
-  rescue HTTPClient::TimeoutError, Errno::ECONNREFUSED => e
+  rescue *NETWORK_ERRORS => e
     Rails.logger.error "ITR service unavailable: #{e.message}"
     raise ServiceUnavailableError, "Tax calculation service is temporarily unavailable"
   end
@@ -58,20 +57,15 @@ class ItrClientService
   # @param assessment_year [String]
   # @return [Hash] regime comparison result
   def compare_regimes(gross_income, assessment_year = 'AY2026-27')
-    url = "#{BASE_URL}/compare-regimes"
-    params = {
+    response = self.class.get('/compare-regimes', query: {
       gross_income: gross_income,
       assessment_year: assessment_year
-    }
+    })
 
-    response = @http.get(url, query: params)
+    raise CalculationError, "Regime comparison failed: #{response.code}" unless response.success?
 
-    if response.status == 200
-      JSON.parse(response.body)
-    else
-      raise CalculationError, "Regime comparison failed: #{response.status}"
-    end
-  rescue HTTPClient::TimeoutError, Errno::ECONNREFUSED => e
+    JSON.parse(response.body)
+  rescue *NETWORK_ERRORS => e
     Rails.logger.error "ITR service unavailable: #{e.message}"
     raise ServiceUnavailableError, "Tax comparison service is temporarily unavailable"
   end
@@ -80,16 +74,15 @@ class ItrClientService
   # @param assessment_year [String]
   # @return [Hash] tax rules configuration
   def get_rules(assessment_year)
-    url = "#{BASE_URL}/rules/#{assessment_year}"
-    response = @http.get(url)
+    response = self.class.get("/rules/#{assessment_year}")
 
-    if response.status == 200
+    if response.success?
       JSON.parse(response.body)
     else
       Rails.logger.warn "Rules not found for #{assessment_year}, using defaults"
       default_rules(assessment_year)
     end
-  rescue HTTPClient::TimeoutError, Errno::ECONNREFUSED => e
+  rescue *NETWORK_ERRORS => e
     Rails.logger.error "ITR service unavailable: #{e.message}"
     default_rules(assessment_year)
   end
@@ -97,28 +90,24 @@ class ItrClientService
   # Health check for the ITR service
   # @return [Boolean]
   def healthy?
-    url = "#{BASE_URL}/health"
-    response = @http.get(url, timeout: 3)
-    response.status == 200
-  rescue HTTPClient::TimeoutError, Errno::ECONNREFUSED
+    self.class.get('/health', timeout: 3).success?
+  rescue *NETWORK_ERRORS
     false
   end
 
   private
 
   def post_with_retry(endpoint, payload)
-    url = "#{BASE_URL}#{endpoint}"
     attempts = 0
 
     begin
       attempts += 1
-      response = @http.post(
-        url,
+      self.class.post(
+        endpoint,
         body: payload.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
-      response
-    rescue HTTPClient::TimeoutError, Errno::ECONNREFUSED => e
+    rescue *NETWORK_ERRORS => e
       if attempts <= RETRY_COUNT
         Rails.logger.warn "ITR service retry #{attempts}/#{RETRY_COUNT}: #{e.message}"
         sleep(attempts * 0.5)

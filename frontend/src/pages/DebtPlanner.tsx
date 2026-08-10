@@ -19,12 +19,12 @@ export default function DebtPlanner() {
 
   const { data: summary, isLoading: loadingSummary } = useQuery({
     queryKey: ['debt-summary'],
-    queryFn: () => api.get('/debt_planner/summary').then(res => res.data),
+    queryFn: () => api.debtPlanner.summary(),
   });
 
   const { data: simulation, isLoading: loadingSimulation } = useQuery({
     queryKey: ['debt-simulation', strategy, extraMonthly],
-    queryFn: () => api.get(`/debt_planner/simulate?strategy=${strategy}&extra_monthly=${extraMonthly}`).then(res => res.data),
+    queryFn: () => api.debtPlanner.simulate({ strategy, extraMonthly }),
     enabled: !!summary?.loans?.length,
   });
 
@@ -32,7 +32,9 @@ export default function DebtPlanner() {
 
   if (loadingSummary) return <div className="p-8 text-center text-muted-foreground">Loading debt profiles...</div>;
 
-  const hasDebt = summary?.total_outstanding > 0;
+  if (!summary) return null;
+
+  const hasDebt = summary.totalOutstanding > 0;
 
   return (
     <div className="space-y-6">
@@ -49,13 +51,13 @@ export default function DebtPlanner() {
           <div className="flex items-center gap-4 bg-card px-4 py-2 rounded-xl border shadow-sm">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Total Debt</p>
-              <p className="text-xl font-bold text-destructive">{formatCurrency(summary.total_outstanding)}</p>
+              <p className="text-xl font-bold text-destructive">{formatCurrency(summary.totalOutstanding)}</p>
             </div>
             <div className="h-10 w-px bg-border mx-2"></div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">DTI Ratio</p>
-              <p className={`text-xl font-bold ${summary.debt_to_income_ratio > 40 ? 'text-destructive' : 'text-amber-500'}`}>
-                {summary.debt_to_income_ratio}%
+              <p className={`text-xl font-bold ${summary.debtToIncomeRatio > 40 ? 'text-destructive' : 'text-amber-500'}`}>
+                {summary.debtToIncomeRatio}%
               </p>
             </div>
           </div>
@@ -144,7 +146,7 @@ export default function DebtPlanner() {
                 <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
                   <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Total Interest</p>
                   <p className="text-2xl font-bold text-destructive">
-                    {simulation ? formatCurrency(simulation.total_interest_paid) : '...'}
+                    {simulation ? formatCurrency(simulation.totalInterestPaid) : '...'}
                   </p>
                 </CardContent>
               </Card>
@@ -153,10 +155,10 @@ export default function DebtPlanner() {
                 <CardContent className="p-4 flex flex-col justify-center items-center text-center h-full">
                   <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1">Time to Freedom</p>
                   <p className="text-2xl font-bold text-primary">
-                    {simulation ? `${simulation.total_months} mo` : '...'}
+                    {simulation ? `${simulation.totalMonths} mo` : '...'}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {simulation ? `${(simulation.total_months / 12).toFixed(1)} years` : ''}
+                    {simulation ? `${(simulation.totalMonths / 12).toFixed(1)} years` : ''}
                   </p>
                 </CardContent>
               </Card>
@@ -168,7 +170,7 @@ export default function DebtPlanner() {
                   </div>
                   <p className="text-xs text-primary/80 uppercase font-bold tracking-wider mb-1 z-10">Interest Saved</p>
                   <p className="text-3xl font-black text-primary z-10">
-                    {simulation ? formatCurrency(simulation.interest_saved) : '...'}
+                    {simulation ? formatCurrency(simulation.interestSaved) : '...'}
                   </p>
                   <p className="text-xs text-primary/70 mt-1 z-10">vs standard minimum payments</p>
                 </CardContent>

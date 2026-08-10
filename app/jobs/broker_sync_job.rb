@@ -13,8 +13,7 @@ class BrokerSyncJob < ApplicationJob
     user = User.find(user_id)
     Current.user = user
 
-    adapter = Brokers::Registry.for(broker)
-    svc = adapter
+    svc = user.broker_credentials.find_by!(broker_type: broker).adapter
     snapshot_service = BrokerSnapshotSyncService.new(user, broker: broker)
 
     snapshot_service.sync_holdings!(svc.holdings)

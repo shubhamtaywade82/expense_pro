@@ -19,6 +19,8 @@ class User < ApplicationRecord
   has_many :debt_plans, dependent: :destroy
   has_many :notifications, dependent: :destroy
   has_many :unread_notifications, -> { where(read: false) }, class_name: 'Notification'
+  has_many :tax_documents, dependent: :destroy
+  has_many :transactions, dependent: :destroy
 
   PERSONAS = %w[salaried trader business mixed].freeze
 

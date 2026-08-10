@@ -8,10 +8,10 @@ Rails.application.routes.draw do
       resource :session, only: [ :show, :create, :destroy ]
       resources :registrations, only: [ :create ]
 
-      resources :categories, except: [ :show ]
-      resources :expenses, except: [ :show ]
-      resources :incomes, except: [ :show ] do
-        resources :tax_deductions, except: [:show]
+      resources :categories, only: %i[index create update destroy]
+      resources :expenses, only: %i[index create update destroy]
+      resources :incomes, only: %i[index create update destroy] do
+        resources :tax_deductions, only: %i[index create update destroy]
         collection do
           get :summary
           get :yearly
@@ -20,9 +20,9 @@ Rails.application.routes.draw do
           patch :toggle_received
         end
       end
-      resources :budgets, except: [ :show ]
+      resources :budgets, only: %i[index create update destroy]
 
-      resources :bills, except: [ :show ] do
+      resources :bills, only: %i[index create update destroy] do
         member do
           patch :toggle_paid
         end
@@ -34,17 +34,17 @@ Rails.application.routes.draw do
       get "debt_planner/summary", to: "debt_planner#summary"
       get "debt_planner/simulate", to: "debt_planner#simulate"
 
-      resources :investments, except: [ :show ]
+      resources :investments, only: %i[index create update destroy]
       get "tax/itr_summary", to: "tax#itr_summary"
       delete "tax/cache", to: "tax#invalidate_cache"
       get "tax/compare_regimes", to: "tax#compare_regimes"
       get "broker_snapshots", to: "broker_snapshots#index"
 
-      resources :employments, except: [:show] do
+      resources :employments, only: %i[index create update destroy] do
         member do
           post :fnf_settlement
         end
-        resources :salary_components, except: [:show]
+        resources :salary_components, only: %i[index create update destroy]
       end
 
       # ── Unified Broker API ──
@@ -69,6 +69,34 @@ Rails.application.routes.draw do
         delete "",               to: "brokers#destroy_credential"
       end
 
+      # ── DhanHQ API ──
+      # Kept alongside the unified broker API: it exposes ledger, orders,
+      # trade book and the CSV P&L report, which brokers/:broker_type lacks.
+      namespace :dhan do
+        get  "token_status",  to: "token#status"
+        post "refresh_token", to: "token#refresh"
+
+        get "credential", to: "credential#show"
+        put "credential", to: "credential#update"
+
+        get "profile",     to: "portfolio#profile"
+        get "positions",   to: "portfolio#positions"
+        get "holdings",    to: "portfolio#holdings"
+        get "fund_limits", to: "portfolio#fund_limits"
+        get "ledger",      to: "portfolio#ledger"
+
+        get  "orders",        to: "trades#orders"
+        get  "trade_book",    to: "trades#trade_book"
+        get  "trade_history", to: "trades#trade_history"
+        get  "pnl_report",    to: "trades#pnl_report"
+        post "import_trades", to: "trades#import"
+
+        get  "pnl_summary",           to: "investments#pnl_summary"
+        get  "sync_status",           to: "investments#sync_status"
+        post "sync_investments",      to: "investments#sync"
+        post "import_to_investments", to: "investments#import_to_investments"
+      end
+
       get "dashboard/overview", to: "dashboard#overview"
       get "reports/monthly", to: "reports#monthly"
       get "reports/financial_year", to: "reports#financial_year"
@@ -90,8 +118,6 @@ Rails.application.routes.draw do
       end
 
       get "net_worth", to: "net_worth#show"
-      get "debt_plans/summary", to: "debt_plans#summary"
-      get "debt_plans/simulate", to: "debt_plans#simulate"
       resources :debt_plans, only: %i[index create]
 
       # Notification Center

@@ -6,7 +6,9 @@ class NetWorthService
   def calculate
     assets = compute_assets
     liabilities = compute_liabilities
-    total_assets = assets.values.sum
+    # compute_assets already carries a :total key, so summing every value
+    # would count the whole portfolio twice.
+    total_assets = assets[:total]
     total_liabilities = liabilities[:total]
 
     {
@@ -51,7 +53,7 @@ class NetWorthService
   end
 
   def compute_liabilities
-    loans = @user.loan_accounts.includes(:emi_schedules)
+    loans = @user.loan_accounts
 
     loan_details = loans.map do |l|
       outstanding = l.outstanding_principal.to_f

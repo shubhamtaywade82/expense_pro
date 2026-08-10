@@ -165,7 +165,9 @@ class DashboardService
       current_value: current_value.to_s,
       total_pnl: total_pnl.to_s,
       count: investments.size,
-      asset_classes: investments.group_by(&:asset_class).transform_values(&:size)
+      # An array, not a hash keyed by asset class: render_camel_json camelizes
+      # every key it walks, which would mangle "non_speculative_fo" into data.
+      asset_classes: investments.group_by(&:asset_class).map { |name, group| { name: name, count: group.size } }
     }
   end
 

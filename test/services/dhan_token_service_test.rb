@@ -53,7 +53,7 @@ class DhanTokenServiceTest < ActiveSupport::TestCase
   test "BrokerCredential fallback_access_token takes precedence over ENV" do
     ENV["DHAN_TOKEN_ACCESS_TOKEN"] = nil
     ENV["DHAN_ACCESS_TOKEN"] = "env-token"
-    BrokerCredential.create!(user: @user, broker: "dhan", fallback_access_token: "credential-token")
+    BrokerCredential.create!(user: @user, broker: "dhan", client_id: "1100000000", fallback_access_token: "credential-token")
 
     token = DhanTokenService.fetch_and_store!
     assert_equal "credential-token", token

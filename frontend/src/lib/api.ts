@@ -23,6 +23,7 @@ import type {
   LoanDetail,
   MonthlyBill,
   MonthlyReport,
+  Notification,
   NetWorth,
   DebtSummary,
   DebtSimulation,
@@ -40,8 +41,11 @@ export class ApiError extends Error {}
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem("jwt");
+  // The browser must set Content-Type itself for multipart bodies so the
+  // boundary is included; forcing application/json corrupts file uploads.
+  const isMultipart = options.body instanceof FormData;
   const headers = {
-    "Content-Type": "application/json",
+    ...(isMultipart ? {} : { "Content-Type": "application/json" }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers ?? {}),
   };
@@ -81,16 +85,25 @@ function buildQuery(params: Record<string, string | number | boolean | undefined
   return query ? `?${query}` : "";
 }
 
+const encode = (body: unknown) => {
+  if (body === undefined) return undefined;
+  return body instanceof FormData ? body : JSON.stringify(body);
+};
+
 const get = <T>(path: string) => request<T>(path);
-const post = <T>(path: string, body?: unknown) =>
-  request<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
-const patch = <T>(path: string, body?: unknown) =>
-  request<T>(path, { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) });
-const put = <T>(path: string, body?: unknown) =>
-  request<T>(path, { method: "PUT", body: body === undefined ? undefined : JSON.stringify(body) });
+const post = <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body: encode(body) });
+const patch = <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body: encode(body) });
+const put = <T>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body: encode(body) });
 const del = <T>(path: string) => request<T>(path, { method: "DELETE" });
 
 export const api = {
+  // Raw verbs for endpoints that have no typed wrapper below.
+  get,
+  post,
+  patch,
+  put,
+  delete: del,
+
   auth: {
     me: () => get<User>("/session"),
     login: async (email: string, password: string) => {
@@ -215,10 +228,10 @@ export const api = {
   },
 
   dhan: {
-    tokenStatus: () => get<DhanTokenStatus>("/dhan/token_status"),
-    refreshToken: () => post<DhanTokenStatus>("/dhan/refresh_token"),
-    getCredential: () => get<DhanCredential>("/dhan/credential"),
-    updateCredential: (data: DhanCredentialUpdate) => put<DhanCredential>("/dhan/credential", data),
+    tokenStatus: () => get<BrokerTokenStatus>("/dhan/token_status"),
+    refreshToken: () => post<BrokerTokenStatus>("/dhan/refresh_token"),
+    getCredential: () => get<BrokerCredential>("/dhan/credential"),
+    updateCredential: (data: BrokerCredentialUpdate) => put<BrokerCredential>("/dhan/credential", data),
     profile: () => get<Record<string, unknown>>("/dhan/profile"),
     positions: () => get<Record<string, unknown>[]>("/dhan/positions"),
     holdings: () => get<Record<string, unknown>[]>("/dhan/holdings"),
@@ -232,10 +245,10 @@ export const api = {
     pnlSummary: (params: { fromDate?: string; toDate?: string } = {}) =>
       get<DhanPnlSummary>(`/dhan/pnl_summary${buildQuery(params)}`),
     importToInvestments: (data: { fromDate: string; toDate: string; manualAssetClass?: "swing_trading" | "long_term_equity" }) =>
-      post<DhanImportResult>("/dhan/import_to_investments", data),
+      post<BrokerImportResult>("/dhan/import_to_investments", data),
     syncInvestments: (data?: { fromDate?: string; toDate?: string }) =>
-      post<DhanSyncResult>("/dhan/sync_investments", data || {}),
-    syncStatus: () => get<DhanSyncStatus>("/dhan/sync_status"),
+      post<BrokerSyncResult>("/dhan/sync_investments", data || {}),
+    syncStatus: () => get<BrokerSyncStatus>("/dhan/sync_status"),
     importTrades: (data: { fromDate: string; toDate: string }) =>
       post<{ imported: number; from_date: string; to_date: string }>("/dhan/import_trades", data),
     pnlReport: (params: { fromDate?: string; toDate?: string } = {}) =>
@@ -274,10 +287,13 @@ export const api = {
     show: () => get<NetWorth>("/net_worth"),
   },
 
-  debtPlans: {
-    summary: () => get<DebtSummary>("/debt_plans/summary"),
+  debtPlanner: {
+    summary: () => get<DebtSummary>("/debt_planner/summary"),
     simulate: (params: { strategy?: string; extraMonthly?: number } = {}) =>
-      get<DebtSimulation>(`/debt_plans/simulate${buildQuery(params)}`),
+      get<DebtSimulation>(`/debt_planner/simulate${buildQuery(params)}`),
+  },
+
+  debtPlans: {
     list: () => get<DebtPlan[]>("/debt_plans"),
     create: (data: { name: string; strategy?: string; monthlyExtra?: number }) =>
       post<{ plan: DebtPlan; simulation: DebtSimulation }>("/debt_plans", data),

@@ -1,8 +1,6 @@
 module Api
   module V1
-    class ItrFilingController < ApplicationController
-      before_action :authenticate_request
-
+    class ItrFilingController < BaseController
       # GET /api/v1/itr_filing/prefill?financial_year=2025&form=ITR-2
       def prefill
         fy = params[:financial_year]&.to_i || TaxCalculatorService.default_financial_year

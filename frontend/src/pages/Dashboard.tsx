@@ -493,7 +493,7 @@ export default function Dashboard() {
                 <ArrowDownRight className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h4 className="text-2xl font-black tracking-tight text-foreground">{formatCurrency(data?.loans.totalEMI ?? "0")}</h4>
+                <h4 className="text-2xl font-black tracking-tight text-foreground">{formatCurrency(data?.loans.totalEmi ?? "0")}</h4>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/10">
                     {data?.emis.paid ?? 0} / {data?.emis.totalCount ?? 0} Paid

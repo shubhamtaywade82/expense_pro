@@ -1,8 +1,5 @@
 module Brokers
   class Registry
-    class AdapterNotRegisteredError < StandardError; end
-    class UnknownBrokerError < StandardError; end
-    
     class << self
       def register(adapter_class)
         # Store the class, not an instance - prevents shared state issues
@@ -12,14 +9,12 @@ module Brokers
 
       def for(broker_key)
         adapter_class = adapters[broker_key.to_s]
-        raise AdapterNotRegisteredError, "No adapter registered for broker: #{broker_key}" unless adapter_class
+        raise UnknownBroker, "No adapter registered for broker: #{broker_key}" unless adapter_class
         adapter_class
       end
 
-      # Returns the adapter class for the given broker type
-      def adapter_for(broker_type)
-        for(broker_type)
-      end
+      # `for` is a Ruby keyword, so it cannot be called without an explicit receiver.
+      alias_method :adapter_for, :for
 
       # Builds a new adapter instance with the given credential
       def build(broker_type, credential)
@@ -39,7 +34,7 @@ module Brokers
       def available_brokers
         adapters.map do |key, adapter_class|
           {
-            key: key,
+            type: key,
             name: adapter_class.display_name,
             asset_classes: adapter_class.asset_classes,
             auth_type: adapter_class.auth_type,

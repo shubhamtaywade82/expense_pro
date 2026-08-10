@@ -46,7 +46,7 @@ export default function EmploymentSection() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...data }: Record<string, unknown>) =>
-      api.employments.update(id as number, data),
+      api.employments.update({ id: id as number, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employments"] });
       setDialogOpen(false);

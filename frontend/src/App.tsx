@@ -13,6 +13,7 @@ import AiAssistant from "./pages/AiAssistant";
 import Investments from "./pages/Investments";
 import ITR from "./pages/ITR";
 import Brokers from "./pages/Brokers";
+import Dhan from "./pages/Dhan";
 import DebtPlanner from "./pages/DebtPlanner";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";

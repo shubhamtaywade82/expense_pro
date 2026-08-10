@@ -1,78 +1,47 @@
-# Dependencies
-vendor/bundle/
-.bundle/
-
-# Logs
-*.log
-log/*.log
-
-# Temporary files
+```
+# Ruby specific
+*.gem
+*.rbc
+coverage/
+InstalledFiles
+pkg/
+spec/reports/
+test/tmp/
+test/version_tmp/
 tmp/
-*.tmp
+
+# Bundle
+.bundle
+vendor/bundle
 
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
-# Coverage
-coverage/
-*.cov
+# Logs
+*.log
+log/
 
-# OS generated files
+# Temporary files
+*.tmp
+*.swp
 .DS_Store
 Thumbs.db
-
-# Ruby specific
-*.gem
-*.rbc
-.ruby-version
-.rubocop.yml
-.rspec
-spec/reports/
-test/tmp/
-test/version_tmp/
 
 # IDE
 .vscode/
 .idea/
-*.swp
 *.swo
 
-# Build
-build/
+# Build and dependency directories
+node_modules/
 dist/
+build/
 target/
-
-# Cache
-.cache/
-__pycache__/
-*.pyc
+.gradle/
 .mypy_cache/
 .pytest_cache/
-.nyc_output/
-coverage/lcov-report/
-
-# Compressed
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+.coverage
+htmlcov/
+```

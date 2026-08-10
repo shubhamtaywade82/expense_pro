@@ -11,6 +11,8 @@ class User < ApplicationRecord
   has_many :emi_payments, dependent: :destroy
   has_many :budgets, dependent: :destroy
   has_many :investments, dependent: :destroy
+  has_many :broker_credentials, dependent: :destroy
+  has_many :broker_access_tokens, dependent: :destroy
   has_many :broker_snapshots, dependent: :destroy
   has_many :trades, dependent: :destroy
   has_many :employments, dependent: :destroy

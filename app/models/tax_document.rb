@@ -79,11 +79,11 @@ class TaxDocument < ApplicationRecord
   end
 
   def requires_ocr?
-    OCR_PARSERS.key?(document_type)
+    parser.present?
   end
 
   def parser
-    DocumentParsers::Registry.for(document_type) if requires_ocr?
+    DocumentParsers::Registry.for(document_type)
   end
 
   def extracted_amount

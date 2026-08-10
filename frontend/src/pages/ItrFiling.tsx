@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import type { FilingReadiness } from '../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { AlertTriangle, ShieldCheck, FileJson } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, FileJson, Upload, ArrowRight, Vault } from 'lucide-react';
 
 export default function ItrFiling() {
   const [fy, setFy] = useState(2025);
@@ -21,19 +22,51 @@ export default function ItrFiling() {
     enabled: !!readiness?.can_file_self,
   });
 
-  const steps = ['Documents', 'Reconciliation', 'Review ITR', 'Download & File', 'E-Verify'];
+  const steps = [
+    { name: 'Documents', path: '/tax-documents' },
+    { name: 'Reconciliation', path: null },
+    { name: 'Review ITR', path: null },
+    { name: 'Download & File', path: null },
+    { name: 'E-Verify', path: null }
+  ];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">File Your ITR</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">File Your ITR</h1>
+          <p className="text-sm text-muted-foreground">
+            Assessment Year {fy + 1}-{String(fy + 2).slice(2)} (FY {fy}-{String(fy + 1).slice(2)})
+          </p>
+        </div>
+        <Link to="/tax-documents">
+          <Button variant="outline" className="gap-2">
+            <Vault className="h-4 w-4" /> Open Tax Document Vault
+          </Button>
+        </Link>
+      </div>
 
       {/* Progress steps */}
       <div className="flex gap-2">
         {steps.map((s, i) => (
-          <div key={s} className={`flex-1 text-center py-2 rounded text-sm font-medium
-            ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-            {i + 1}. {s}
-          </div>
+          s.path ? (
+            <Link
+              key={s.name}
+              to={s.path}
+              className={`flex-1 text-center py-2 rounded text-sm font-medium transition-colors
+                ${i <= step ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted hover:bg-muted/80'}`}
+            >
+              {i + 1}. {s.name}
+            </Link>
+          ) : (
+            <div
+              key={s.name}
+              className={`flex-1 text-center py-2 rounded text-sm font-medium
+                ${i <= step ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+            >
+              {i + 1}. {s.name}
+            </div>
+          )
         ))}
       </div>
 
@@ -57,11 +90,25 @@ export default function ItrFiling() {
       {/* Blockers that must be resolved */}
       {!!readiness?.blockers?.length && (
         <Card>
-          <CardHeader><CardTitle>Resolve Before Filing ({readiness!.blockers.length})</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle>Resolve Before Filing ({readiness!.blockers.length})</CardTitle>
+            <Link to="/tax-documents">
+              <Button size="sm" className="gap-2">
+                <Upload className="h-4 w-4" /> Upload Documents <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </CardHeader>
           <CardContent className="space-y-2">
             {readiness!.blockers.map((b, i) => (
-              <div key={i} className="text-sm border-l-4 border-amber-400 pl-3 py-1">
-                <strong>{b.item}:</strong> {b.resolution}
+              <div key={i} className="text-sm border-l-4 border-amber-400 pl-3 py-2 flex items-center justify-between bg-amber-50/30 rounded-r">
+                <div>
+                  <strong className="capitalize">{b.item.replace(/_/g, ' ')}:</strong> {b.resolution}
+                </div>
+                <Link to="/tax-documents">
+                  <Button variant="ghost" size="sm" className="text-xs text-primary underline">
+                    Upload
+                  </Button>
+                </Link>
               </div>
             ))}
           </CardContent>

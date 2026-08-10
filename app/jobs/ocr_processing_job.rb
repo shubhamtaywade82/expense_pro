@@ -12,7 +12,7 @@ class OcrProcessingJob < ApplicationJob
       return
     end
 
-    parser = parser_class.constantize.new
+    parser = parser_class.is_a?(Class) ? parser_class.new : parser_class.constantize.new
     extracted = parser.parse(doc)
 
     # Run parser-specific validation
@@ -63,3 +63,5 @@ class OcrProcessingJob < ApplicationJob
     Rails.logger.error("Failed to generate preview for doc #{doc.id}: #{e.message}")
   end
 end
+
+OCRProcessingJob = OcrProcessingJob unless defined?(OCRProcessingJob)

@@ -11,7 +11,7 @@ module DocumentParsers
     protected
 
     def ocr
-      @ocr ||= OCR::OcrService.new
+      @ocr ||= ::Ocr::OcrService.new
     end
   end
 end

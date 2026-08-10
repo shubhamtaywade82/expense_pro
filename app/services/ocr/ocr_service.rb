@@ -1,4 +1,4 @@
-module OCR
+module Ocr
   class OcrService
     def initialize(provider: nil)
       @provider = provider || ENV.fetch("OCR_PROVIDER", "tesseract").to_sym

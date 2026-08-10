@@ -14,6 +14,15 @@ class Income < ApplicationRecord
   validates :frequency, inclusion: { in: FREQUENCIES }
 
   scope :for_month, ->(month, year) { where(income_date: Date.new(year, month, 1)..Date.new(year, month, -1)) }
+  scope :for_fy, ->(year) {
+    y = year.to_i
+    where(income_date: Date.new(y - 1, 4, 1)..Date.new(y, 3, 31))
+  }
+  scope :salary, -> { where(income_type: %w[salary bonus fnf]) }
+  scope :freelance, -> { where(income_type: "freelance") }
+  scope :rental, -> { where("source ILIKE '%rent%' OR notes ILIKE '%rent%'") }
+  scope :interest, -> { where("source ILIKE '%interest%' OR notes ILIKE '%interest%'") }
+  scope :dividend, -> { where("source ILIKE '%dividend%' OR notes ILIKE '%dividend%'") }
   scope :templates, -> { where(is_recurring: true, parent_id: nil) }
   scope :recent_first, -> { order(income_date: :desc, id: :desc) }
 

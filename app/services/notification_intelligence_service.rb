@@ -37,7 +37,7 @@ class NotificationIntelligenceService
 
   def check_ais_mismatch
     # Check if user has trades but no matching AIS data uploaded
-    trade_count = @user.trades.where(executed_at: Date.new(@fy, 4, 1)..).count
+    trade_count = @user.trades.for_fy(@fy).count
     ais_docs = @user.tax_documents.where(document_type: :ais_json, financial_year: @fy)
     
     if trade_count > 10 && ais_docs.empty?
@@ -56,7 +56,7 @@ class NotificationIntelligenceService
 
   def check_form_16_missing
     form16 = @user.tax_documents.where(document_type: :form_16, financial_year: @fy).first
-    salary_income = @user.incomes.where(income_source: :salary, income_date: Date.new(@fy, 4, 1)..).sum(:amount)
+    salary_income = @user.incomes.for_fy(@fy).salary.sum(:amount)
     
     if salary_income > 0 && !form16
       create_notification(
@@ -73,10 +73,11 @@ class NotificationIntelligenceService
   end
 
   def check_fo_loss_limit
-    fo_losses = @user.trades
-                     .where(segment: :fno, executed_at: Date.new(@fy, 4, 1)..)
-                     .where("pnl < 0")
-                     .sum(:pnl)
+    fo_losses = @user.investments
+                     .where(asset_class: "non_speculative_fo")
+                     .for_fy(@fy)
+                     .select { |i| i.total_pnl < 0 }
+                     .sum(&:total_pnl)
     
     if fo_losses < -150_000 # ₹1.5L limit for non-business F&O
       create_notification(
@@ -226,7 +227,8 @@ class NotificationIntelligenceService
 
   def check_dividend_tracking
     recent_dividends = @user.incomes
-                            .where(income_source: :dividend, income_date: (Date.today - 30.days)..Date.today)
+                            .dividend
+                            .where(income_date: (Date.current - 30.days)..Date.current)
     
     if recent_dividends.any?
       total = recent_dividends.sum(:amount)

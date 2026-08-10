@@ -73,4 +73,22 @@ class IncomeTest < ActiveSupport::TestCase
     t1.update(end_date: Date.new(2025, 6, 14))
     assert_match /Continuous: Seamless transition/, t1.gap_info
   end
+
+  test "for_fy scope filters incomes within financial year" do
+    inc1 = @user.incomes.create!(source: "Salary FY26", amount: 1000, income_date: Date.new(2025, 6, 1), income_type: "salary")
+    inc2 = @user.incomes.create!(source: "Salary FY25", amount: 1000, income_date: Date.new(2024, 6, 1), income_type: "salary")
+
+    fy26_incomes = @user.incomes.for_fy(2026)
+    assert_includes fy26_incomes, inc1
+    assert_not_includes fy26_incomes, inc2
+  end
+
+  test "category scopes filter appropriately" do
+    salary = @user.incomes.create!(source: "Tech Corp", amount: 50000, income_date: Date.new(2025, 5, 1), income_type: "salary")
+    dividend = @user.incomes.create!(source: "TCS Dividend", amount: 500, income_date: Date.new(2025, 5, 1), income_type: "other")
+
+    assert_includes @user.incomes.salary, salary
+    assert_not_includes @user.incomes.salary, dividend
+    assert_includes @user.incomes.dividend, dividend
+  end
 end

@@ -125,7 +125,36 @@ export type EmiPayment = Omit<CommonFields, "createdAt" | "updatedAt"> & {
   paidDate: DateString | null;
 };
 
-export type LoanType = "home" | "car" | "personal" | "education" | "business" | "gold" | "other";
+export type RateRevision = {
+  effectiveDate: DateString;
+  interestRate: number;
+  strategy?: "adjust_tenure" | "adjust_emi";
+};
+
+export type DisbursementTranche = {
+  disbursedOn: DateString;
+  amount: number;
+  isPreEmi?: boolean;
+};
+
+export type EmiScheduleItem = {
+  id: number;
+  loanAccountId?: number;
+  installmentNumber: number;
+  dueDate: DateString;
+  openingBalance: string | number;
+  emiAmount: string | number;
+  principalComponent: string | number;
+  interestComponent: string | number;
+  closingBalance: string | number;
+  status: "pending" | "paid" | "overdue";
+  paidOn?: DateString | null;
+  amount?: string | number;
+  principalAmount?: string | number;
+  interestAmount?: string | number;
+  isPaid?: boolean;
+  emiNumber?: number;
+};
 
 export type Loan = CommonFields & {
   categoryId: number;
@@ -146,10 +175,12 @@ export type Loan = CommonFields & {
   isActive: boolean;
   paidEmiCount: number;
   remainingEmiCount: number;
+  rateRevisions?: RateRevision[];
+  disbursements?: DisbursementTranche[];
 };
 
 export type LoanDetail = Loan & {
-  emis: EmiPayment[];
+  emis: (EmiPayment & EmiScheduleItem)[];
 };
 
 export type Budget = CommonFields & {

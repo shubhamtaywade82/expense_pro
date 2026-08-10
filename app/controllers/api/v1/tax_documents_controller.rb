@@ -32,6 +32,7 @@ module Api
 
       def index
         docs = current_user.tax_documents
+                           .with_attached_file
                            .for_fy(params[:financial_year] || TaxCalculatorService.default_financial_year)
                            .order(created_at: :desc)
 
@@ -71,9 +72,11 @@ module Api
       def preview
         doc = current_user.tax_documents.find(params[:id])
         if doc.preview_image.attached?
-          redirect_to rails_blob_url(doc.preview_image, disposition: "inline")
+          redirect_to rails_blob_url(doc.preview_image, disposition: "inline"), allow_other_host: true
+        elsif doc.file.attached?
+          redirect_to rails_blob_url(doc.file, disposition: "inline"), allow_other_host: true
         else
-          redirect_to rails_blob_url(doc.file, disposition: "inline")
+          render json: { error: "No file attached" }, status: :not_found
         end
       end
 
@@ -93,7 +96,8 @@ module Api
         elsif doc.document_type == "ais_json"
           AisParseJob.perform_later(doc.id)
         elsif doc.requires_ocr?
-          OcrProcessingJob.perform_later(doc.id)
+          job_class = defined?(OCRProcessingJob) ? OCRProcessingJob : (defined?(OcrProcessingJob) ? OcrProcessingJob : "OcrProcessingJob".constantize)
+          job_class.perform_later(doc.id)
         else
           doc.update!(status: :verified)
         end

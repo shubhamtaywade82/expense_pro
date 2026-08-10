@@ -48,10 +48,10 @@ module Api
       def current_user
         return @current_user if @current_user
 
-        header = request.headers["Authorization"]
-        return nil unless header.present?
+        auth_header = request.headers["Authorization"]
+        token = auth_header&.split(" ")&.last || params[:token] || request.cookies["token"]
+        return nil unless token.present?
 
-        token = header.split(" ").last
         begin
           decoded = JWT.decode(token, jwt_secret, true, { algorithm: "HS256" })
           payload = decoded[0]

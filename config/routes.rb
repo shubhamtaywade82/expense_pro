@@ -28,7 +28,13 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :loans, only: [ :index, :show, :create, :destroy ]
+      resources :loans, only: [ :index, :show, :create, :update, :destroy ] do
+        member do
+          post :recalculate_schedule
+          post :import_schedule
+          patch "emi_schedules/:schedule_id", to: "loans#update_schedule", as: :update_schedule
+        end
+      end
       patch "emi_payments/:id/pay", to: "emi_payments#pay", as: :pay_emi
       
       get "debt_planner/summary", to: "debt_planner#summary"

@@ -56,7 +56,7 @@ class DocumentChecklistService
     personas.empty? ? [:individual] : personas
   end
 
-  def salaried? = @user.incomes.for_fy(@fy).where(income_type: :salary).exists? || @user.incomes.for_fy(@fy).where(income_source: :salary).exists?
+  def salaried? = @user.incomes.for_fy(@fy).salary.exists?
   def trader? = @user.trades.for_fy(@fy).where(broker_type: 'securities').exists? rescue false
   def crypto_trader? = @user.trades.for_fy(@fy).where(broker_type: 'crypto').exists? rescue false
   def business? = defined?(@user.businesses) && @user.businesses.exists?

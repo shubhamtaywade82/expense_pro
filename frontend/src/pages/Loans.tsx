@@ -23,11 +23,31 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, CheckCircle2, Circle, ChevronDown, ChevronUp, Landmark, Calculator } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Circle,
+  ChevronDown,
+  ChevronUp,
+  Landmark,
+  Calculator,
+  TrendingUp,
+  FileSpreadsheet,
+  Edit3,
+} from "lucide-react";
+import type { Loan, EmiScheduleItem } from "@/types";
+import { LoanRateTimelineDialog } from "@/components/LoanRateTimelineDialog";
+import { LoanScheduleImportDialog } from "@/components/LoanScheduleImportDialog";
+import { EditInstallmentDialog } from "@/components/EditInstallmentDialog";
 
 export default function Loans() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expandedLoan, setExpandedLoan] = useState<number | null>(null);
+  const [timelineOpen, setTimelineOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [editingInstallment, setEditingInstallment] = useState<EmiScheduleItem | null>(null);
+
   const [form, setForm] = useState({
     categoryId: "",
     name: "",
@@ -58,6 +78,32 @@ export default function Loans() {
   const deleteMutation = useMutation({ mutationFn: api.loans.delete, onSuccess: invalidate });
   const payEmiMutation = useMutation({ mutationFn: api.loans.payEmi, onSuccess: invalidate });
 
+  const recalculateMutation = useMutation({
+    mutationFn: (data: { rateRevisions: any[]; disbursements: any[] }) =>
+      api.loans.recalculateSchedule(expandedLoan as number, data),
+    onSuccess: () => {
+      invalidate();
+      setTimelineOpen(false);
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (rows: any[]) => api.loans.importSchedule(expandedLoan as number, rows),
+    onSuccess: () => {
+      invalidate();
+      setImportOpen(false);
+    },
+  });
+
+  const updateInstallmentMutation = useMutation({
+    mutationFn: ({ scheduleId, data }: { scheduleId: number; data: Partial<EmiScheduleItem> }) =>
+      api.loans.updateSchedule(expandedLoan as number, scheduleId, data),
+    onSuccess: () => {
+      invalidate();
+      setEditingInstallment(null);
+    },
+  });
+
   const emiCategories = categories?.filter((c) => c.type === "emi") ?? [];
 
   const resetForm = () => {
@@ -86,9 +132,10 @@ export default function Loans() {
     return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(num);
   };
 
-  const totalOutstanding = loans?.reduce((sum, l) => sum + (l.isActive ? parseFloat(String(l.outstandingPrincipal)) : 0), 0) ?? 0;
-  const totalEMI = loans?.reduce((sum, l) => sum + (l.isActive ? parseFloat(String(l.emiAmount)) : 0), 0) ?? 0;
-  const activeLoans = loans?.filter((l) => l.isActive).length ?? 0;
+  const loanList: Loan[] = Array.isArray(loans) ? loans : ((loans as any)?.data ?? []);
+  const totalOutstanding = loanList.reduce((sum, l) => sum + (l.isActive ? parseFloat(String(l.outstandingPrincipal)) : 0), 0);
+  const totalEMI = loanList.reduce((sum, l) => sum + (l.isActive ? parseFloat(String(l.emiAmount)) : 0), 0);
+  const activeLoans = loanList.filter((l) => l.isActive).length;
 
   const loanTypeLabels: Record<string, string> = { home: "Home", car: "Car", personal: "Personal", education: "Education", business: "Business", gold: "Gold", other: "Other" };
 
@@ -98,7 +145,7 @@ export default function Loans() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Loans & EMIs</h2>
-            <p className="text-muted-foreground">Track your loans and EMI payments</p>
+            <p className="text-muted-foreground">Track loans, floating rate revisions, and EMI schedules</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -150,10 +197,10 @@ export default function Loans() {
         </div>
 
         <div className="space-y-4">
-          {isLoading ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div> : loans?.length === 0 ? (
+          {isLoading ? <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div> : loanList.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No loans added yet</p>
           ) : (
-            loans?.map((loan) => {
+            loanList.map((loan) => {
               const progress = loan.tenureMonths > 0 ? (loan.paidEmiCount / loan.tenureMonths) * 100 : 0;
               const isExpanded = expandedLoan === loan.id;
               return (
@@ -197,24 +244,74 @@ export default function Loans() {
                           <div className="bg-muted p-2 rounded-lg"><p className="text-xs text-muted-foreground">Total Payable</p><p className="font-semibold text-sm">{formatCurrency(loan.totalAmount)}</p></div>
                           <div className="bg-muted p-2 rounded-lg"><p className="text-xs text-muted-foreground">Outstanding</p><p className="font-semibold text-sm text-orange-600">{formatCurrency(loan.outstandingPrincipal)}</p></div>
                         </div>
-                        <h4 className="text-sm font-medium mb-2">EMI Schedule</h4>
-                        <div className="max-h-64 overflow-y-auto space-y-1">
-                          {loanDetail.emis?.map((emi) => (
-                            <div key={emi.id} className="flex items-center justify-between p-2 rounded hover:bg-muted/50 text-sm">
-                              <div className="flex items-center gap-2">
-                                <button onClick={() => !emi.isPaid && payEmiMutation.mutate({ emiId: emi.id, paidDate: new Date().toISOString().split("T")[0] })}>
-                                  {emi.isPaid ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Circle className="w-4 h-4 text-muted-foreground" />}
-                                </button>
-                                <span>EMI #{emi.emiNumber}</span>
+
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-sm font-semibold">Amortization Schedule</h4>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => setTimelineOpen(true)}>
+                              <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+                              Rate Timeline & Tranches
+                            </Button>
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => setImportOpen(true)}>
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
+                              Import Statement (CSV)
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+                          {loanDetail.emis?.map((emi) => {
+                            const isPaid = emi.status === "paid" || emi.isPaid;
+                            const instNum = emi.installmentNumber || emi.emiNumber;
+                            const emiVal = emi.emiAmount || emi.amount;
+                            const pVal = emi.principalComponent || emi.principalAmount;
+                            const iVal = emi.interestComponent || emi.interestAmount;
+
+                            return (
+                              <div
+                                key={emi.id}
+                                className={`flex items-center justify-between p-2 rounded border text-sm transition-colors ${
+                                  isPaid ? "bg-green-50/30 border-green-200" : "hover:bg-muted/50"
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <button
+                                    onClick={() =>
+                                      !isPaid &&
+                                      updateInstallmentMutation.mutate({
+                                        scheduleId: emi.id,
+                                        data: { status: "paid", paidOn: new Date().toISOString().split("T")[0] },
+                                      })
+                                    }
+                                  >
+                                    {isPaid ? (
+                                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                    ) : (
+                                      <Circle className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                  </button>
+                                  <span className="font-medium text-xs">EMI #{instNum}</span>
+                                  {isPaid && <Badge variant="secondary" className="text-[10px] h-4 bg-green-100 text-green-800">Paid</Badge>}
+                                </div>
+                                <div className="flex items-center gap-3 text-xs">
+                                  <span className="text-muted-foreground font-mono">
+                                    {emi.dueDate ? new Date(emi.dueDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : ""}
+                                  </span>
+                                  <span className="font-medium font-mono">{formatCurrency(emiVal)}</span>
+                                  <span className="text-green-600 hidden md:inline font-mono">P: {formatCurrency(pVal)}</span>
+                                  <span className="text-orange-600 hidden md:inline font-mono">I: {formatCurrency(iVal)}</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                    onClick={() => setEditingInstallment(emi)}
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-3 text-xs">
-                                <span className="text-muted-foreground">{emi.dueDate ? new Date(emi.dueDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : ""}</span>
-                                <span className="font-medium">{formatCurrency(emi.amount)}</span>
-                                <span className="text-green-600 hidden md:inline">P: {formatCurrency(emi.principalAmount)}</span>
-                                <span className="text-orange-600 hidden md:inline">I: {formatCurrency(emi.interestAmount)}</span>
-                              </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -225,6 +322,32 @@ export default function Loans() {
           )}
         </div>
       </div>
+
+      {/* Floating Rate & Tranches Timeline Dialog */}
+      <LoanRateTimelineDialog
+        loan={loanDetail || null}
+        open={timelineOpen}
+        onOpenChange={setTimelineOpen}
+        onSave={(data) => recalculateMutation.mutate(data)}
+        isPending={recalculateMutation.isPending}
+      />
+
+      {/* Statement CSV Import Dialog */}
+      <LoanScheduleImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImport={(rows) => importMutation.mutate(rows)}
+        isPending={importMutation.isPending}
+      />
+
+      {/* Inline Installment Edit Dialog */}
+      <EditInstallmentDialog
+        installment={editingInstallment}
+        open={!!editingInstallment}
+        onOpenChange={(open) => !open && setEditingInstallment(null)}
+        onSave={(scheduleId, data) => updateInstallmentMutation.mutate({ scheduleId, data })}
+        isPending={updateInstallmentMutation.isPending}
+      />
     </div>
   );
 }

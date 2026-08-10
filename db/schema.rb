@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_120100) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -295,6 +295,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_120100) do
     t.decimal "outstanding_principal", precision: 15, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "rate_revisions", default: []
+    t.jsonb "disbursements", default: []
+    t.jsonb "metadata", default: {}
     t.index ["user_id"], name: "index_loan_accounts_on_user_id"
   end
 

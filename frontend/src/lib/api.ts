@@ -175,10 +175,19 @@ export const api = {
   },
 
   loans: {
-    list: () => get<Loan[]>("/loans"),
+    list: async () => {
+      const res = await request<{ data: Loan[]; meta?: any } | Loan[]>("/loans");
+      return Array.isArray(res) ? res : (res?.data ?? []);
+    },
     byId: (id: number) => get<LoanDetail>(`/loans/${id}`),
     create: (data: CreatePayload<Loan>) => post<Loan>("/loans", data),
+    update: (id: number, data: Partial<Loan> & { regenerateSchedule?: boolean }) => patch<Loan>(`/loans/${id}`, data),
     delete: (id: number) => del<void>(`/loans/${id}`),
+    recalculateSchedule: (id: number, data: { rateRevisions?: any[]; disbursements?: any[] }) =>
+      post<LoanDetail>(`/loans/${id}/recalculate_schedule`, data),
+    importSchedule: (id: number, rows: any[]) => post<LoanDetail>(`/loans/${id}/import_schedule`, { rows }),
+    updateSchedule: (id: number, scheduleId: number, data: Partial<EmiScheduleItem>) =>
+      patch<EmiScheduleItem>(`/loans/${id}/emi_schedules/${scheduleId}`, data),
     payEmi: ({ emiId, paidDate }: { emiId: number; paidDate?: string }) =>
       patch<EmiPayment>(`/emi_payments/${emiId}/pay`, { paidDate }),
   },

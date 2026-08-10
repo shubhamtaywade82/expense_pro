@@ -43,7 +43,7 @@ class ReconciliationService
   def check_salary(form16s, ais)
     return nil unless ais
 
-    app_salary = @user.incomes.for_fy(@fy).where(income_source: :salary).sum(:amount)
+    app_salary = @user.incomes.for_fy(@fy).salary.sum(:amount)
     form16_salary = form16s.sum { |f| f["taxable_salary"].to_f }
     ais_salary_tds = ais["tds_entries"]&.select { |t| t["section"] == "192" }&.sum { |t| t["amount"].to_f } || 0
 
@@ -67,7 +67,7 @@ class ReconciliationService
   def check_interest(ais)
     return nil unless ais
 
-    app_interest = @user.incomes.for_fy(@fy).where(income_source: :interest).sum(:amount)
+    app_interest = @user.incomes.for_fy(@fy).interest.sum(:amount)
     ais_interest = ais["total_interest_reported"].to_f
 
     # Rule: you must report AT LEAST what AIS shows
@@ -89,7 +89,7 @@ class ReconciliationService
   def check_dividend(ais)
     return nil unless ais
 
-    app_dividend = @user.incomes.for_fy(@fy).where(income_source: :dividend).sum(:amount)
+    app_dividend = @user.incomes.for_fy(@fy).dividend.sum(:amount)
     ais_dividend = ais["total_dividend_reported"].to_f
     under_reported = ais_dividend - app_dividend
 

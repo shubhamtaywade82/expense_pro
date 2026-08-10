@@ -89,7 +89,7 @@ class ItrPrefillService
     end
 
     # Schedule HP: House Property
-    rental = @user.incomes.for_fy(@fy).where(income_source: :rental).sum(:amount)
+    rental = @user.incomes.for_fy(@fy).rental.sum(:amount)
     home_interest = verified_home_loan_interest
     if rental > 0 || home_interest > 0
       details[:houseProperty] = {
@@ -101,8 +101,8 @@ class ItrPrefillService
     end
 
     # Schedule OS: Other Sources
-    interest = @user.incomes.for_fy(@fy).where(income_source: :interest).sum(:amount)
-    dividend = @user.incomes.for_fy(@fy).where(income_source: :dividend).sum(:amount)
+    interest = @user.incomes.for_fy(@fy).interest.sum(:amount)
+    dividend = @user.incomes.for_fy(@fy).dividend.sum(:amount)
     if interest > 0 || dividend > 0
       details[:otherSources] = {
         interestIncome: {
@@ -180,7 +180,7 @@ class ItrPrefillService
     end
 
     # Presumptive 44ADA — freelance
-    freelance = @user.incomes.for_fy(@fy).where(income_source: %i[freelance consulting])
+    freelance = @user.incomes.for_fy(@fy).freelance
     if freelance.any?
       gross = freelance.sum(:amount)
       bp[:presumptive44ADA] = {
@@ -328,7 +328,7 @@ class ItrPrefillService
   def health_insurance_total = verified_documents(:health_insurance_80d).sum { |h| h["premium"].to_f }
   def education_loan_interest = verified_documents(:education_loan_cert).sum { |e| e["interest_paid"].to_f }
   def donation_total = verified_documents(:donation_80g).sum { |d| d["amount"].to_f }
-  def savings_interest = @user.incomes.for_fy(@fy).where(income_source: :interest).sum(:amount)
+  def savings_interest = @user.incomes.for_fy(@fy).interest.sum(:amount)
   def hra_exemption = HraCalculatorService.new(@user, @fy).calculate
 
   def mask_aadhaar(aadhaar)

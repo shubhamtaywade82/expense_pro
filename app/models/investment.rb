@@ -32,6 +32,10 @@ class Investment < ApplicationRecord
   scope :realized, -> { where(status: "realized") }
   scope :recent_first, -> { order(purchase_date: :desc, id: :desc) }
   scope :for_year, ->(year) { where(purchase_date: Date.new(year, 1, 1)..Date.new(year, 12, 31)) }
+  scope :for_fy, ->(year) {
+    y = year.to_i
+    where(purchase_date: Date.new(y - 1, 4, 1)..Date.new(y, 3, 31))
+  }
 
   def current_value
     if status == "realized" && sell_price.present?

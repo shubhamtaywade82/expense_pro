@@ -2,13 +2,13 @@ module Brokers
   class CoinDCXAdapter < BaseAdapter
     BASE_URL = "https://api.coindcx.com"
 
-    def broker_key
-      "coindcx"
-    end
-
-    def broker_name
-      "CoinDCX"
-    end
+    def self.broker_type = "coindcx"
+    def self.display_name = "CoinDCX"
+    def self.asset_classes = [:crypto]
+    def self.auth_type = :api_key
+    def self.required_credentials = [:api_key]
+    def self.rate_limit = { requests_per_second: 10, burst: 20 }
+    def self.documentation_url = "https://docs.coindcx.com/"
 
     def profile
       api_get("/exchange/v1/users/me")

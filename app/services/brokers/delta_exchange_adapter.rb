@@ -3,13 +3,13 @@ module Brokers
     BASE_URL = "https://api.india.delta.exchange"
     MAINNET_URL = "https://api.delta.exchange"
 
-    def broker_key
-      "delta_exchange"
-    end
-
-    def broker_name
-      "Delta Exchange India"
-    end
+    def self.broker_type = "delta_exchange"
+    def self.display_name = "Delta Exchange India"
+    def self.asset_classes = [:crypto]
+    def self.auth_type = :api_key
+    def self.required_credentials = [:api_key]
+    def self.rate_limit = { requests_per_second: 10, burst: 20 }
+    def self.documentation_url = "https://docs.delta.exchange/"
 
     def profile
       api_get("/v2/user/profile")

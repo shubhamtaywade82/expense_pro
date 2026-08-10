@@ -29,15 +29,15 @@ module Brokers
     def holdings
       raw = signed_get("/api/v2/funds")
       raw.select { |f| f["balance"].to_f > 0 }.map do |f|
-        NormalizedHolding.new(
-          broker: "wazirx",
-          symbol: f["currency"]&.upcase,
-          name: f["currency"]&.upcase,
+        Brokers::BaseAdapter::Holding.new(
+          security_id: f["currency"]&.upcase,
+          trading_symbol: f["currency"]&.upcase,
+          exchange: "WAZIRX",
           quantity: f["balance"].to_f,
-          avg_price: nil,
+          average_price: nil,
           current_price: nil,
-          asset_class: "crypto_currency",
-          raw_data: f
+          pnl: 0.0,
+          data: f
         )
       end
     end
@@ -111,19 +111,28 @@ module Brokers
     end
 
     def normalize_trade(raw)
-      NormalizedTrade.new(
-        broker: "wazirx",
+      Brokers::BaseAdapter::Trade.new(
         exchange_trade_id: raw["id"]&.to_s,
-        symbol: raw["market"],
-        name: raw["market"],
-        segment: "crypto_spot",
-        asset_class: "crypto_currency",
-        trade_type: raw["side"]&.downcase == "buy" ? :buy : :sell,
+        transaction_type: raw["side"]&.downcase == "buy" ? "BUY" : "SELL",
+        exchange_segment: "WAZIRX_CRYPTO",
+        trading_symbol: raw["market"],
+        security_id: raw["market"],
         quantity: raw["executed_qty"].to_f,
         price: raw["avg_price"].to_f,
-        amount: raw["executed_qty"].to_f * raw["avg_price"].to_f,
-        trade_date: Time.at(raw["created_at"].to_i).to_datetime,
-        charges: { fee: raw["fee"].to_f },
+        trade_date: Time.at(raw["created_at"].to_i),
+        brokerage: raw["fee"].to_f,
+        stt: 0.0,
+        gst: 0.0,
+        sebi_tax: 0.0,
+        exchange_charges: 0.0,
+        stamp_duty: 0.0,
+        product_type: "CNC",
+        order_type: "MARKET",
+        instrument: "CRYPTO",
+        isin: nil,
+        expiry_date: nil,
+        option_type: nil,
+        strike_price: nil,
         raw_data: raw
       )
     end

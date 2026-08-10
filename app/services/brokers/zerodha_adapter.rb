@@ -35,15 +35,15 @@ module Brokers
     def holdings
       raw = get("/portfolio/holdings")
       (raw["data"] || []).map do |h|
-        NormalizedHolding.new(
-          broker: "zerodha",
-          symbol: h["tradingsymbol"],
-          name: h["exchange"] == "NSE" ? h["tradingsymbol"] : h["tradingsymbol"],
+        Brokers::BaseAdapter::Holding.new(
+          security_id: h["instrument_token"].to_s,
+          trading_symbol: h["tradingsymbol"],
+          exchange: h["exchange"],
           quantity: h["quantity"].to_f,
-          avg_price: h["average_price"].to_f,
+          average_price: h["average_price"].to_f,
           current_price: h["last_price"].to_f,
-          asset_class: "long_term_equity",
-          raw_data: h
+          pnl: 0.0,
+          data: h
         )
       end
     end
@@ -51,15 +51,16 @@ module Brokers
     def positions
       raw = get("/portfolio/positions")
       (raw.dig("data", "net") || []).map do |p|
-        NormalizedHolding.new(
-          broker: "zerodha",
-          symbol: p["tradingsymbol"],
-          name: p["tradingsymbol"],
-          quantity: p["quantity"].to_f,
-          avg_price: p["average_price"].to_f,
-          current_price: p["last_price"].to_f,
-          asset_class: p["product"] == "MIS" ? "swing_trading" : "long_term_equity",
-          raw_data: p
+        Brokers::BaseAdapter::Position.new(
+          security_id: p["instrument_token"].to_s,
+          trading_symbol: p["tradingsymbol"],
+          exchange: p["exchange"],
+          net_quantity: p["quantity"].to_f,
+          buy_average: p["buy_price"].to_f,
+          sell_average: p["sell_price"].to_f,
+          unrealized_pnl: p["unrealised"].to_f,
+          realized_pnl: p["realised"].to_f,
+          data: p
         )
       end
     end

@@ -2,6 +2,14 @@ module Brokers
   class DhanHQAdapter < BaseAdapter
     DEFAULT_TOKEN_SERVICE_URL = "https://algo-trading-api.onrender.com/auth/dhan/token"
 
+    def self.broker_type = "dhanhq"
+    def self.display_name = "DhanHQ"
+    def self.asset_classes = [:equity, :futures, :options, :mutual_funds]
+    def self.auth_type = :api_key_secret
+    def self.required_credentials = [:client_id]
+    def self.rate_limit = { requests_per_second: 5, burst: 10 }
+    def self.documentation_url = "https://docs.dhan.co/"
+
     CHARGE_FIELDS = %i[
       sebi_tax stt brokerage_charges service_tax exchange_transaction_charges stamp_duty
     ].freeze
@@ -39,14 +47,6 @@ module Brokers
     }.freeze
 
     MAX_TRADE_HISTORY_PAGES = 250
-
-    def broker_key
-      "dhan"
-    end
-
-    def broker_name
-      "DhanHQ"
-    end
 
     def profile
       DhanHQ::Models::Profile.fetch&.attributes

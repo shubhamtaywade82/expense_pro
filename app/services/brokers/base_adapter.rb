@@ -1,5 +1,29 @@
 module Brokers
+  # Base exception for all broker-related errors
+  class BrokerError < StandardError; end
+  
+  # Authentication/Authorization errors
+  class AuthenticationError < BrokerError; end
+  
+  # Rate limiting errors
+  class RateLimitError < BrokerError; end
+  
+  # General API errors
+  class APIError < BrokerError
+    attr_reader :status, :body
+    
+    def initialize(message = nil, status: nil, body: nil)
+      @status = status
+      @body = body
+      super(message || "API error")
+    end
+  end
+  
+  # Unknown broker error
+  class UnknownBroker < BrokerError; end
+
   class BaseAdapter
+    # Data structures for normalized data
     NormalizedPortfolio = Data.define(:holdings, :positions)
     Holding = Data.define(:security_id, :trading_symbol, :exchange, :quantity, :average_price, :current_price, :pnl, :data)
     Position = Data.define(:security_id, :trading_symbol, :exchange, :net_quantity, :buy_average, :sell_average, :unrealized_pnl, :realized_pnl, :data)
@@ -10,12 +34,49 @@ module Brokers
       :instrument, :isin, :expiry_date, :option_type, :strike_price, :raw_data
     )
 
+    # Class methods that all adapters must implement
+    class << self
+      def broker_type
+        raise NotImplementedError, "#{name} must implement .broker_type"
+      end
+
+      def display_name
+        raise NotImplementedError, "#{name} must implement .display_name"
+      end
+
+      def asset_classes
+        raise NotImplementedError, "#{name} must implement .asset_classes"
+      end
+
+      def auth_type
+        raise NotImplementedError, "#{name} must implement .auth_type"
+      end
+
+      def required_credentials
+        raise NotImplementedError, "#{name} must implement .required_credentials"
+      end
+
+      def rate_limit
+        { requests_per_second: 10, burst: 20 }
+      end
+
+      def documentation_url
+        nil
+      end
+    end
+
+    # Instance methods
+    def initialize(credential = nil)
+      @credential = credential
+      @rate_limiter = RateLimiter.new(self.class.rate_limit)
+    end
+
     def broker_key
-      raise NotImplementedError
+      self.class.broker_type
     end
 
     def broker_name
-      raise NotImplementedError
+      self.class.display_name
     end
 
     def profile

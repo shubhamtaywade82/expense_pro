@@ -139,7 +139,7 @@ export default function AiAssistant() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0 overflow-hidden">
         {/* Chat History Panel */}
-        <div className="lg:col-span-3 flex flex-col h-full overflow-hidden glass-card glowing-border rounded-[32px] border-border/40 bg-card/30 backdrop-blur-3xl shadow-2xl">
+        <div className="lg:col-span-3 flex flex-col h-full overflow-hidden glass-card glowing-border rounded-[32px] border-border/40">
           <div className="py-4 px-6 border-b border-border/40 bg-card/40 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative flex h-3 w-3">
@@ -261,7 +261,7 @@ export default function AiAssistant() {
 
         {/* Sidebar suggestions */}
         <div className="space-y-6 flex flex-col h-full overflow-y-auto pr-1 -mr-1 custom-scrollbar">
-          <div className="glass-card glowing-border rounded-[28px] p-6 shadow-sm border-border/40">
+          <div className="glass-card glowing-border rounded-[28px] p-6 border-border/40">
             <div className="flex items-center gap-2 mb-4">
               <MessageSquare className="w-4 h-4 text-primary" />
               <span className="text-[10px] font-black uppercase tracking-widest text-foreground">
@@ -283,7 +283,7 @@ export default function AiAssistant() {
             </div>
           </div>
 
-          <div className="glass-card glowing-border rounded-[28px] p-6 bg-gradient-to-tr from-primary/10 to-indigo-500/10 border-primary/20 shadow-lg flex-1">
+          <div className="glass-card glowing-border rounded-[28px] p-6 bg-gradient-to-tr from-primary/10 to-indigo-500/10 border-primary/20 flex-1">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center mb-4">
               <Zap className="w-5 h-5 text-primary" />
             </div>

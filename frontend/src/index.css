@@ -32,6 +32,9 @@
     --sidebar-accent-foreground: 262 83% 58%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 262 83% 58%;
+    --shadow-card: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 4px 12px -2px rgb(16 24 40 / 0.06);
+    --shadow-raised: 0 2px 4px -1px rgb(16 24 40 / 0.06), 0 12px 24px -6px rgb(16 24 40 / 0.1);
+    --shadow-pop: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 20px 40px -12px rgb(16 24 40 / 0.16);
   }
 
   .dark {
@@ -62,6 +65,9 @@
     --sidebar-accent-foreground: 263 90% 64%;
     --sidebar-border: 240 12% 11%;
     --sidebar-ring: 263 90% 64%;
+    --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 4px 16px -4px rgb(0 0 0 / 0.4);
+    --shadow-raised: 0 2px 6px -1px rgb(0 0 0 / 0.4), 0 12px 28px -8px rgb(0 0 0 / 0.55);
+    --shadow-pop: 0 4px 10px -2px rgb(0 0 0 / 0.5), 0 24px 48px -12px rgb(0 0 0 / 0.65);
   }
 }
 
@@ -81,12 +87,14 @@
 }
 
 @layer utilities {
+  /* Opaque, not translucent: the page background is near-solid, so backdrop-blur
+     cost GPU compositing (and rounded-corner seams) while blurring nothing. */
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50 shadow-glass transition-all duration-300;
+    @apply bg-card border border-border/70 shadow-soft transition-all duration-300;
   }
-  
+
   .glass-panel {
-    @apply bg-card/40 backdrop-blur-md border border-border/30 transition-all duration-300;
+    @apply bg-card border border-border/60 transition-all duration-300;
   }
 
   .text-gradient {
@@ -115,12 +123,9 @@
   }
 
   /* Micro-animations */
-  .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow;
-  }
-
+  .hover-lift,
   .hover-lift-emerald {
-    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-emerald;
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-raised;
   }
 
   /* Staggered entrance helper */

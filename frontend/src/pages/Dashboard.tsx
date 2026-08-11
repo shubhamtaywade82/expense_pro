@@ -312,7 +312,7 @@ export default function Dashboard() {
 
         {/* Charts and Lists */}
         <div className="grid gap-6 lg:grid-cols-2 animate-stagger-fade" style={{ animationDelay: "150ms" }}>
-          <div className="glass-card glowing-border rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col">
+          <div className="glass-card glowing-border rounded-2xl p-6 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h4 className="text-sm font-bold font-display text-foreground flex items-center gap-2">
@@ -353,7 +353,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="glass-card glowing-border rounded-2xl p-6 shadow-sm flex flex-col">
+          <div className="glass-card glowing-border rounded-2xl p-6 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h4 className="text-sm font-bold font-display text-foreground">Allocation Breakdown</h4>
@@ -504,7 +504,7 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Expenses Ledger */}
-          <div className="lg:col-span-2 glass-card glowing-border rounded-2xl p-6 shadow-sm overflow-hidden flex flex-col">
+          <div className="lg:col-span-2 glass-card glowing-border rounded-2xl p-6 overflow-hidden flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h4 className="text-sm font-bold font-display text-foreground flex items-center gap-2">

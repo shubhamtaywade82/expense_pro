@@ -84,3 +84,8 @@ gem "combine_pdf", "~> 1.0"
 gem "marcel", "~> 1.2"
 
 gem "pagy", "~> 9.3"
+
+# Money objects with INR as the default currency. Amounts in the debt
+# clearance domain are stored as integer paise (bigint) and exposed as
+# Money objects via the monetize macro.
+gem "money-rails", "~> 3.0"

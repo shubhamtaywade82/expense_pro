@@ -33,6 +33,15 @@ import type {
   TaxDeduction,
   UpdatePayload,
   User,
+  DebtAccount,
+  DebtForecastResponse,
+  DebtOverview,
+  DebtStrategy,
+  IncomeScenario,
+  SettlementCaseDetail,
+  SettlementContribution,
+  SettlementOffer,
+  SettlementSimulation,
 } from "@/types";
 
 const BASE_URL = "/api/v1";
@@ -306,6 +315,61 @@ export const api = {
     list: () => get<DebtPlan[]>("/debt_plans"),
     create: (data: { name: string; strategy?: string; monthlyExtra?: number }) =>
       post<{ plan: DebtPlan; simulation: DebtSimulation }>("/debt_plans", data),
+  },
+
+  // ── Debt Clearance System ──
+  debtClearance: {
+    overview: () => get<DebtOverview>("/debt_dashboard/overview"),
+    forecast: (params: { monthlyAllocation?: number } = {}) =>
+      get<DebtForecastResponse>(`/debt_dashboard/forecast${buildQuery(params)}`),
+    simulate: (amount: number) =>
+      get<SettlementSimulation>(`/debt_dashboard/simulate_settlement${buildQuery({ amount })}`),
+
+    debtAccounts: {
+      list: () => get<DebtAccount[]>("/debt_accounts"),
+      create: (data: Partial<DebtAccount>) => post<DebtAccount>("/debt_accounts", { debtAccount: data }),
+      update: (id: number, data: Partial<DebtAccount>) => patch<DebtAccount>(`/debt_accounts/${id}`, { debtAccount: data }),
+      delete: (id: number) => del<void>(`/debt_accounts/${id}`),
+      snapshot: (id: number, data: { balance: number; dpd?: number; source?: string }) =>
+        post<DebtAccount>(`/debt_accounts/${id}/snapshot`, data),
+    },
+
+    settlementCases: {
+      list: (params: { openOnly?: boolean } = {}) =>
+        get<SettlementCaseDetail[]>(`/settlement_cases${buildQuery({ openOnly: params.openOnly })}`),
+      show: (id: number) => get<SettlementCaseDetail>(`/settlement_cases/${id}`),
+      create: (data: { debtAccountId: number; currentClaim?: number; originalClaim?: number; startedOn?: string }) =>
+        post<SettlementCaseDetail>("/settlement_cases", data),
+      update: (id: number, data: Partial<SettlementCaseDetail>) => patch<SettlementCaseDetail>(`/settlement_cases/${id}`, data),
+      delete: (id: number) => del<void>(`/settlement_cases/${id}`),
+      recordPayment: (id: number, data: { settlementOfferId?: number; paidOn?: string; paymentMode?: string; referenceNumber?: string; syncToExpenses?: boolean }) =>
+        post<{ payment: Record<string, unknown> }>(`/settlement_cases/${id}/record_payment`, data),
+    },
+
+    offers: {
+      create: (caseId: number, data: { claimAmount: number; settlementPercentage: number; offeredOn?: string; validUntil?: string; referenceNumber?: string }) =>
+        post<SettlementOffer>(`/settlement_cases/${caseId}/settlement_offers`, data),
+      accept: (caseId: number, offerId: number) =>
+        patch<SettlementOffer>(`/settlement_cases/${caseId}/settlement_offers/${offerId}`, { status: "accepted" }),
+    },
+
+    contributions: {
+      create: (caseId: number, data: { amount: number; contributedOn?: string; source?: string; reference?: string; notes?: string }) =>
+        post<SettlementContribution>(`/settlement_cases/${caseId}/settlement_contributions`, data),
+      delete: (caseId: number, id: number) => del<void>(`/settlement_cases/${caseId}/settlement_contributions/${id}`),
+    },
+
+    incomeScenarios: {
+      list: () => get<IncomeScenario[]>("/income_scenarios"),
+      create: (data: Partial<IncomeScenario>) => post<IncomeScenario>("/income_scenarios", data),
+      activate: (id: number) => patch<IncomeScenario>(`/income_scenarios/${id}/activate`),
+    },
+
+    strategies: {
+      list: () => get<DebtStrategy[]>("/debt_strategies"),
+      create: (data: Partial<DebtStrategy>) => post<DebtStrategy>("/debt_strategies", data),
+      setDefault: (id: number) => patch<DebtStrategy>(`/debt_strategies/${id}/set_default`),
+    },
   },
 
   taxDeductions: {

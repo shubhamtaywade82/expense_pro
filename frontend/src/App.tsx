@@ -15,6 +15,7 @@ import ITR from "./pages/ITR";
 import Brokers from "./pages/Brokers";
 import Dhan from "./pages/Dhan";
 import DebtPlanner from "./pages/DebtPlanner";
+import DebtClearance from "./pages/DebtClearance";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import TaxDocuments from "./pages/TaxDocuments";
@@ -134,6 +135,14 @@ export default function App() {
         element={
           <LayoutWrapper>
             <DebtPlanner />
+          </LayoutWrapper>
+        }
+      />
+      <Route
+        path="/debt-clearance"
+        element={
+          <LayoutWrapper>
+            <DebtClearance />
           </LayoutWrapper>
         }
       />

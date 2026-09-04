@@ -45,6 +45,12 @@ module Ai
         Active Loans:
         #{formatted_loans}
 
+        Debt Clearance Overview:
+        #{formatted_debt_clearance}
+
+        Settlement Pipeline (ranked by DebtQueueRanker):
+        #{formatted_settlement_pipeline}
+
         Active Budgets (This Month):
         #{formatted_budgets}
 
@@ -83,12 +89,19 @@ module Ai
         26. update_investment(id, sell_price?, sell_date?, current_price?, status?, notes?) — Update investment (sell/update price).
         27. delete_investment(id) — Remove an investment.
         28. get_financial_summary(month?, year?, financial_year?) — Full financial snapshot with optional tax estimate.
+        29. debt_overview() — Total/protected/settlement debt, settlement fund, next target, cashflow.
+        30. settlement_queue() — Ranked settlement pipeline with stages, scores and funding progress.
+        31. settle_with_amount(amount) — "What can I settle with ₹X?" simulator.
+        32. debt_forecast(monthly_allocation?) — Projected settlement dates and debt-free date.
+        33. compare_settlement_scenarios(settlement_case_id? | account_name?) — 20-45% settlement cost ladder for one account.
+        34. add_settlement_contribution(amount, settlement_case_id? | account_name?, contributed_on?, source?, notes?) — Save money towards a settlement.
 
         Instructions:
         - Use these tools to manage the user's finances. Financial context is already in this prompt.
         - DO NOT call tools to fetch data that is already provided above.
         - Be proactive: suggest logging expenses, paying bills, or setting budgets when appropriate.
         - For tax questions, use get_financial_summary with the relevant financial year.
+        - For debt questions, use the debt tools; settlement amounts always come from offers/scenario math, never from the raw claim amount.
         - If uncertain about a parameter, ask the user.
       SYSTEM
     end
@@ -143,6 +156,33 @@ module Ai
       emps = @user.employments.by_recency
       return "- No employment records" if emps.empty?
       emps.map { |e| "- #{e.employer_name}: #{e.designation || 'N/A'} (#{e.start_date} — #{e.end_date || 'Present'})#{e.is_current ? ' [Current]' : ''}" }.join("\n")
+    end
+
+    def formatted_debt_clearance
+      capital = SettlementCapitalService.new(@user).call
+      accounts = @user.debt_accounts.open
+      settlement_total = accounts.settlement.sum(:current_balance_paise) / 100.0
+      protected_total = accounts.serviced.sum(:current_balance_paise) / 100.0
+
+      <<~DEBT.strip
+        - Protected Debt: ₹#{'%.2f' % protected_total} across #{accounts.serviced.count} accounts (serviced normally)
+        - Settlement Debt: ₹#{'%.2f' % settlement_total} across #{accounts.settlement.count} accounts
+        - Settlement Fund Available: ₹#{'%.2f' % capital[:current_settlement_fund]}
+        - Monthly Surplus: ₹#{'%.2f' % capital[:available_monthly_surplus]} (allocation to settlements: ₹#{'%.2f' % capital[:settlement_allocation]})
+      DEBT
+    rescue StandardError
+      "- Debt clearance data unavailable"
+    end
+
+    def formatted_settlement_pipeline
+      entries = DebtQueueRanker.new(@user).call
+      return "- No open settlement cases" if entries.empty?
+
+      entries.map do |e|
+        "- Case ##{e.settlement_case.id} #{e.debt_account.name} (#{e.debt_account.lender}): claim ₹#{e.debt_account.current_balance}, stage #{e.stage}, score #{e.score}, estimated total ₹#{e.estimated_total_paise / 100.0}, funding #{e.funding_progress}%#{e.eligible ? ' [ELIGIBLE]' : ''}"
+      end.join("\n")
+    rescue StandardError
+      "- Settlement pipeline unavailable"
     end
   end
 end

@@ -108,6 +108,44 @@ Rails.application.routes.draw do
       get "reports/financial_year", to: "reports#financial_year"
       post "ai/chat", to: "ai#chat"
 
+      # ── Debt Clearance System ──
+      # Debt registry (protected + settlement accounts)
+      resources :debt_accounts do
+        member do
+          post :snapshot
+        end
+      end
+
+      # Strategy layer driving the queue and forecasts
+      resources :debt_strategies do
+        member do
+          patch :set_default
+        end
+      end
+
+      # Salary/increment scenarios ("what if my income becomes ₹X?")
+      resources :income_scenarios do
+        member do
+          patch :activate
+        end
+      end
+
+      # Settlement pipeline: cases -> offers / contributions / documents
+      resources :settlement_cases do
+        member do
+          post :record_payment
+        end
+
+        resources :settlement_offers, only: %i[create update]
+        resources :settlement_contributions, only: %i[create destroy]
+        resources :settlement_documents, only: %i[index create destroy]
+      end
+
+      # Debt clearance dashboard + simulators
+      get "debt_dashboard/overview", to: "debt_dashboard#overview"
+      get "debt_dashboard/forecast", to: "debt_dashboard#forecast"
+      get "debt_dashboard/simulate_settlement", to: "debt_dashboard#simulate_settlement"
+
       resources :tax_documents, only: %i[index create destroy] do
         member do
           patch :verify

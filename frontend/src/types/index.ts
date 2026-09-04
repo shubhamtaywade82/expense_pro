@@ -645,3 +645,242 @@ export type TaxDocumentRow = {
   preview_url: string;
   created_at: string;
 };
+
+// ── Debt Clearance System ──
+// Debt registry, settlement pipeline, funding and forecasts. All money
+// arrives as numbers in major units (rupees), camelized at the boundary.
+
+export type DebtTotals = {
+  totalDebt: number;
+  protectedDebt: number;
+  settlementDebt: number;
+  settlementAccounts: number;
+  protectedAccounts: number;
+};
+
+export type NextSettlement = {
+  settlementCaseId: number;
+  name: string;
+  lender: string | null;
+  claim: number;
+  estimatedTotal: number;
+  stage: string;
+  status: string;
+  eligible: boolean;
+  fundingProgress: number;
+};
+
+export type PipelineEntry = {
+  settlementCaseId: number;
+  debtAccountId: number;
+  name: string;
+  lender: string | null;
+  claim: number;
+  estimatedTotal: number;
+  minTotal: number;
+  stage: string;
+  score: number;
+  breakdown: Record<string, number>;
+  status: string;
+  priority: string;
+  fundingProgress: number;
+  eligible: boolean;
+  monthlyContribution: number;
+  settlementFund: number;
+};
+
+export type CashflowView = {
+  income: number;
+  commitments: number;
+  emergencyBuffer: number;
+  availableMonthlySurplus: number;
+  settlementAllocation: number;
+  cashOnHand: number;
+  currentSettlementFund: number;
+  projectedSettlementCapital: { months: number; amount: number };
+  scenarioName: string | null;
+};
+
+export type RecentContribution = {
+  id: number;
+  settlementCaseId: number;
+  contributedOn: string;
+  amount: number;
+  source: string | null;
+};
+
+export type ForecastSettlement = {
+  settlementCaseId: number;
+  debtAccountId: number;
+  name: string;
+  lender: string | null;
+  monthNumber: number;
+  projectedOn: string;
+  cost: number;
+  claim: number;
+  cashflowReleased: number;
+};
+
+export type ForecastScenarioSummary = {
+  label: string;
+  monthlyAllocation: number;
+  debtFreeOn: string | null;
+  monthsUsed: number | null;
+  totalSettlementCost: number;
+  settlements: ForecastSettlement[];
+};
+
+export type DebtOverview = {
+  totals: DebtTotals;
+  settlementFund: number;
+  fundTarget: number;
+  nextSettlement: NextSettlement | null;
+  estimatedDebtFreeOn: string | null;
+  forecastMonthsUsed: number | null;
+  totalSettlementCost: number;
+  pipeline: PipelineEntry[];
+  cashflow: CashflowView;
+  recentContributions: RecentContribution[];
+  scenarioComparison: ForecastScenarioSummary[];
+};
+
+export type SettlementSimulation = {
+  availableCash: number;
+  allocations: {
+    settlementCaseId: number;
+    debtAccountId: number;
+    name: string;
+    lender: string | null;
+    claim: number;
+    stage: string;
+    settlementCost: number;
+    cashflowReleased: number;
+  }[];
+  accountsEliminated: number;
+  debtRemoved: number;
+  totalSettlementCost: number;
+  monthlyCashflowRecovered: number;
+  remainingCash: number;
+  nextTarget: {
+    settlementCaseId: number;
+    name: string;
+    lender: string | null;
+    settlementCost: number;
+    shortfall: number;
+    monthsToFund: number | null;
+  } | null;
+};
+
+export type DebtForecastResponse = {
+  monthlyAllocation: number;
+  startFund: number;
+  monthsUsed: number | null;
+  debtFreeOn: string | null;
+  totalSettlementCost: number;
+  settlements: ForecastSettlement[];
+};
+
+export type ScenarioRow = {
+  settlementPercentage: number;
+  settlementAmount: number;
+  serviceFee: number;
+  gst: number;
+  total: number;
+};
+
+export type DebtAccount = {
+  id: number;
+  name: string;
+  lender: string | null;
+  debtType: string;
+  classification: string;
+  status: string;
+  currentBalance: number;
+  originalPrincipal: number;
+  monthlyObligation: number | null;
+  monthlyCashflowDemand: number;
+  interestRate: string | null;
+  dpd: number;
+  formalNotice: boolean;
+  ageInMonths: number;
+  openCaseId: number | null;
+  notes: string | null;
+};
+
+export type SettlementOffer = {
+  id: number;
+  settlementCaseId: number;
+  offeredOn: string;
+  claimAmount: number;
+  settlementPercentage: number;
+  settlementAmount: number;
+  serviceFee: number;
+  gst: number;
+  totalAmount: number;
+  validUntil: string | null;
+  status: string;
+  acceptedOn: string | null;
+  referenceNumber: string | null;
+  expired: boolean;
+};
+
+export type SettlementContribution = {
+  id: number;
+  settlementCaseId: number;
+  contributedOn: string;
+  amount: number;
+  source: string | null;
+  reference: string | null;
+};
+
+export type SettlementCaseDetail = {
+  id: number;
+  debtAccountId: number;
+  startedOn: string;
+  originalClaim: number;
+  currentClaim: number;
+  targetMinPercentage: number;
+  targetMaxPercentage: number;
+  serviceFeePercentage: number;
+  gstPercentage: number;
+  monthlyContribution: number;
+  eligibilityThresholdPercentage: number;
+  status: string;
+  stage: string;
+  priority: string;
+  notes: string | null;
+  estimatedTotal: number;
+  estimatedTotalMin: number;
+  contributedAmount: number;
+  settlementFund: number;
+  fundingProgress: number;
+  eligible: boolean;
+  debtAccount: DebtAccount;
+  offers?: SettlementOffer[];
+  contributions?: SettlementContribution[];
+  scenarioTable?: ScenarioRow[];
+};
+
+export type IncomeScenario = {
+  id: number;
+  name: string;
+  scenarioType: string;
+  effectiveOn: string;
+  monthlyIncome: number;
+  monthlyCommitments: number;
+  settlementAllocation: number;
+  bufferAllocation: number;
+  monthlySurplus: number;
+  isActive: boolean;
+};
+
+export type DebtStrategy = {
+  id: number;
+  name: string;
+  strategyType: string;
+  priorityMethod: string;
+  monthlyAllocation: number;
+  targetDate: string | null;
+  status: string;
+  isDefault: boolean;
+};

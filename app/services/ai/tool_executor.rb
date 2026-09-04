@@ -36,6 +36,12 @@ module Ai
       when "get_financial_summary" then get_financial_summary(tool_call.arguments)
       when "calculate_tax_with_copilot" then calculate_tax_with_copilot(tool_call.arguments)
       when "explain_tax_provision" then explain_tax_provision(tool_call.arguments)
+      when "debt_overview" then debt_overview
+      when "settlement_queue" then settlement_queue
+      when "settle_with_amount" then settle_with_amount(tool_call.arguments)
+      when "debt_forecast" then debt_forecast(tool_call.arguments)
+      when "compare_settlement_scenarios" then compare_settlement_scenarios(tool_call.arguments)
+      when "add_settlement_contribution" then add_settlement_contribution(tool_call.arguments)
       else { success: false, message: "Unknown tool: #{tool_call.name}" }
       end
     rescue StandardError => e
@@ -332,6 +338,110 @@ module Ai
       @user.categories.where("name ILIKE ?", clean_name).first ||
         @user.categories.find_by(name: "Other") ||
         @user.categories.create!(name: clean_name, category_type: "expense")
+    end
+
+    # ── Debt Clearance ──────────────────────────────────────────────────
+
+    def debt_overview
+      overview = DebtClearanceService.new(@user).overview
+
+      {
+        success: true,
+        totals: overview[:totals],
+        settlement_fund: overview[:settlement_fund],
+        estimated_debt_free_on: overview[:estimated_debt_free_on],
+        next_settlement: overview[:next_settlement],
+        cashflow: overview[:cashflow]
+      }
+    end
+
+    def settlement_queue
+      entries = DebtQueueRanker.new(@user).call
+
+      {
+        success: true,
+        queue: entries.map do |e|
+          {
+            settlement_case_id: e.settlement_case.id,
+            name: e.debt_account.name,
+            lender: e.debt_account.lender,
+            claim: e.debt_account.current_balance.to_f,
+            stage: e.stage,
+            score: e.score,
+            estimated_total: e.estimated_total_paise / 100.0,
+            funding_progress: e.funding_progress,
+            eligible: e.eligible,
+            status: e.settlement_case.status
+          }
+        end
+      }
+    end
+
+    def settle_with_amount(args)
+      amount = args["amount"].to_f
+      return { success: false, message: "amount is required" } if amount <= 0
+
+      result = SettlementSimulator.new(@user).call(available_cash: amount)
+      { success: true, simulation: result }
+    end
+
+    def debt_forecast(args)
+      result = DebtForecastEngine.new(@user, monthly_allocation: args["monthly_allocation"]).call
+
+      {
+        success: true,
+        monthly_allocation: result.monthly_allocation,
+        settlements: result.settlements,
+        debt_free_on: result.debt_free_on,
+        total_settlement_cost: result.total_settlement_cost,
+        note: ("Could not settle everything within #{DebtForecastEngine::MAX_MONTHS} months at this allocation" if result.settlements.size < DebtQueueRanker.new(@user).call.size)
+      }
+    end
+
+    def compare_settlement_scenarios(args)
+      settlement_case = find_settlement_case(args)
+      return { success: false, message: "Settlement case not found" } if settlement_case.nil?
+
+      {
+        success: true,
+        settlement_case_id: settlement_case.id,
+        account: settlement_case.debt_account.name,
+        claim: settlement_case.current_claim.to_f,
+        scenarios: DebtClearanceService.new(@user).scenario_table(settlement_case)
+      }
+    end
+
+    def add_settlement_contribution(args)
+      settlement_case = find_settlement_case(args)
+      return { success: false, message: "Settlement case not found" } if settlement_case.nil?
+
+      contribution = settlement_case.settlement_contributions.create!(
+        user: @user,
+        amount: args["amount"].to_d,
+        contributed_on: Date.parse(args["contributed_on"] || Date.current.to_s),
+        source: args["source"] || "salary",
+        reference: args["reference"],
+        notes: args["notes"]
+      )
+      settlement_case.update!(status: :funding) if settlement_case.drafting?
+
+      {
+        success: true,
+        message: "Contribution saved",
+        contribution: { id: contribution.id, amount: contribution.amount.to_s },
+        settlement_fund: settlement_case.settlement_fund_paise / 100.0,
+        funding_progress: settlement_case.funding_progress
+      }
+    end
+
+    def find_settlement_case(args)
+      if args["settlement_case_id"].present?
+        @user.settlement_cases.find_by(id: args["settlement_case_id"])
+      else
+        scope = @user.settlement_cases.open.joins(:debt_account)
+        scope.where("debt_accounts.name ILIKE ?", "%#{args["account_name"]}%").first ||
+          scope.where("debt_accounts.lender ILIKE ?", "%#{args["account_name"]}%").first
+      end
     end
 
     def default_fy

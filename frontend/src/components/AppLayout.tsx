@@ -27,6 +27,7 @@ import {
   ScrollText,
   Calculator,
   Building,
+  Swords,
 } from "lucide-react";
 
 const navItems = [
@@ -35,6 +36,7 @@ const navItems = [
   { path: "/bills", label: "Monthly Bills", icon: FileText },
   { path: "/loans", label: "Loans & EMIs", icon: Landmark },
   { path: "/debt-planner", label: "Debt Planner", icon: Target },
+  { path: "/debt-clearance", label: "Debt Clearance", icon: Swords },
   { path: "/income", label: "Income", icon: Wallet },
   { path: "/budget", label: "Budget", icon: PiggyBank },
   { path: "/net-worth", label: "Net Worth", icon: Building },

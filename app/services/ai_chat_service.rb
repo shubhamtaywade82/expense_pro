@@ -35,7 +35,7 @@ class AiChatService
 
   def available_tools
     CATEGORY_TOOLS + EXPENSE_TOOLS + INCOME_TOOLS + BILL_TOOLS +
-      LOAN_TOOLS + BUDGET_TOOLS + INVESTMENT_TOOLS + QUERY_TOOLS
+      LOAN_TOOLS + BUDGET_TOOLS + INVESTMENT_TOOLS + QUERY_TOOLS + DEBT_TOOLS
   end
 
   CATEGORY_TOOLS = [
@@ -533,6 +533,85 @@ class AiChatService
             context: { type: "string", description: "User's specific situation or question context." }
           },
           required: ["section"]
+        }
+      }
+    }
+  ].freeze
+
+  DEBT_TOOLS = [
+    {
+      type: "function",
+      function: {
+        name: "debt_overview",
+        description: "Get the user's debt clearance overview: total/protected/settlement debt, settlement fund, next settlement target, and monthly cashflow split.",
+        parameters: { type: "object", properties: {} }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "settlement_queue",
+        description: "Show the ranked settlement queue: which account to target next, its stage (legal opportunity, small, medium, large), priority score and funding progress.",
+        parameters: { type: "object", properties: {} }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "settle_with_amount",
+        description: "Simulate what can be settled with a lump of cash. Returns the accounts that can be fully settled, cash used, remaining cash, monthly cashflow recovered, and the next target with its shortfall.",
+        parameters: {
+          type: "object",
+          properties: {
+            amount: { type: "number", description: "Available capital in INR (e.g. 100000)." }
+          },
+          required: %w[amount]
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "debt_forecast",
+        description: "Project when each settlement becomes fundable and when the user is debt-free, given a monthly settlement allocation. Uses the active income scenario when no allocation is given.",
+        parameters: {
+          type: "object",
+          properties: {
+            monthly_allocation: { type: "number", description: "Monthly amount saved towards settlements in INR. Optional." }
+          }
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "compare_settlement_scenarios",
+        description: "Compare settlement costs at 20/25/30/35/40/45 percent for one account: settlement amount, service fee, GST and total for each level.",
+        parameters: {
+          type: "object",
+          properties: {
+            settlement_case_id: { type: "integer", description: "Settlement case ID. Optional if account_name is given." },
+            account_name: { type: "string", description: "Account or lender name, e.g. 'IDFC'. Optional." }
+          }
+        }
+      }
+    },
+    {
+      type: "function",
+      function: {
+        name: "add_settlement_contribution",
+        description: "Record money the user is setting aside towards a settlement (builds the settlement fund for that case).",
+        parameters: {
+          type: "object",
+          properties: {
+            settlement_case_id: { type: "integer", description: "Settlement case ID. Optional if account_name is given." },
+            account_name: { type: "string", description: "Account or lender name, e.g. 'IDFC'. Optional." },
+            amount: { type: "number", description: "Amount saved in INR." },
+            contributed_on: { type: "string", description: "YYYY-MM-DD. Default: today." },
+            source: { type: "string", description: "salary / bonus / increment / other." },
+            notes: { type: "string" }
+          },
+          required: %w[amount]
         }
       }
     }

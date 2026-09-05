@@ -1,71 +1,54 @@
 module Brokers
   class Registry
+    ADAPTERS = {
+      "dhanhq"         => Brokers::DhanHQAdapter,
+      "coindcx"        => Brokers::CoinDCXAdapter,
+      "delta_exchange" => Brokers::DeltaExchangeAdapter,
+      "wazirx"         => Brokers::WazirXAdapter,
+      "zerodha"        => Brokers::ZerodhaAdapter
+    }.freeze
+
     class << self
-      def register(adapter_class)
-        # Store the class, not an instance - prevents shared state issues
-        adapter_key = adapter_class.broker_type
-        adapters[adapter_key] = adapter_class
-      end
-
       def for(broker_key)
-        adapter_class = adapters[broker_key.to_s]
-        raise UnknownBroker, "No adapter registered for broker: #{broker_key}" unless adapter_class
-        adapter_class
+        ADAPTERS[broker_key.to_s] || raise(UnknownBroker, "No adapter registered for broker: #{broker_key}")
       end
-
-      # `for` is a Ruby keyword, so it cannot be called without an explicit receiver.
       alias_method :adapter_for, :for
 
-      # Builds a new adapter instance with the given credential
       def build(broker_type, credential)
-        adapter_class = adapter_for(broker_type)
-        adapter_class.new(credential)
+        adapter_for(broker_type).new(credential)
       end
 
       def registered_keys
-        adapters.keys
+        ADAPTERS.keys
       end
 
       def registered_names
-        adapters.transform_values(&:display_name)
+        ADAPTERS.transform_values(&:display_name)
       end
 
-      # Returns all registered brokers with their metadata
       def available_brokers
-        adapters.map do |key, adapter_class|
+        ADAPTERS.map do |key, adapter|
           {
             type: key,
-            name: adapter_class.display_name,
-            asset_classes: adapter_class.asset_classes,
-            auth_type: adapter_class.auth_type,
-            required_credentials: adapter_class.required_credentials,
-            documentation_url: adapter_class.documentation_url
+            name: adapter.display_name,
+            asset_classes: adapter.asset_classes,
+            auth_type: adapter.auth_type,
+            required_credentials: adapter.required_credentials,
+            documentation_url: adapter.documentation_url
           }
         end
       end
 
-      # Returns crypto brokers
       def crypto_brokers
-        adapters.select { |_, adapter_class| adapter_class.asset_classes.include?(:crypto) }
+        ADAPTERS.select { |_, a| a.asset_classes.include?(:crypto) }
       end
 
-      # Returns equity brokers
       def equity_brokers
-        adapters.select { |_, adapter_class| adapter_class.asset_classes.include?(:equity) }
+        ADAPTERS.select { |_, a| a.asset_classes.include?(:equity) }
       end
 
       def register_all!
-        register(Brokers::DhanHQAdapter)
-        register(Brokers::CoinDCXAdapter)
-        register(Brokers::DeltaExchangeAdapter)
-        register(Brokers::WazirXAdapter)
-        register(Brokers::ZerodhaAdapter)
-      end
-
-      private
-
-      def adapters
-        @adapters ||= {}
+        # Kept as no-op for compatibility
       end
     end
   end

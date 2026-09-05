@@ -104,15 +104,6 @@ GEM
     bullet (8.1.3)
       activesupport (>= 3.0.0)
       uniform_notifier (~> 1.11)
-    capybara (3.40.0)
-      addressable
-      matrix
-      mini_mime (>= 0.1.3)
-      nokogiri (~> 1.11)
-      rack (>= 1.6.0)
-      rack-test (>= 0.6.3)
-      regexp_parser (>= 1.5, < 3.0)
-      xpath (~> 3.2)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
     crass (1.0.7)
@@ -226,7 +217,6 @@ GEM
       net-pop
       net-smtp
     marcel (1.2.1)
-    matrix (0.4.3)
     mini_mime (1.1.5)
     minitest (6.0.6)
       drb (~> 2.0)
@@ -366,7 +356,6 @@ GEM
       io-console (~> 0.5)
     request_store (1.7.0)
       rack (>= 1.4)
-    rexml (3.4.4)
     rotp (6.3.0)
     rubocop (1.88.2)
       json (~> 2.3)
@@ -397,14 +386,7 @@ GEM
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
-    rubyzip (3.4.1)
     securerandom (0.4.1)
-    selenium-webdriver (4.46.0)
-      base64 (~> 0.2)
-      logger (~> 1.4)
-      rexml (~> 3.2, >= 3.2.5)
-      rubyzip (>= 1.2.2, < 4.0)
-      websocket (~> 1.0)
     solid_cable (4.0.2)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -428,8 +410,6 @@ GEM
       net-sftp (>= 2.1.2)
       net-ssh (>= 2.8.0)
       ostruct
-    stimulus-rails (1.3.4)
-      railties (>= 6.0.0)
     thor (1.5.0)
     thruster (0.1.23)
     thruster (0.1.23-aarch64-linux)
@@ -438,9 +418,6 @@ GEM
     thruster (0.1.23-x86_64-linux)
     timeout (0.6.1)
     tsort (0.2.0)
-    turbo-rails (2.0.23)
-      actionpack (>= 7.1.0)
-      railties (>= 7.1.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.2.0)
@@ -453,13 +430,10 @@ GEM
       actionview (>= 8.0.0)
       bindex (>= 0.4.0)
       railties (>= 8.0.0)
-    websocket (1.2.11)
     websocket-driver (0.8.2)
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
-    xpath (3.2.0)
-      nokogiri (~> 1.8)
     zeitwerk (2.8.2)
 
 PLATFORMS
@@ -479,7 +453,6 @@ DEPENDENCIES
   bootsnap
   brakeman
   bullet
-  capybara
   cssbundling-rails
   debug
   dotenv-rails
@@ -497,13 +470,10 @@ DEPENDENCIES
   rack-attack
   rails (~> 8.0.3)
   rubocop-rails-omakase
-  selenium-webdriver
   solid_cable
   solid_cache
   solid_queue
-  stimulus-rails
   thruster
-  turbo-rails
   tzinfo-data
   web-console
 

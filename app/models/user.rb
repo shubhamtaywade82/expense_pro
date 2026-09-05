@@ -20,7 +20,6 @@ class User < ApplicationRecord
   has_many :notifications, dependent: :destroy
   has_many :unread_notifications, -> { where(read: false) }, class_name: 'Notification'
   has_many :tax_documents, dependent: :destroy
-  has_many :transactions, dependent: :destroy
   has_many :debt_accounts, dependent: :destroy
   has_many :debt_strategies, dependent: :destroy
   has_many :settlement_cases, dependent: :destroy

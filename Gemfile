@@ -16,8 +16,6 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Bundle and process CSS [https://github.com/rails/cssbundling-rails]
 gem "cssbundling-rails"
-# Build JSON APIs with ease [https://github.com/rails/jbuilder]
-gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem "bcrypt", "~> 3.1.7"
@@ -44,7 +42,6 @@ gem "thruster", require: false
 
 gem "jwt"
 gem "paper_trail"
-gem "blueprinter"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -73,18 +70,11 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
-
 gem "ollama-client"
 gem "DhanHQ", "~> 3.3"
 gem "httparty"
 gem "rack-attack"
-
-gem "image_processing", "~> 2.0"
-gem "combine_pdf", "~> 1.0"
-gem "marcel", "~> 1.2"
-
 gem "pagy", "~> 9.3"
-
 # Money objects with INR as the default currency. Amounts in the debt
 # clearance domain are stored as integer paise (bigint) and exposed as
 # Money objects via the monetize macro.

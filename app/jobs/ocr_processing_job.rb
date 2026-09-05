@@ -63,5 +63,3 @@ class OcrProcessingJob < ApplicationJob
     Rails.logger.error("Failed to generate preview for doc #{doc.id}: #{e.message}")
   end
 end
-
-OCRProcessingJob = OcrProcessingJob unless defined?(OCRProcessingJob)

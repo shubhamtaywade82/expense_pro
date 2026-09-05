@@ -16,4 +16,23 @@ class Expense < ApplicationRecord
   }
   scope :search, ->(term) { where("description ILIKE ?", "%#{sanitize_sql_like(term)}%") }
   scope :recent_first, -> { order(expense_date: :desc, id: :desc) }
+
+  def as_json(options = nil)
+    {
+      id: id,
+      amount: amount.to_s,
+      description: description,
+      expenseDate: expense_date,
+      expense_date: expense_date,
+      paymentMethod: payment_method,
+      payment_method: payment_method,
+      isRecurring: is_recurring,
+      is_recurring: is_recurring,
+      categoryId: category_id,
+      category_id: category_id,
+      categoryName: category&.name,
+      categoryColor: category&.color,
+      categoryIcon: category&.icon
+    }
+  end
 end

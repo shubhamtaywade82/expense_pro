@@ -93,11 +93,8 @@ module Api
       def enqueue_processing(doc)
         if doc.requires_decryption?
           DocumentDecryptJob.perform_later(doc.id)
-        elsif doc.document_type == "ais_json"
-          AisParseJob.perform_later(doc.id)
         elsif doc.requires_ocr?
-          job_class = defined?(OCRProcessingJob) ? OCRProcessingJob : (defined?(OcrProcessingJob) ? OcrProcessingJob : "OcrProcessingJob".constantize)
-          job_class.perform_later(doc.id)
+          OcrProcessingJob.perform_later(doc.id)
         else
           doc.update!(status: :verified)
         end

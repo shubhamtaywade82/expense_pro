@@ -16,7 +16,7 @@ module Api
         @pagy, @expenses = pagy(scope)
 
         render json: {
-          data: ExpenseBlueprint.render_as_hash(@expenses),
+          data: @expenses.map(&:as_json),
           meta: {
             page: @pagy.page,
             per_page: @pagy.limit,
@@ -29,12 +29,12 @@ module Api
       def create
         expense = current_user.expenses.build(expense_params)
         expense.save!
-        render json: ExpenseBlueprint.render_as_hash(expense), status: :created
+        render json: expense.as_json, status: :created
       end
 
       def update
         @expense.update!(expense_params)
-        render json: ExpenseBlueprint.render_as_hash(@expense)
+        render json: @expense.as_json
       end
 
       def destroy

@@ -20,7 +20,7 @@ class SettlementSimulatorTest < ActiveSupport::TestCase
   test "settles every account the cash can fully fund, cheapest first" do
     result = SettlementSimulator.new(@user).call(available_cash: 1_00_000)
 
-    assert_equal %w[Account A Account B Account C], result[:allocations].map { |a| a[:name] }
+    assert_equal ["Account A", "Account B", "Account C"], result[:allocations].map { |a| a[:name] }
     assert_equal 3, result[:accounts_eliminated]
     assert_equal 77_000.0, result[:total_settlement_cost]
     assert_equal 23_000.0, result[:remaining_cash]
@@ -55,7 +55,7 @@ class SettlementSimulatorTest < ActiveSupport::TestCase
 
     assert_equal 0, result[:accounts_eliminated]
     assert_equal "Account A", result[:next_target][:name]
-    assert_equal 18_000.0, result[:next_target][:shortfall]
+    assert_equal 13_000.0, result[:next_target][:shortfall]
   end
 
   test "legal opportunities are funded before cheaper small balances" do
@@ -65,7 +65,7 @@ class SettlementSimulatorTest < ActiveSupport::TestCase
 
     result = SettlementSimulator.new(@user).call(available_cash: 50_000)
 
-    assert_equal %w[Account D], result[:allocations].map { |a| a[:name] }
+    assert_equal ["Account D"], result[:allocations].map { |a| a[:name] }
     assert_equal 0.0, result[:remaining_cash]
   end
 

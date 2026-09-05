@@ -16,7 +16,7 @@ MoneyRails.configure do |config|
   config.default_currency = :inr
 
   # Fees/GST math must round half up to the nearest paisa, consistently.
-  config.rounding_mode = :half_up
+  config.rounding_mode = BigDecimal::ROUND_HALF_UP
 
   # Money#format defaults we rely on in services and notifications.
   # ₹1,00,000.00 style grouping comes from the :inr currency definition.

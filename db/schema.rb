@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_04_090009) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -133,6 +133,36 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
     t.index ["user_id"], name: "index_categories_on_user_id"
   end
 
+  create_table "debt_accounts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "loan_account_id"
+    t.bigint "loan_id"
+    t.string "name", null: false
+    t.string "lender"
+    t.integer "debt_type", default: 0, null: false
+    t.integer "classification", default: 0, null: false
+    t.integer "status", default: 0, null: false
+    t.bigint "original_principal_paise", default: 0, null: false
+    t.bigint "current_balance_paise", default: 0, null: false
+    t.bigint "monthly_obligation_paise", default: 0
+    t.decimal "interest_rate", precision: 6, scale: 3
+    t.integer "dpd", default: 0, null: false
+    t.boolean "formal_notice", default: false, null: false
+    t.date "first_defaulted_on"
+    t.date "charged_off_on"
+    t.date "last_payment_on"
+    t.text "notes"
+    t.integer "priority", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["loan_account_id"], name: "index_debt_accounts_on_loan_account_id"
+    t.index ["loan_id"], name: "index_debt_accounts_on_loan_id"
+    t.index ["user_id", "classification"], name: "index_debt_accounts_on_user_id_and_classification"
+    t.index ["user_id", "debt_type"], name: "index_debt_accounts_on_user_id_and_debt_type"
+    t.index ["user_id", "status"], name: "index_debt_accounts_on_user_id_and_status"
+    t.index ["user_id"], name: "index_debt_accounts_on_user_id"
+  end
+
   create_table "debt_plans", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.string "name", null: false
@@ -147,6 +177,34 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
     t.index ["status"], name: "index_debt_plans_on_status"
     t.index ["strategy"], name: "index_debt_plans_on_strategy"
     t.index ["user_id"], name: "index_debt_plans_on_user_id"
+  end
+
+  create_table "debt_snapshots", force: :cascade do |t|
+    t.bigint "debt_account_id", null: false
+    t.date "recorded_on", null: false
+    t.bigint "balance_paise", default: 0, null: false
+    t.integer "dpd", default: 0, null: false
+    t.string "source", default: "manual"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["debt_account_id", "recorded_on"], name: "index_debt_snapshots_on_debt_account_id_and_recorded_on"
+    t.index ["debt_account_id"], name: "index_debt_snapshots_on_debt_account_id"
+  end
+
+  create_table "debt_strategies", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.integer "strategy_type", default: 0, null: false
+    t.bigint "monthly_allocation_paise", default: 0, null: false
+    t.date "target_date"
+    t.integer "priority_method", default: 0, null: false
+    t.string "status", default: "active", null: false
+    t.boolean "is_default", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "is_default"], name: "index_debt_strategies_on_user_id_and_is_default"
+    t.index ["user_id"], name: "index_debt_strategies_on_user_id"
   end
 
   create_table "emi_payments", force: :cascade do |t|
@@ -224,6 +282,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_financial_accounts_on_user_id"
+  end
+
+  create_table "income_scenarios", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.integer "scenario_type", default: 5, null: false
+    t.date "effective_on", null: false
+    t.bigint "monthly_income_paise", default: 0, null: false
+    t.bigint "monthly_commitments_paise", default: 0, null: false
+    t.bigint "settlement_allocation_paise", default: 0, null: false
+    t.bigint "buffer_allocation_paise", default: 0, null: false
+    t.boolean "is_active", default: false, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "is_active"], name: "index_income_scenarios_on_user_id_and_is_active"
+    t.index ["user_id", "scenario_type"], name: "index_income_scenarios_on_user_id_and_scenario_type"
+    t.index ["user_id"], name: "index_income_scenarios_on_user_id"
   end
 
   create_table "incomes", force: :cascade do |t|
@@ -381,6 +457,103 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
     t.datetime "updated_at", null: false
     t.index ["employment_id", "component_type"], name: "index_salary_components_on_employment_id_and_component_type"
     t.index ["employment_id"], name: "index_salary_components_on_employment_id"
+  end
+
+  create_table "settlement_cases", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "debt_account_id", null: false
+    t.date "started_on", null: false
+    t.bigint "original_claim_paise", default: 0, null: false
+    t.bigint "current_claim_paise", default: 0, null: false
+    t.integer "target_min_percentage", default: 20, null: false
+    t.integer "target_max_percentage", default: 45, null: false
+    t.decimal "service_fee_percentage", precision: 5, scale: 2, default: "15.0", null: false
+    t.decimal "gst_percentage", precision: 5, scale: 2, default: "18.0", null: false
+    t.bigint "monthly_contribution_paise", default: 0, null: false
+    t.integer "eligibility_threshold_percentage", default: 50, null: false
+    t.integer "status", default: 0, null: false
+    t.integer "stage", default: 4, null: false
+    t.integer "priority", default: 1, null: false
+    t.date "closed_on"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["debt_account_id"], name: "index_settlement_cases_on_debt_account_id"
+    t.index ["user_id", "stage"], name: "index_settlement_cases_on_user_id_and_stage"
+    t.index ["user_id", "status"], name: "index_settlement_cases_on_user_id_and_status"
+    t.index ["user_id"], name: "index_settlement_cases_on_user_id"
+  end
+
+  create_table "settlement_contributions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "settlement_case_id", null: false
+    t.date "contributed_on", null: false
+    t.bigint "amount_paise", default: 0, null: false
+    t.string "source", default: "salary"
+    t.string "reference"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["settlement_case_id", "contributed_on"], name: "idx_settl_contrib_case_on_date"
+    t.index ["settlement_case_id"], name: "index_settlement_contributions_on_settlement_case_id"
+    t.index ["user_id", "contributed_on"], name: "index_settlement_contributions_on_user_id_and_contributed_on"
+    t.index ["user_id"], name: "index_settlement_contributions_on_user_id"
+  end
+
+  create_table "settlement_documents", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "settlement_case_id", null: false
+    t.integer "document_type", default: 6, null: false
+    t.string "title", null: false
+    t.integer "status", default: 0, null: false
+    t.jsonb "extracted", default: {}, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["settlement_case_id", "document_type"], name: "idx_settl_docs_case_on_type"
+    t.index ["settlement_case_id"], name: "index_settlement_documents_on_settlement_case_id"
+    t.index ["user_id"], name: "index_settlement_documents_on_user_id"
+  end
+
+  create_table "settlement_offers", force: :cascade do |t|
+    t.bigint "settlement_case_id", null: false
+    t.date "offered_on", null: false
+    t.bigint "claim_amount_paise", default: 0, null: false
+    t.decimal "settlement_percentage", precision: 5, scale: 2, default: "0.0", null: false
+    t.bigint "settlement_amount_paise", default: 0, null: false
+    t.bigint "service_fee_paise", default: 0, null: false
+    t.bigint "gst_paise", default: 0, null: false
+    t.bigint "total_amount_paise", default: 0, null: false
+    t.date "valid_until"
+    t.integer "status", default: 0, null: false
+    t.date "accepted_on"
+    t.string "reference_number"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["settlement_case_id", "status"], name: "index_settlement_offers_on_settlement_case_id_and_status"
+    t.index ["settlement_case_id"], name: "index_settlement_offers_on_settlement_case_id"
+  end
+
+  create_table "settlement_payments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "settlement_case_id", null: false
+    t.bigint "settlement_offer_id"
+    t.date "paid_on", null: false
+    t.bigint "settlement_amount_paise", default: 0, null: false
+    t.bigint "service_fee_paise", default: 0, null: false
+    t.bigint "gst_paise", default: 0, null: false
+    t.bigint "total_paid_paise", default: 0, null: false
+    t.string "payment_mode", default: "neft"
+    t.string "reference_number"
+    t.boolean "synced_to_expenses", default: false, null: false
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["settlement_case_id", "paid_on"], name: "index_settlement_payments_on_settlement_case_id_and_paid_on"
+    t.index ["settlement_case_id"], name: "index_settlement_payments_on_settlement_case_id"
+    t.index ["settlement_offer_id"], name: "index_settlement_payments_on_settlement_offer_id"
+    t.index ["user_id"], name: "index_settlement_payments_on_user_id"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -624,7 +797,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
   add_foreign_key "budgets", "categories"
   add_foreign_key "budgets", "users"
   add_foreign_key "categories", "users"
+  add_foreign_key "debt_accounts", "loan_accounts"
+  add_foreign_key "debt_accounts", "loans"
+  add_foreign_key "debt_accounts", "users"
   add_foreign_key "debt_plans", "users"
+  add_foreign_key "debt_snapshots", "debt_accounts"
+  add_foreign_key "debt_strategies", "users"
   add_foreign_key "emi_payments", "loans"
   add_foreign_key "emi_payments", "users"
   add_foreign_key "emi_schedules", "loan_accounts"
@@ -632,6 +810,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
   add_foreign_key "expenses", "categories"
   add_foreign_key "expenses", "users"
   add_foreign_key "financial_accounts", "users"
+  add_foreign_key "income_scenarios", "users"
   add_foreign_key "incomes", "employments"
   add_foreign_key "incomes", "users"
   add_foreign_key "investments", "users"
@@ -643,6 +822,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_10_214000) do
   add_foreign_key "notifications", "users"
   add_foreign_key "prepayments", "loan_accounts"
   add_foreign_key "salary_components", "employments"
+  add_foreign_key "settlement_cases", "debt_accounts"
+  add_foreign_key "settlement_cases", "users"
+  add_foreign_key "settlement_contributions", "settlement_cases"
+  add_foreign_key "settlement_contributions", "users"
+  add_foreign_key "settlement_documents", "settlement_cases"
+  add_foreign_key "settlement_documents", "users"
+  add_foreign_key "settlement_offers", "settlement_cases"
+  add_foreign_key "settlement_payments", "settlement_cases"
+  add_foreign_key "settlement_payments", "settlement_offers"
+  add_foreign_key "settlement_payments", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

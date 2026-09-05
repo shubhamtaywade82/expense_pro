@@ -83,7 +83,7 @@ class TaxDocument < ApplicationRecord
   end
 
   def parser
-    DocumentParsers::Registry.for(document_type)
+    OCR_PARSERS[document_type]&.safe_constantize
   end
 
   def extracted_amount
@@ -113,19 +113,9 @@ class TaxDocument < ApplicationRecord
   end
 
   OCR_PARSERS = {
-    "pan_card"            => "DocumentParsers::PanParser",
-    "form_16"             => "DocumentParsers::Form16Parser",
-    "form_16a"            => "DocumentParsers::Form16AParser",
-    "form_26as"           => "DocumentParsers::Form26ASParser",
-    "ais_json"            => "DocumentParsers::AisParser",
-    "advance_tax_challan" => "DocumentParsers::ChallanParser",
-    "rent_receipt"        => "DocumentParsers::RentReceiptParser",
-    "home_loan_certificate" => "DocumentParsers::HomeLoanCertParser",
-    "health_insurance_80d" => "DocumentParsers::InsurancePremiumParser",
-    "capital_gains_stmt"  => "DocumentParsers::CapitalGainsParser",
-    "bank_statement"      => "DocumentParsers::BankStatementParser",
-    "expense_invoice"     => "DocumentParsers::InvoiceParser",
-    "tuition_receipt"     => "DocumentParsers::TuitionReceiptParser",
-    "donation_80g"        => "DocumentParsers::DonationParser"
+    "pan_card"         => "DocumentParsers::PanParser",
+    "form_16"          => "DocumentParsers::Form16Parser",
+    "ais_json"         => "DocumentParsers::AisParser",
+    "trading_pnl_stmt" => "DocumentParsers::BrokerPnlParser"
   }.freeze
 end

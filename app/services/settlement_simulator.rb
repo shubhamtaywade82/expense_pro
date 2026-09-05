@@ -22,7 +22,7 @@ class SettlementSimulator
   def call(available_cash:)
     available = available_cash.to_f
     queue = DebtQueueRanker.new(@user).call
-    targets = queue.sort_by { |e| [e.stage, e.estimated_total_paise] }
+    targets = queue.sort_by { |e| [DebtQueueRanker::STAGE_ORDER.fetch(e.stage, 99), e.estimated_total_paise] }
 
     cash = available
     allocations = []

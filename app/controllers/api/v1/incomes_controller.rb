@@ -7,14 +7,14 @@ module Api
         if params[:month].present? && params[:year].present?
           start_date = Date.new(params[:year].to_i, params[:month].to_i, 1)
           incomes = IncomeProjectionService.new(current_user, start_date, start_date.end_of_month, include_parent: true).call
-          render json: IncomeBlueprint.render_as_hash(incomes)
+          render json: incomes.map(&:as_json)
         elsif params[:year].present?
           start_date = Date.new(params[:year].to_i, 1, 1)
           end_date = Date.new(params[:year].to_i, 12, 31)
           incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
-          render json: IncomeBlueprint.render_as_hash(incomes)
+          render json: incomes.map(&:as_json)
         else
-          render json: IncomeBlueprint.render_as_hash(current_user.incomes.includes(:parent, :tax_deductions).recent_first)
+          render json: current_user.incomes.includes(:parent, :tax_deductions).recent_first.map(&:as_json)
         end
       end
 
@@ -42,7 +42,7 @@ module Api
         start_date = Date.new(year, 1, 1)
         end_date = Date.new(year, 12, 31)
 
-        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date).call
+        all_incomes = IncomeProjectionService.new(current_user, start_date, end_date, include_parent: true).call
 
         months_summary = (1..12).map do |m|
           m_start = Date.new(year, m, 1)
@@ -79,12 +79,12 @@ module Api
       def create
         income = current_user.incomes.build(income_params)
         income.save!
-        render json: IncomeBlueprint.render_as_hash(income), status: :created
+        render json: income.as_json, status: :created
       end
 
       def update
         @income.update!(income_params)
-        render json: IncomeBlueprint.render_as_hash(@income)
+        render json: @income.as_json
       end
 
       def destroy
@@ -94,7 +94,7 @@ module Api
 
       def toggle_received
         @income.update!(is_received: !@income.is_received)
-        render json: IncomeBlueprint.render_as_hash(@income)
+        render json: @income.as_json
       end
 
       private

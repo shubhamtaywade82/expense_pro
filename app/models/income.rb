@@ -95,6 +95,51 @@ class Income < ApplicationRecord
   end
 
 
+  def as_json(options = nil)
+    {
+      id: id,
+      source: source,
+      amount: amount.to_s,
+      income_date: income_date,
+      incomeDate: income_date,
+      is_recurring: is_recurring,
+      isRecurring: is_recurring,
+      frequency: frequency,
+      notes: notes,
+      is_received: is_received,
+      isReceived: is_received,
+      parent_id: parent_id,
+      parentId: parent_id,
+      income_type: income_type,
+      incomeType: income_type,
+      gross_amount: gross_amount&.to_s,
+      grossAmount: gross_amount&.to_s,
+      tax_deducted: tax_deducted&.to_s,
+      taxDeducted: tax_deducted&.to_s,
+      pf_deducted: pf_deducted&.to_s,
+      pfDeducted: pf_deducted&.to_s,
+      other_deductions: other_deductions&.to_s,
+      otherDeductions: other_deductions&.to_s,
+      created_at: created_at,
+      updated_at: updated_at,
+      is_custom: is_custom || (parent_id.present? && amount != parent&.amount),
+      isCustom: is_custom || (parent_id.present? && amount != parent&.amount),
+      change_reason: change_reason,
+      changeReason: change_reason,
+      original_amount: base_amount.to_s,
+      originalAmount: base_amount.to_s,
+      amount_difference: amount_difference,
+      amountDifference: amount_difference,
+      is_latest_recurring: latest_recurring?,
+      isLatestRecurring: latest_recurring?,
+      is_ongoing: ongoing?,
+      isOngoing: ongoing?,
+      gap_info: gap_info,
+      gapInfo: gap_info,
+      tax_deductions: tax_deductions.map(&:as_json)
+    }
+  end
+
   private
 
   def validate_recurring_rules

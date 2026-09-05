@@ -27,12 +27,7 @@ class DocumentDecryptJob < ApplicationJob
           content_type: doc.file.content_type
         )
         # Now parse it
-        if doc.document_type == "ais_json"
-          doc.update!(status: :processing)
-          AisParseJob.perform_later(doc.id)
-        else
-          OcrProcessingJob.perform_later(doc.id)
-        end
+        OcrProcessingJob.perform_later(doc.id)
       else
         doc.update!(
           status: :failed,

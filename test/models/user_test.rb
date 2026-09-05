@@ -23,7 +23,4 @@ class UserTest < ActiveSupport::TestCase
     assert_respond_to @user, :tax_documents
   end
 
-  test "has many transactions" do
-    assert_respond_to @user, :transactions
-  end
 end

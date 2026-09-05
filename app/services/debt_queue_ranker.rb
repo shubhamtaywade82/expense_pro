@@ -25,6 +25,13 @@ class DebtQueueRanker
     :estimated_total_paise, :min_total_paise, :funding_progress, :eligible, keyword_init: true
   )
 
+  STAGE_ORDER = {
+    legal_opportunity: 1,
+    small_balance: 2,
+    medium_balance: 3,
+    large_unsecured: 4
+  }.freeze
+
   def initialize(user)
     @user = user
   end
@@ -32,7 +39,7 @@ class DebtQueueRanker
   def call
     cases = @user.settlement_cases.open.includes(:debt_account, :settlement_contributions, :settlement_payments)
     entries = cases.map { |c| entry_for(c) }
-    entries.sort_by { |e| [e.stage, -e.score, -e.settlement_case.priority_before_type_cast] }
+    entries.sort_by { |e| [STAGE_ORDER.fetch(e.stage, 99), -e.score, -e.settlement_case.priority_before_type_cast] }
   end
 
   # Stage for a case that is not yet ranked (e.g. right after creation).

@@ -5,13 +5,7 @@ module Ocr
     end
 
     def extract_text(file_path, language: "eng+hin")
-      case @provider
-      when :tesseract    then tesseract(file_path, language)
-      when :google_docai then google_docai(file_path)
-      when :aws_textract then aws_textract(file_path)
-      else
-        raise "Unknown OCR provider: #{@provider}"
-      end
+      tesseract(file_path, language)
     end
 
     private
@@ -43,16 +37,6 @@ module Ocr
       Dir.mkdir(output_dir) unless Dir.exist?(output_dir)
       system("pdftoppm", "-png", "-r", dpi.to_s, pdf_path, "#{output_dir}/page")
       Dir.glob("#{output_dir}/page-*.png").sort
-    end
-    
-    def google_docai(file_path)
-      # Stub for Google DocAI
-      ""
-    end
-    
-    def aws_textract(file_path)
-      # Stub for AWS Textract
-      ""
     end
   end
 end

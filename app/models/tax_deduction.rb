@@ -18,4 +18,16 @@ class TaxDeduction < ApplicationRecord
   def self.total_for_fy(year)
     for_fy(year).sum(:tds_amount)
   end
+
+  def as_json(options = nil)
+    {
+      id: id,
+      deduction_type: deduction_type,
+      amount: tds_amount.to_s,
+      tds_amount: tds_amount.to_s,
+      description: remarks,
+      remarks: remarks,
+      paid_on: paid_on
+    }
+  end
 end

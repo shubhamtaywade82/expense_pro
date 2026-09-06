@@ -324,6 +324,22 @@ export const api = {
       get<DebtForecastResponse>(`/debt_dashboard/forecast${buildQuery(params)}`),
     simulate: (amount: number) =>
       get<SettlementSimulation>(`/debt_dashboard/simulate_settlement${buildQuery({ amount })}`),
+    downloadCsv: async (sheetType: string) => {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`/api/v1/debt_dashboard/export_csv?sheet_type=${sheetType}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new ApiError("Failed to export CSV");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = sheetType === "database" ? "Debt_Database.csv" : sheetType === "cards" ? "credit_cards.csv" : sheetType === "loans" ? "loans.csv" : "summary.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    },
 
     debtAccounts: {
       list: () => get<DebtAccount[]>("/debt_accounts"),

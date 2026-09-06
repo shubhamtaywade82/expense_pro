@@ -805,6 +805,15 @@ export type DebtAccount = {
   ageInMonths: number;
   openCaseId: number | null;
   notes: string | null;
+  creditLimit: number;
+  overdueAmount: number;
+  statementDay: number | null;
+  dueDay: number | null;
+  tenureMonths: number | null;
+  remainingTenureMonths: number | null;
+  bureauStatus: string | null;
+  utilizationPercentage: number;
+  overLimit: boolean;
 };
 
 export type SettlementOffer = {

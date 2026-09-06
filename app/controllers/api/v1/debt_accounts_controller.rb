@@ -49,12 +49,15 @@ module Api
           :original_principal, :current_balance, :monthly_obligation,
           :interest_rate, :dpd, :formal_notice, :first_defaulted_on,
           :charged_off_on, :last_payment_on, :notes, :priority,
-          :loan_account_id, :loan_id
+          :loan_account_id, :loan_id, :credit_limit, :overdue_amount,
+          :statement_day, :due_day, :tenure_months, :remaining_tenure_months, :bureau_status
         )
 
         permitted[:original_principal] = paise(permitted[:original_principal]) if permitted.key?(:original_principal)
         permitted[:current_balance] = paise(permitted[:current_balance]) if permitted.key?(:current_balance)
         permitted[:monthly_obligation] = paise(permitted[:monthly_obligation]) if permitted.key?(:monthly_obligation)
+        permitted[:credit_limit] = paise(permitted[:credit_limit]) if permitted.key?(:credit_limit)
+        permitted[:overdue_amount] = paise(permitted[:overdue_amount]) if permitted.key?(:overdue_amount)
         permitted[:formal_notice] = ActiveModel::Type::Boolean.new.cast(permitted[:formal_notice]) if permitted.key?(:formal_notice)
         %i[first_defaulted_on charged_off_on last_payment_on].each do |date_field|
           permitted[date_field] = parse_date(permitted[date_field]) if permitted.key?(date_field)
@@ -73,6 +76,15 @@ module Api
           "originalPrincipal" => account.original_principal.to_f,
           "monthlyObligation" => account.monthly_obligation&.to_f,
           "monthlyCashflowDemand" => account.monthly_cashflow_demand.round(2),
+          "creditLimit" => account.credit_limit.to_f,
+          "overdueAmount" => account.overdue_amount.to_f,
+          "statementDay" => account.statement_day,
+          "dueDay" => account.due_day,
+          "tenureMonths" => account.tenure_months,
+          "remainingTenureMonths" => account.remaining_tenure_months,
+          "bureauStatus" => account.bureau_status,
+          "utilizationPercentage" => account.utilization_percentage,
+          "overLimit" => account.over_limit?,
           "ageInMonths" => account.age_in_months,
           "openCaseId" => account.settlement_cases.open.first&.id
         )

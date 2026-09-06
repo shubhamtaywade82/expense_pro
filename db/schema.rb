@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_09_04_090009) do
+ActiveRecord::Schema[8.0].define(version: 2026_09_06_180001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -155,6 +155,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_09_04_090009) do
     t.integer "priority", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "credit_limit_paise", default: 0, null: false
+    t.bigint "overdue_amount_paise", default: 0, null: false
+    t.integer "statement_day"
+    t.integer "due_day"
+    t.integer "tenure_months"
+    t.integer "remaining_tenure_months"
+    t.string "bureau_status"
     t.index ["loan_account_id"], name: "index_debt_accounts_on_loan_account_id"
     t.index ["loan_id"], name: "index_debt_accounts_on_loan_id"
     t.index ["user_id", "classification"], name: "index_debt_accounts_on_user_id_and_classification"

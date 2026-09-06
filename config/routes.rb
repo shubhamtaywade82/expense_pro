@@ -145,6 +145,7 @@ Rails.application.routes.draw do
       get "debt_dashboard/overview", to: "debt_dashboard#overview"
       get "debt_dashboard/forecast", to: "debt_dashboard#forecast"
       get "debt_dashboard/simulate_settlement", to: "debt_dashboard#simulate_settlement"
+      get "debt_dashboard/export_csv", to: "debt_dashboard#export_csv"
 
       resources :tax_documents, only: %i[index create destroy] do
         member do

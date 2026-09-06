@@ -42,6 +42,10 @@ class DebtAccount < ApplicationRecord
   monetize :current_balance_paise, as: :current_balance,
            numericality: { greater_than_or_equal_to: 0 }
   monetize :monthly_obligation_paise, as: :monthly_obligation, allow_nil: true
+  monetize :credit_limit_paise, as: :credit_limit,
+           numericality: { greater_than_or_equal_to: 0 }
+  monetize :overdue_amount_paise, as: :overdue_amount,
+           numericality: { greater_than_or_equal_to: 0 }
 
   scope :open, -> { where.not(status: %i[settled closed]) }
   scope :protected_pool, -> { serviced.open }
@@ -85,6 +89,16 @@ class DebtAccount < ApplicationRecord
     return 0 if first_defaulted_on.nil?
 
     ((Date.current - first_defaulted_on) / 30.44).floor
+  end
+
+  def utilization_percentage
+    return 0.0 unless credit_limit_paise.positive?
+
+    (current_balance_paise.to_f / credit_limit_paise * 100).round(1)
+  end
+
+  def over_limit?
+    credit_card? && credit_limit_paise.positive? && current_balance_paise > credit_limit_paise
   end
 
   private

@@ -8,17 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import {
   Shield, Swords, Wallet, CalendarCheck, Target, HandCoins, ArrowUpRight,
+  Download, AlertOctagon, CreditCard as CardIcon, Home, FileSpreadsheet
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { PipelineTable } from "@/components/debt/PipelineTable";
 import { SimulatorPanel } from "@/components/debt/SimulatorPanel";
 import { CaseDetailDialog } from "@/components/debt/CaseDetailDialog";
 import { AddDebtAccountDialog } from "@/components/debt/AddDebtAccountDialog";
+import { CreditCardsTable } from "@/components/debt/CreditCardsTable";
+import { SecuredLoansCard } from "@/components/debt/SecuredLoansCard";
 
 const fmt = (val: number | null | undefined) =>
   val == null ? "—" : `₹${val.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -32,6 +38,7 @@ export default function DebtClearance() {
   const [caseDialogOpen, setCaseDialogOpen] = useState(false);
   const [fundCase, setFundCase] = useState<{ id: number; name: string } | null>(null);
   const [fundAmount, setFundAmount] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: overview, isLoading } = useQuery({
     queryKey: ["debt-clearance", "overview"],
@@ -55,6 +62,18 @@ export default function DebtClearance() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const handleExport = async (type: string, label: string) => {
+    try {
+      setIsExporting(true);
+      await api.debtClearance.downloadCsv(type);
+      toast.success(`Downloaded ${label}`);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to download CSV");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading || !overview) {
     return <div className="p-8 text-center text-muted-foreground">Loading debt clearance...</div>;
   }
@@ -69,9 +88,13 @@ export default function DebtClearance() {
     allocation: s.monthlyAllocation,
   }));
 
+  const legalSuitAccount = accounts?.find(
+    (a) => a.formalNotice || a.bureauStatus?.includes("SUIT") || a.name.includes("Akara")
+  );
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold font-display tracking-tight flex items-center gap-2">
@@ -82,8 +105,70 @@ export default function DebtClearance() {
             Settlement pipeline, funding and the road to debt-free.
           </p>
         </div>
-        <AddDebtAccountDialog />
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isExporting} className="gap-1.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <Download className="w-3.5 h-3.5" />
+                Download CSVs
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Google Sheets / Bureau CSVs</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleExport("database", "Master Debt Database (CSV)")}>
+                Debt_Database.csv (Consolidated 29 Accounts)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("cards", "Credit Cards Tracker (CSV)")}>
+                credit_cards.csv (Cards, Limits & Utilisation)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("loans", "Loans Tracker (CSV)")}>
+                loans.csv (Loan Schedules & Dues)
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("summary", "Financial Summary (CSV)")}>
+                summary.csv (Cash Flow & Bureau KPI)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AddDebtAccountDialog />
+        </div>
       </div>
+
+      {/* Critical Legal Alert Banner (if any account is Suit Filed) */}
+      {legalSuitAccount && (
+        <Card className="border-red-500/50 bg-red-500/10 dark:bg-red-950/40">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="p-2 bg-red-600 text-white rounded-lg shrink-0">
+                <AlertOctagon className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-red-900 dark:text-red-200">
+                    CRITICAL LEGAL ALERT: SUIT FILED
+                  </span>
+                  <Badge variant="destructive" className="text-xs uppercase">Action Priority 1</Badge>
+                </div>
+                <p className="text-sm text-red-800/90 dark:text-red-300">
+                  Legal proceedings logged against <strong>{legalSuitAccount.name}</strong> (Overdue: {fmt(legalSuitAccount.overdueAmount || legalSuitAccount.currentBalance)}). Immediate OTS required with court withdrawal clause.
+                </p>
+              </div>
+            </div>
+            {legalSuitAccount.openCaseId && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="shrink-0 font-semibold gap-1.5 shadow-sm"
+                onClick={() => openCase(legalSuitAccount.openCaseId!)}
+              >
+                Resolve Case &amp; Draft Letter <ArrowUpRight className="w-4 h-4" />
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -150,15 +235,22 @@ export default function DebtClearance() {
         </Card>
       )}
 
+      {/* Main Tabs */}
       <Tabs defaultValue="pipeline" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-6 max-w-4xl">
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+          <TabsTrigger value="cards" className="flex items-center gap-1">
+            <CardIcon className="w-3.5 h-3.5" /> Cards
+          </TabsTrigger>
+          <TabsTrigger value="secured" className="flex items-center gap-1">
+            <Home className="w-3.5 h-3.5" /> Secured
+          </TabsTrigger>
           <TabsTrigger value="cashflow">Cashflow</TabsTrigger>
           <TabsTrigger value="simulator">Simulator</TabsTrigger>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+          <TabsTrigger value="accounts">Registry</TabsTrigger>
         </TabsList>
 
-        {/* Pipeline */}
+        {/* 1. Settlement Queue Pipeline */}
         <TabsContent value="pipeline" className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
@@ -196,7 +288,33 @@ export default function DebtClearance() {
           )}
         </TabsContent>
 
-        {/* Cashflow + forecast */}
+        {/* 2. Dedicated Credit Cards View */}
+        <TabsContent value="cards" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CardIcon className="w-5 h-5 text-primary" />
+                Credit Cards Registry &amp; Utilisation
+              </CardTitle>
+              <CardDescription>
+                Reconciled against CRIF High Mark credit report. Red badges indicate over-limit breach (&gt;100% utilisation).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CreditCardsTable
+                accounts={accounts ?? []}
+                onOpenCase={openCase}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* 3. Dedicated Secured Assets View */}
+        <TabsContent value="secured" className="space-y-4">
+          <SecuredLoansCard accounts={accounts ?? []} />
+        </TabsContent>
+
+        {/* 4. Cashflow + forecast */}
         <TabsContent value="cashflow" className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader className="pb-2">
@@ -265,12 +383,12 @@ export default function DebtClearance() {
           </Card>
         </TabsContent>
 
-        {/* Simulator */}
+        {/* 5. Simulator */}
         <TabsContent value="simulator">
           <SimulatorPanel />
         </TabsContent>
 
-        {/* Accounts */}
+        {/* 6. Accounts Registry */}
         <TabsContent value="accounts">
           <Card>
             <CardHeader className="pb-2">
@@ -284,6 +402,7 @@ export default function DebtClearance() {
                     <TableHead>Account</TableHead>
                     <TableHead>Class</TableHead>
                     <TableHead className="text-right">Outstanding</TableHead>
+                    <TableHead className="text-right">Overdue</TableHead>
                     <TableHead className="text-right">Monthly</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead></TableHead>
@@ -302,8 +421,15 @@ export default function DebtClearance() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono">{fmt(a.currentBalance)}</TableCell>
+                      <TableCell className="text-right font-mono text-destructive">
+                        {a.overdueAmount > 0 ? fmt(a.overdueAmount) : "—"}
+                      </TableCell>
                       <TableCell className="text-right font-mono">{fmt(a.monthlyCashflowDemand)}</TableCell>
-                      <TableCell className="text-sm">{a.status.replace(/_/g, " ")}</TableCell>
+                      <TableCell className="text-sm">
+                        <Badge variant="outline" className={a.bureauStatus?.includes("SUIT") ? "bg-red-100 text-red-800" : a.bureauStatus?.includes("Written") ? "bg-amber-100 text-amber-800" : ""}>
+                          {a.bureauStatus || a.status.replace(/_/g, " ")}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
                         {a.openCaseId && (
                           <Button size="sm" variant="ghost" onClick={() => openCase(a.openCaseId!)}>
@@ -320,7 +446,7 @@ export default function DebtClearance() {
         </TabsContent>
       </Tabs>
 
-      {/* Case detail dialog */}
+      {/* Case detail dialog with OTS letter tab */}
       <CaseDetailDialog
         caseId={openCaseId}
         open={caseDialogOpen}

@@ -33,7 +33,7 @@ module ArchitectureGate
 
     def run!(paths: nil)
       report = run(paths: paths)
-      puts report.to_s
+      puts report
 
       if report.failures.any?
         puts "\n❌ ARCHITECTURE GATE FAILED (#{report.failures.size} violations)"

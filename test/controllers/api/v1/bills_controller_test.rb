@@ -9,7 +9,7 @@ class Api::V1::BillsControllerTest < ActionDispatch::IntegrationTest
       password_confirmation: "password123"
     )
     @category = @user.categories.find_by!(name: "Rent")
-    
+
     @bill = @user.monthly_bills.create!(
       category: @category,
       name: "Rent Bill",

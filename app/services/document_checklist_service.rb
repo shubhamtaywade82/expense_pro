@@ -57,8 +57,8 @@ class DocumentChecklistService
   end
 
   def salaried? = @user.incomes.for_fy(@fy).salary.exists?
-  def trader? = @user.trades.for_fy(@fy).where(broker_type: 'securities').exists? rescue false
-  def crypto_trader? = @user.trades.for_fy(@fy).where(broker_type: 'crypto').exists? rescue false
+  def trader? = @user.trades.for_fy(@fy).where(broker_type: "securities").exists? rescue false
+  def crypto_trader? = @user.trades.for_fy(@fy).where(broker_type: "crypto").exists? rescue false
   def business? = defined?(@user.businesses) && @user.businesses.exists?
   def has_home_loan? = defined?(@user.loan_accounts) && @user.loan_accounts.where(loan_type: :home_loan, status: :active).exists?
   def claims_hra? = defined?(@user.salary_structures) && @user.salary_structures.exists? # simplified since we don't have rent_amount

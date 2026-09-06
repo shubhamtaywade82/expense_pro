@@ -23,10 +23,10 @@ module Ocr
       # Ensure language parameter doesn't cause errors if 'hin' is not installed
       # Defaulting back to english if needed would be smart, but we stick to the blueprint
       lang_param = language.include?("hin") ? "eng" : language # fallback to eng to prevent crashes in basic envs
-      
+
       output_base = "#{Dir.tmpdir}/ocr_#{SecureRandom.hex(8)}"
       success = system("tesseract", image_path, output_base, "-l", lang_param, "--psm", "6")
-      
+
       result = File.exist?("#{output_base}.txt") ? File.read("#{output_base}.txt") : ""
     ensure
       File.delete("#{output_base}.txt") if defined?(output_base) && File.exist?("#{output_base}.txt")

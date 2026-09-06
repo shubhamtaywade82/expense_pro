@@ -44,10 +44,10 @@ class IncomeProjectionService
 
   def already_exists?(template, real_incomes, month_start)
     month_end = month_start.end_of_month
-    
+
     # Check if template record itself is in this month
     return true if template.income_date >= month_start && template.income_date <= month_end
-    
+
     # Check if there is an instance for this template in this month
     real_incomes.any? { |inc| inc.parent_id == template.id && inc.income_date >= month_start && inc.income_date <= month_end }
   end

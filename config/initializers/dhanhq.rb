@@ -15,3 +15,10 @@ DhanHQ.configure do |config|
     DhanTokenService.force_refresh!
   end
 end
+
+# DhanHQ defines its own Zeitwerk loader with naming discrepancies (e.g. edis_contract.rb).
+# Unregistering it from Zeitwerk::Registry prevents Rails eager_load_all in CI/production
+# from breaking while preserving normal on-demand autoloading.
+if defined?(DhanHQ::LOADER) && defined?(Zeitwerk::Registry)
+  Zeitwerk::Registry.loaders.unregister(DhanHQ::LOADER)
+end

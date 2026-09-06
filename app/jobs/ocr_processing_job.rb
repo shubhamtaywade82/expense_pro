@@ -12,8 +12,10 @@ class OcrProcessingJob < ApplicationJob
       return
     end
 
-    parser = parser_class.is_a?(Class) ? parser_class.new : parser_class.constantize.new
+    parser = parser_class.new
     extracted = parser.parse(doc)
+
+
 
     # Run parser-specific validation
     validation_errors = parser.respond_to?(:validate!) ? parser.validate!(extracted) : []
@@ -50,7 +52,7 @@ class OcrProcessingJob < ApplicationJob
       if doc.file.content_type == "application/pdf"
         thumb_path = "#{Dir.tmpdir}/thumb_#{doc.id}.png"
         success = system("pdftoppm", "-png", "-f", "1", "-l", "1", "-r", "72", f.path, thumb_path.gsub(".png", ""))
-        
+
         # the output file will be named like thumb_1-1.png
         output_file = "#{thumb_path.gsub('.png', '')}-1.png"
         if success && File.exist?(output_file)

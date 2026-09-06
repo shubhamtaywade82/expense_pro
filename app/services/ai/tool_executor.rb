@@ -27,11 +27,11 @@ module Ai
     def extract_arguments(tool_call_or_name, args)
       raw = if args
               args
-            elsif tool_call_or_name.respond_to?(:arguments)
+      elsif tool_call_or_name.respond_to?(:arguments)
               tool_call_or_name.arguments
-            else
+      else
               {}
-            end
+      end
       raw = JSON.parse(raw) if raw.is_a?(String)
       raw.respond_to?(:stringify_keys) ? raw.stringify_keys : {}
     end

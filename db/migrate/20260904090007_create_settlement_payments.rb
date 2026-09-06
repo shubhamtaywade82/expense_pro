@@ -17,7 +17,7 @@ class CreateSettlementPayments < ActiveRecord::Migration[8.0]
       t.string :payment_mode, default: "neft"
       t.string :reference_number
       t.boolean :synced_to_expenses, null: false, default: false
-      t.text   :notes
+      t.text :notes
 
       t.timestamps
     end

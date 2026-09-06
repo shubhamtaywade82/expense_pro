@@ -7,7 +7,7 @@ class TaxCalculatorServiceAccuracyTest < ActiveSupport::TestCase
 
   def compute(salary: 0, freelance: 0, interest: 0, fo_pnl: 0, stcg: 0, ltcg: 0, crypto_pnl: 0, deductions_80c: 0, regime: :new, home_loan: nil)
     service = TaxCalculatorService.new(@user, 2026)
-    
+
     income_data = {
       gross_salary: salary,
       freelance: freelance,
@@ -28,7 +28,7 @@ class TaxCalculatorServiceAccuracyTest < ActiveSupport::TestCase
 
     service.instance_variable_set(:@deductions_80c, deductions_80c)
     def service.section_80c(*args); [@deductions_80c, 1_50_000.0].min; end
-    
+
     # Apply 44ADA logic in the test helper since we bypass `compute`
     freelance_val = freelance > 75_00_000 ? freelance : freelance * 0.50
     income_data[:freelance] = freelance_val
@@ -93,10 +93,10 @@ class TaxCalculatorServiceAccuracyTest < ActiveSupport::TestCase
       occupancy: "self_occupied"
     )
     result = compute(salary: 20_00_000, home_loan: loan, regime: :old)
-    
+
     assert_equal 2_00_000, result[:deductions_breakdown][:section_24b]
-    
-    interest = loan.emi_payments.where(due_date: Date.new(2025,4,1)..Date.new(2026,3,31)).sum(:interest_amount)
+
+    interest = loan.emi_payments.where(due_date: Date.new(2025, 4, 1)..Date.new(2026, 3, 31)).sum(:interest_amount)
     assert_operator interest, :>, 3_50_000
   end
 

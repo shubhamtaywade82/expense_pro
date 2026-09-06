@@ -2,35 +2,25 @@
 
 ## Overview
 
-ExpensePro's AI chat assistant is powered by **32 tools** that enable natural language interactions with your financial data. The AI uses a local LLM (Ollama with qwen3.5:4b) to understand intents, parse documents, and execute appropriate tools.
+ExpensePro's AI chat assistant is powered by **47 agentic tools** built on the **`ruby-llm`** (v1.16) gem. It supports multiple LLM providers seamlessly:
+- **Ollama** (Local default with `qwen3.5:4b` or any local model)
+- **Google Gemini** (`gemini-2.5-flash` via `GEMINI_API_KEY`)
+- **Anthropic Claude** (`claude-3-7-sonnet` via `ANTHROPIC_API_KEY`)
+- **OpenAI** (`gpt-5.4` / `gpt-4o` via `OPENAI_API_KEY`)
+- **DeepSeek** (`deepseek-chat` via `DEEPSEEK_API_KEY`)
 
-## New: Smart Document Parsing
+The system enables natural language interactions across all features of ExpensePro: core cashflow, credit cards & debt settlements, Dhan trading, income tax copilot, and net worth analytics.
 
-### **Document Upload & Auto-Prefill**
-When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automatically:
-1. **Detects Schema**: Uses LLM to identify columns, sheets, and data types
-2. **Extracts Transactions**: Parses unstructured text (PDFs) or structured rows (CSV/Excel)
-3. **Normalizes Data**: Maps to Expense/Income/Investment/Loan models
-4. **Deduplicates**: Updates existing records matching Date+Amount
-5. **Auto-Categorizes**: Guesses categories based on description patterns
-
-**Example Prompts**:
-- "Upload my HDFC bank statement PDF" → Creates 100s of expense/income records
-- "Import this Form 16 Excel" → Populates salary income and TDS details
-- "Parse this Zerodha contract note" → Adds investment transactions
-
-## Tool Categories
+## Tool Categories (47 Tools)
 
 ### 1. Category Management (3 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
-| `create_category` | Create a new expense category | "Create a category for 'Pet Care'" |
+| `create_category` | Create a new expense/income category | "Create a category for 'Pet Care'" |
 | `list_categories` | List all available categories | "Show me all my categories" |
 | `delete_category` | Delete a category (if unused) | "Remove the 'Miscellaneous' category" |
 
 ### 2. Expense Tracking (4 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_expense` | Record a new expense | "Spent ₹500 on groceries via UPI today" |
@@ -39,7 +29,6 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `delete_expense` | Remove an expense | "Delete the duplicate electricity bill" |
 
 ### 3. Income Tracking (5 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_income` | Record income entry | "Received ₹50,000 salary for March" |
@@ -49,7 +38,6 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `toggle_income_received` | Mark income as received/pending | "Mark the March invoice as paid" |
 
 ### 4. Bill Management (4 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_bill` | Set up recurring bill | "Add electricity bill of ₹2000 monthly" |
@@ -58,7 +46,6 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `delete_bill` | Remove a bill | "Cancel the old gym membership bill" |
 
 ### 5. Loan & EMI Tracking (4 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_loan` | Create a new loan record | "I took a car loan of ₹5L at 9% for 5 years" |
@@ -67,7 +54,6 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `delete_loan` | Close a loan | "My personal loan is fully paid, remove it" |
 
 ### 6. Budget Management (3 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_budget` | Set category budget | "Set monthly grocery budget to ₹15,000" |
@@ -75,7 +61,6 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `delete_budget` | Remove a budget | "Remove the entertainment budget" |
 
 ### 7. Investment Tracking (4 tools)
-
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
 | `create_investment` | Add investment holding | "Bought 10 shares of TCS at ₹3500" |
@@ -83,15 +68,41 @@ When users upload PDFs, CSVs, or Excels, the `SmartDocumentParserService` automa
 | `update_investment` | Update holdings | "Update HDFC Bank shares to 50 units" |
 | `delete_investment` | Remove investment | "Sold all IT stocks, remove them" |
 
-### 8. Tax Intelligence (5 tools) ⭐ NEW
-
+### 8. Credit Cards & Debt Clearance (10 tools) ⭐ NEW
 | Tool | Description | Example Prompt |
 |------|-------------|----------------|
-| `get_financial_summary` | Get comprehensive financial snapshot | "Give me my complete financial summary for FY 2025-26" |
-| `calculate_tax_with_copilot` | Calculate tax using india-itr-copilot engine | "Calculate my tax for FY 2025-26 with 18L salary, 50k F&O loss, 1.5L 80C" |
-| `explain_tax_provision` | Explain tax sections in plain language | "What is marginal relief in surcharge?" |
-| `start_itr_filing_wizard` | Launch guided ITR filing conversation | "Start my ITR filing for FY 2025-26" |
-| `generate_itr_json` | Generate official ITR JSON for portal upload | "Generate ITR-1 JSON file" |
+| `list_credit_cards` | List all 9 credit cards with limits, balances, overdue amounts, utilization %, and due dates | "Can you list my credit cards and total overdue amount?" |
+| `list_debt_accounts` | Filter all 29 accounts across serviced and settlement pools | "Show all my debt accounts that are overdue" |
+| `get_legal_status` | Identify accounts with legal risk (court suits, Akara/Stashfin alerts) | "Do I have any legal notices or court suits on my debt?" |
+| `generate_ots_letter` | Generate formal RBI-compliant One-Time Settlement (OTS) proposal letter | "Draft an OTS settlement letter for Akara Capital at 25%" |
+| `debt_overview` | Summary of total debt, serviced vs settlement debt, settlement fund | "What is my total debt and settlement pool breakdown?" |
+| `settlement_queue` | Ranked settlement queue by priority score and stage | "Which debt account should I settle first?" |
+| `settle_with_amount` | Simulates settlements possible with a given lump sum | "What can I settle if I have ₹1,00,000 cash?" |
+| `debt_forecast` | Forecasts debt-free timeline based on monthly allocation | "When will I be debt-free if I save ₹30,000 a month?" |
+| `compare_settlement_scenarios` | Cost ladder (20% to 45%) for a specific lender | "Compare settlement scenarios for IDFC FIRST Bank" |
+| `add_settlement_contribution` | Record capital saved towards a settlement | "Set aside ₹20,000 from bonus towards my settlement fund" |
+
+### 9. Broker & Dhan Trading Integration (3 tools) ⭐ NEW
+| Tool | Description | Example Prompt |
+|------|-------------|----------------|
+| `get_broker_snapshots` | Latest portfolio holdings, positions, margin from Dhan | "Show me my Dhan portfolio snapshot" |
+| `get_dhan_pnl_summary` | Realized & unrealized P&L across equity and F&O | "What is my trading PnL summary?" |
+| `sync_broker_data` | Background synchronization of holdings & trades | "Sync my broker data from Dhan" |
+
+### 10. Tax & ITR Copilot (4 tools) ⭐ ENHANCED
+| Tool | Description | Example Prompt |
+|------|-------------|----------------|
+| `calculate_tax_with_copilot` | Calculate tax with india-itr-copilot engine | "Calculate my tax for FY 2025-26 with ₹15L salary" |
+| `explain_tax_provision` | Explain tax sections, deductions, and amendments | "What is Section 80CCD(1B) of the Income Tax Act?" |
+| `compare_tax_regimes` | Compare Old vs New Tax Regime | "Compare old vs new regime for ₹18L income" |
+| `itr_readiness_checklist` | Check filing readiness and missing documents | "Check my ITR filing readiness checklist" |
+
+### 11. Wealth Analytics & Reports (3 tools) ⭐ NEW
+| Tool | Description | Example Prompt |
+|------|-------------|----------------|
+| `get_net_worth` | Real-time Net Worth (assets minus liabilities) | "What is my current net worth and total liabilities?" |
+| `get_financial_summary` | Full monthly/yearly income, expenses, EMIs snapshot | "Give me my financial summary for this month" |
+| `get_monthly_report` | Detailed budget vs actual report by category | "Show my monthly budget report for this month" |
 
 ## Detailed Tool Specifications
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'json'
-require 'time'
+require "json"
+require "time"
 
 module ArchitectureGate
   class Report

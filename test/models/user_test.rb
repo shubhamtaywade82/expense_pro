@@ -22,5 +22,4 @@ class UserTest < ActiveSupport::TestCase
   test "has many tax documents" do
     assert_respond_to @user, :tax_documents
   end
-
 end

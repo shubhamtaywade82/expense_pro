@@ -105,11 +105,11 @@ class TaxCalculatorService
 
     recommended_itr = if speculative_pnl != 0 || non_speculative_fo_pnl != 0 || gross_freelance > 0 || fixed_income_pnl != 0
                         "ITR-3"
-                      elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0 || gold_stcg != 0 || gold_ltcg != 0
+    elsif stcg_pnl != 0 || ltcg_pnl != 0 || crypto_pnl != 0 || gold_stcg != 0 || gold_ltcg != 0
                         "ITR-2"
-                      else
+    else
                         "ITR-1"
-                      end
+    end
 
     {
       financial_year: "2025-26",
@@ -148,10 +148,10 @@ class TaxCalculatorService
   def compute_taxable_income(income_data, regime)
     std_ded = regime == :new ? 75_000.0 : 50_000.0
     salary = [income_data[:gross_salary] - std_ded, 0].max
-    
+
     # Let out property income could be added here, for now it's 0.
     house_property = 0.0 - (regime == :old ? section_24b_interest(income_data[:start_d], income_data[:end_d]) : 0.0)
-    
+
     other_sources = income_data[:interest] + income_data[:dividend]
 
     business = income_data[:freelance] + income_data[:non_speculative_fo_pnl] + income_data[:fixed_income_pnl]
@@ -161,7 +161,7 @@ class TaxCalculatorService
     crypto_115bbh = [income_data[:crypto_pnl], 0].max
 
     normal_income = salary + house_property + other_sources
-    
+
     absorbed_business = [business, -normal_income].max
     unabsorbed_business_loss = [-(normal_income + business), 0].max
 
@@ -191,7 +191,7 @@ class TaxCalculatorService
 
   def calculate_regime_tax(computed, regime)
     income = computed[:normal_taxable]
-    
+
     slab_tax = 0.0
     if regime == :new
       slab_tax += (800_000 - 400_000) * 0.05 if income > 400_000
@@ -230,7 +230,7 @@ class TaxCalculatorService
     base_tax = normal_tax_payable + special_tax
 
     surcharge_data = compute_surcharge_with_marginal_relief(base_tax, special_tax, income + computed[:stcg_111a] + computed[:ltcg_112a] + computed[:crypto_115bbh])
-    
+
     cess = ((base_tax + surcharge_data[:surcharge]) * 0.04).round(2)
     total_tax = (base_tax + surcharge_data[:surcharge] + cess).round(2)
 
@@ -259,24 +259,24 @@ class TaxCalculatorService
     normal_tax = base_tax - special_tax
 
     rate, threshold = case total_income
-      when 5_000_001..10_000_000 then [0.10, 5_000_000]
-      when 10_000_001..20_000_000 then [0.15, 10_000_000]
-      when 20_000_001..50_000_000 then [0.25, 20_000_000]
-      else [0.37, 50_000_000]
+    when 5_000_001..10_000_000 then [0.10, 5_000_000]
+    when 10_000_001..20_000_000 then [0.15, 10_000_000]
+    when 20_000_001..50_000_000 then [0.25, 20_000_000]
+    else [0.37, 50_000_000]
     end
 
-    # Surcharge on CG is capped at 15% (for 111A/112A), 25% for crypto. 
+    # Surcharge on CG is capped at 15% (for 111A/112A), 25% for crypto.
     # For simplicity, capping overall special at 15% if rate > 15% for normal.
     cg_surcharge = special_tax * [rate, 0.15].min
     normal_surcharge = normal_tax * rate
-    
+
     raw_total = base_tax + normal_surcharge + cg_surcharge
 
     # Marginal Relief: Calculate tax at threshold to cap the max tax
     # (Approximation for golden tests)
     # The true marginal relief would involve recalculating base_tax exactly at threshold.
     # To keep it simple, max additional tax = income above threshold.
-    
+
     { surcharge: normal_surcharge + cg_surcharge, cg_surcharge: cg_surcharge, marginal_relief: false }
   end
 

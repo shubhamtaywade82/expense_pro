@@ -1,24 +1,24 @@
 module Brokers
   # Base exception for all broker-related errors
   class BrokerError < StandardError; end
-  
+
   # Authentication/Authorization errors
   class AuthenticationError < BrokerError; end
-  
+
   # Rate limiting errors
   class RateLimitError < BrokerError; end
-  
+
   # General API errors
   class APIError < BrokerError
     attr_reader :status, :body
-    
+
     def initialize(message = nil, status: nil, body: nil)
       @status = status
       @body = body
       super(message || "API error")
     end
   end
-  
+
   # Unknown broker error
   class UnknownBroker < BrokerError; end
 

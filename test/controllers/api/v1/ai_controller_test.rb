@@ -15,20 +15,13 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get assistant response from chat endpoint" do
-    mock_response = Ollama::Response.new({
-      "message" => {
-        "role" => "assistant",
-        "content" => "Hello! How can I help you today?"
-      }
-    })
-
-    mock_client = Object.new
-    mock_client.define_singleton_method(:chat) do |*args, **kwargs|
-      mock_response
+    mock_service = Object.new
+    def mock_service.chat(*_args)
+      { role: "assistant", content: "Hello! How can I help you today?" }
     end
 
-    original_new = Ollama::Client.method(:new)
-    Ollama::Client.define_singleton_method(:new) { |*| mock_client }
+    original_new = AiChatService.method(:new)
+    AiChatService.define_singleton_method(:new) { |*| mock_service }
 
     begin
       post api_v1_ai_chat_url, params: { message: "Hello AI" }, headers: @headers
@@ -38,7 +31,7 @@ class Api::V1::AiControllerTest < ActionDispatch::IntegrationTest
       assert_equal "assistant", json["role"]
       assert_equal "Hello! How can I help you today?", json["content"]
     ensure
-      Ollama::Client.define_singleton_method(:new, &original_new)
+      AiChatService.define_singleton_method(:new, &original_new)
     end
   end
 end

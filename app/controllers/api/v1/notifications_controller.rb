@@ -7,11 +7,11 @@ module Api
       # GET /api/v1/notifications
       def index
         @notifications = current_user.notifications
-                                     .where(archived: params[:archived] == 'true')
+                                     .where(archived: params[:archived] == "true")
                                      .order(created_at: :desc)
-        
+
         pagy, notifications = pagy(@notifications, items: 20)
-        
+
         render json: {
           notifications: notifications.as_json(include_payload: true),
           meta: pagy_metadata(pagy),

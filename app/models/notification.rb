@@ -15,10 +15,10 @@ class Notification < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   # Category scopes
-  scope :tax_alerts, -> { where(category: 'tax') }
-  scope :cash_flow_alerts, -> { where(category: 'cash_flow') }
-  scope :investment_alerts, -> { where(category: 'investment') }
-  scope :document_alerts, -> { where(category: 'document') }
+  scope :tax_alerts, -> { where(category: "tax") }
+  scope :cash_flow_alerts, -> { where(category: "cash_flow") }
+  scope :investment_alerts, -> { where(category: "investment") }
+  scope :document_alerts, -> { where(category: "document") }
 
   # JSONB payload helpers
   store_accessor :payload, :action_url, :action_label, :priority, :metadata

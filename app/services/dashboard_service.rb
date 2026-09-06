@@ -39,11 +39,11 @@ class DashboardService
   def overall_summary
     first_record = user.incomes.order(:income_date).first&.income_date || Date.current
     all_incomes = IncomeProjectionService.new(user, first_record, Date.current).call
-    
+
     total_income = all_incomes.sum(&:amount)
     total_expense = user.expenses.sum(:amount)
     total_emi_paid = user.emi_payments.where(is_paid: true).sum(:amount)
-    
+
     {
       total_income: total_income.to_s,
       total_expense: total_expense.to_s,
@@ -59,8 +59,8 @@ class DashboardService
 
   def income_summary
     incomes = IncomeProjectionService.new(user, period.first, period.last).call
-    { 
-      total: incomes.sum(&:amount).to_s, 
+    {
+      total: incomes.sum(&:amount).to_s,
       count: incomes.count,
       received: incomes.count(&:is_received),
       expected: incomes.count { |inc| !inc.is_received }

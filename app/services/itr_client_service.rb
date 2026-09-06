@@ -21,9 +21,9 @@ class ItrClientService
   class ServiceUnavailableError < StandardError; end
   class CalculationError < StandardError; end
 
-  BASE_URL = ENV.fetch('ITR_SERVICE_URL', 'http://localhost:8000')
-  TIMEOUT = ENV.fetch('ITR_SERVICE_TIMEOUT', '10').to_i
-  RETRY_COUNT = ENV.fetch('ITR_SERVICE_RETRY', '2').to_i
+  BASE_URL = ENV.fetch("ITR_SERVICE_URL", "http://localhost:8000")
+  TIMEOUT = ENV.fetch("ITR_SERVICE_TIMEOUT", "10").to_i
+  RETRY_COUNT = ENV.fetch("ITR_SERVICE_RETRY", "2").to_i
   NETWORK_ERRORS = [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError ].freeze
 
   base_uri BASE_URL
@@ -39,7 +39,7 @@ class ItrClientService
 
     request_payload = build_tax_request(user, year, assessment_year)
 
-    response = post_with_retry('/calculate', request_payload)
+    response = post_with_retry("/calculate", request_payload)
 
     if response.success?
       parse_response(response.body, user, year)
@@ -56,8 +56,8 @@ class ItrClientService
   # @param gross_income [Float]
   # @param assessment_year [String]
   # @return [Hash] regime comparison result
-  def compare_regimes(gross_income, assessment_year = 'AY2026-27')
-    response = self.class.get('/compare-regimes', query: {
+  def compare_regimes(gross_income, assessment_year = "AY2026-27")
+    response = self.class.get("/compare-regimes", query: {
       gross_income: gross_income,
       assessment_year: assessment_year
     })
@@ -90,7 +90,7 @@ class ItrClientService
   # Health check for the ITR service
   # @return [Boolean]
   def healthy?
-    self.class.get('/health', timeout: 3).success?
+    self.class.get("/health", timeout: 3).success?
   rescue *NETWORK_ERRORS
     false
   end
@@ -105,7 +105,7 @@ class ItrClientService
       self.class.post(
         endpoint,
         body: payload.to_json,
-        headers: { 'Content-Type' => 'application/json' }
+        headers: { "Content-Type" => "application/json" }
       )
     rescue *NETWORK_ERRORS => e
       if attempts <= RETRY_COUNT
@@ -128,13 +128,13 @@ class ItrClientService
     salary_incomes = incomes.select { |i| %w[salary bonus fnf].include?(i.income_type) || i.income_type.blank? }
     gross_salary = salary_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
 
-    freelance_incomes = incomes.select { |i| i.income_type == 'freelance' }
+    freelance_incomes = incomes.select { |i| i.income_type == "freelance" }
     gross_freelance = freelance_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
 
     interest_incomes = incomes.select { |i| %w[interest fd_interest].include?(i.income_type) }
     gross_interest = interest_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
 
-    dividend_incomes = incomes.select { |i| i.income_type == 'dividend' }
+    dividend_incomes = incomes.select { |i| i.income_type == "dividend" }
     gross_dividend = dividend_incomes.sum { |inc| (inc.gross_amount || inc.amount).to_f }
 
     # TDS
@@ -145,14 +145,14 @@ class ItrClientService
     # Investment P&L
     investments = user.investments
       .where(purchase_date: start_date..end_date)
-      .or(user.investments.where(status: 'realized', sell_date: start_date..end_date))
+      .or(user.investments.where(status: "realized", sell_date: start_date..end_date))
 
-    speculative_pnl = investments.select { |i| i.asset_class == 'speculative_intraday' }.sum(&:total_pnl).to_f
-    non_speculative_fo_pnl = investments.select { |i| i.asset_class == 'non_speculative_fo' }.sum(&:total_pnl).to_f
-    crypto_pnl = investments.select { |i| i.asset_class == 'crypto' }.sum(&:total_pnl).to_f
-    fixed_income_pnl = investments.select { |i| i.asset_class == 'fixed_income' }.sum(&:total_pnl).to_f
+    speculative_pnl = investments.select { |i| i.asset_class == "speculative_intraday" }.sum(&:total_pnl).to_f
+    non_speculative_fo_pnl = investments.select { |i| i.asset_class == "non_speculative_fo" }.sum(&:total_pnl).to_f
+    crypto_pnl = investments.select { |i| i.asset_class == "crypto" }.sum(&:total_pnl).to_f
+    fixed_income_pnl = investments.select { |i| i.asset_class == "fixed_income" }.sum(&:total_pnl).to_f
 
-    gold_investments = investments.select { |i| i.asset_class == 'gold' }
+    gold_investments = investments.select { |i| i.asset_class == "gold" }
     gold_stcg = gold_investments.select { |i| (i.sell_date || Date.current) - i.purchase_date < 1095 }.sum(&:total_pnl).to_f
     gold_ltcg = gold_investments.select { |i| (i.sell_date || Date.current) - i.purchase_date >= 1095 }.sum(&:total_pnl).to_f
 
@@ -211,20 +211,20 @@ class ItrClientService
       },
       tds_paid: total_tds,
       advance_tax_paid: 0.0,
-      regime_preference: 'both'
+      regime_preference: "both"
     }
   end
 
   def calculate_section_80c(user, start_date, end_date, investments)
-    elss = investments.select { |i| i.asset_class == 'elss_80c' }.sum(&:invested_amount).to_f
-    principal = user.loans.where(loan_type: 'home').sum do |l|
+    elss = investments.select { |i| i.asset_class == "elss_80c" }.sum(&:invested_amount).to_f
+    principal = user.loans.where(loan_type: "home").sum do |l|
       l.emi_payments.where(due_date: start_date..end_date).sum(:principal_amount).to_f
     end
     [elss + principal, 150_000].min
   end
 
   def calculate_section_80d(user, start_date, end_date)
-    health_category_ids = user.categories.where(name: 'Health', category_type: 'expense').pluck(:id)
+    health_category_ids = user.categories.where(name: "Health", category_type: "expense").pluck(:id)
     total = 0.0
     if health_category_ids.any?
       total = user.expenses
@@ -235,7 +235,7 @@ class ItrClientService
   end
 
   def calculate_section_80ccd_1b(investments)
-    nps = investments.select { |i| i.asset_class == 'nps' }.sum(&:invested_amount).to_f
+    nps = investments.select { |i| i.asset_class == "nps" }.sum(&:invested_amount).to_f
     [nps, 50_000].min
   end
 
@@ -255,56 +255,56 @@ class ItrClientService
   end
 
   def calculate_home_loan_interest(user, start_date, end_date)
-    user.loans.where(loan_type: 'home').sum do |l|
+    user.loans.where(loan_type: "home").sum do |l|
       interest = l.emi_payments.where(due_date: start_date..end_date).sum(:interest_amount).to_f
-      l.respond_to?(:occupancy) && l.occupancy == 'let_out' ? interest : [interest, 200_000].min
+      l.respond_to?(:occupancy) && l.occupancy == "let_out" ? interest : [interest, 200_000].min
     end
   end
 
   def parse_response(response_body, user, year)
     data = JSON.parse(response_body)
 
-    recommended = data['recommended_regime'].downcase.include?('new') ? 'new' : 'old'
-    recommended_result = recommended == 'new' ? data['new_regime'] : data['old_regime']
+    recommended = data["recommended_regime"].downcase.include?("new") ? "new" : "old"
+    recommended_result = recommended == "new" ? data["new_regime"] : data["old_regime"]
 
     {
       financial_year: "#{year}-#{year + 1}",
-      assessment_year: data['assessment_year'],
-      gross_total_income: recommended_result['gross_total_income'],
-      taxable_income: recommended_result['taxable_income'],
+      assessment_year: data["assessment_year"],
+      gross_total_income: recommended_result["gross_total_income"],
+      taxable_income: recommended_result["taxable_income"],
       recommendation: {
-        best_regime: data['recommended_regime'],
-        tax_saved: data['tax_saved_by_recommendation'],
-        itr_form: extract_itr_form(data['compliance_notes'])
+        best_regime: data["recommended_regime"],
+        tax_saved: data["tax_saved_by_recommendation"],
+        itr_form: extract_itr_form(data["compliance_notes"])
       },
       trading_summary: build_trading_summary(data),
-      new_regime: format_regime_detail(data['new_regime']),
-      old_regime: format_regime_detail(data['old_regime']),
+      new_regime: format_regime_detail(data["new_regime"]),
+      old_regime: format_regime_detail(data["old_regime"]),
       deductions: format_deductions(data),
-      special_taxes: recommended_result['special_taxes'],
-      compliance_notes: data['compliance_notes'],
-      refund_due: data['refund_due'],
-      tax_payable: data['total_tax_payable']
+      special_taxes: recommended_result["special_taxes"],
+      compliance_notes: data["compliance_notes"],
+      refund_due: data["refund_due"],
+      tax_payable: data["total_tax_payable"]
     }
   end
 
   def extract_itr_form(compliance_notes)
-    note = compliance_notes.find { |n| n.include?('ITR Form') }
-    return 'ITR-1' unless note
+    note = compliance_notes.find { |n| n.include?("ITR Form") }
+    return "ITR-1" unless note
 
-    if note.include?('ITR-3')
-      'ITR-3'
-    elsif note.include?('ITR-2')
-      'ITR-2'
+    if note.include?("ITR-3")
+      "ITR-3"
+    elsif note.include?("ITR-2")
+      "ITR-2"
     else
-      'ITR-1'
+      "ITR-1"
     end
   end
 
   def build_trading_summary(data)
-    old_regime = data['old_regime'] || {}
-    new_regime = data['new_regime'] || {}
-    losses = old_regime['unabsorbed_losses'] || new_regime['unabsorbed_losses'] || {}
+    old_regime = data["old_regime"] || {}
+    new_regime = data["new_regime"] || {}
+    losses = old_regime["unabsorbed_losses"] || new_regime["unabsorbed_losses"] || {}
 
     {
       speculative_intraday_pnl: 0.0, # Would need to pass through from request
@@ -321,56 +321,56 @@ class ItrClientService
     return {} unless regime_data
 
     {
-      taxable_income: regime_data['taxable_income'],
-      slab_tax: regime_data['slab_tax'],
-      rebate_87a: regime_data['rebate_87a'],
-      marginal_relief_applied: regime_data['marginal_relief_on_rebate'] || regime_data['marginal_relief_on_surcharge'],
-      base_tax: regime_data['base_tax_after_rebate'],
-      surcharge: regime_data['surcharge'],
-      cess: regime_data['cess'],
-      total_tax: regime_data['total_tax_rounded'],
-      deductions_used: regime_data['deductions_used']
+      taxable_income: regime_data["taxable_income"],
+      slab_tax: regime_data["slab_tax"],
+      rebate_87a: regime_data["rebate_87a"],
+      marginal_relief_applied: regime_data["marginal_relief_on_rebate"] || regime_data["marginal_relief_on_surcharge"],
+      base_tax: regime_data["base_tax_after_rebate"],
+      surcharge: regime_data["surcharge"],
+      cess: regime_data["cess"],
+      total_tax: regime_data["total_tax_rounded"],
+      deductions_used: regime_data["deductions_used"]
     }
   end
 
   def format_deductions(data)
-    old_deductions = data.dig('old_regime', 'deductions_used') || {}
-    new_deductions = data.dig('new_regime', 'deductions_used') || {}
+    old_deductions = data.dig("old_regime", "deductions_used") || {}
+    new_deductions = data.dig("new_regime", "deductions_used") || {}
 
     {
-      standard_deduction_new: new_deductions['standard_deduction'] || 75_000,
+      standard_deduction_new: new_deductions["standard_deduction"] || 75_000,
       standard_deduction_old: 50_000,
-      section_80c: old_deductions['section_80c'] || 0,
-      section_80d: old_deductions['section_80d'] || 0,
-      section_24b_home_loan_interest: old_deductions['section_24b'] || 0,
-      section_80ccd_1b: old_deductions['section_80ccd_1b'] || 0,
-      hra: old_deductions['hra'] || 0
+      section_80c: old_deductions["section_80c"] || 0,
+      section_80d: old_deductions["section_80d"] || 0,
+      section_24b_home_loan_interest: old_deductions["section_24b"] || 0,
+      section_80ccd_1b: old_deductions["section_80ccd_1b"] || 0,
+      hra: old_deductions["hra"] || 0
     }
   end
 
   def default_rules(assessment_year)
     {
-      'assessment_year' => assessment_year,
-      'old_regime' => {
-        'slabs' => [
-          { 'limit' => 250_000, 'rate' => 0.0 },
-          { 'limit' => 500_000, 'rate' => 0.05 },
-          { 'limit' => 1_000_000, 'rate' => 0.20 },
-          { 'limit' => nil, 'rate' => 0.30 }
+      "assessment_year" => assessment_year,
+      "old_regime" => {
+        "slabs" => [
+          { "limit" => 250_000, "rate" => 0.0 },
+          { "limit" => 500_000, "rate" => 0.05 },
+          { "limit" => 1_000_000, "rate" => 0.20 },
+          { "limit" => nil, "rate" => 0.30 }
         ],
-        'standard_deduction' => 50_000
+        "standard_deduction" => 50_000
       },
-      'new_regime' => {
-        'slabs' => [
-          { 'limit' => 400_000, 'rate' => 0.0 },
-          { 'limit' => 800_000, 'rate' => 0.05 },
-          { 'limit' => 1_200_000, 'rate' => 0.10 },
-          { 'limit' => 1_600_000, 'rate' => 0.15 },
-          { 'limit' => 2_000_000, 'rate' => 0.20 },
-          { 'limit' => 2_400_000, 'rate' => 0.25 },
-          { 'limit' => nil, 'rate' => 0.30 }
+      "new_regime" => {
+        "slabs" => [
+          { "limit" => 400_000, "rate" => 0.0 },
+          { "limit" => 800_000, "rate" => 0.05 },
+          { "limit" => 1_200_000, "rate" => 0.10 },
+          { "limit" => 1_600_000, "rate" => 0.15 },
+          { "limit" => 2_000_000, "rate" => 0.20 },
+          { "limit" => 2_400_000, "rate" => 0.25 },
+          { "limit" => nil, "rate" => 0.30 }
         ],
-        'standard_deduction' => 75_000
+        "standard_deduction" => 75_000
       }
     }
   end

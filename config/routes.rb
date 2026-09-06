@@ -36,7 +36,7 @@ Rails.application.routes.draw do
         end
       end
       patch "emi_payments/:id/pay", to: "emi_payments#pay", as: :pay_emi
-      
+
       get "debt_planner/summary", to: "debt_planner#summary"
       get "debt_planner/simulate", to: "debt_planner#simulate"
 

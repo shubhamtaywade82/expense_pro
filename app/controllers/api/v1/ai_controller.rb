@@ -3,9 +3,9 @@ module Api
     class AiController < BaseController
       def chat
         params.require(:message)
-        
+
         history = params[:history] || []
-        
+
         # Ensure elements are hashes
         history = history.map(&:to_unsafe_h) if history.is_a?(Array)
 

@@ -1,6 +1,6 @@
 class TaxDocument < ApplicationRecord
   belongs_to :user
-  
+
   has_one_attached :file
   has_one_attached :preview_image
 
@@ -83,7 +83,12 @@ class TaxDocument < ApplicationRecord
   end
 
   def parser
-    OCR_PARSERS[document_type]&.safe_constantize
+    case document_type
+    when "pan_card"         then DocumentParsers::PanParser
+    when "form_16"          then DocumentParsers::Form16Parser
+    when "ais_json"         then DocumentParsers::AisParser
+    when "trading_pnl_stmt" then DocumentParsers::BrokerPnlParser
+    end
   end
 
   def extracted_amount
@@ -111,11 +116,4 @@ class TaxDocument < ApplicationRecord
       errors.add(:file, "must be under #{limit}MB (income tax portal limit)")
     end
   end
-
-  OCR_PARSERS = {
-    "pan_card"         => "DocumentParsers::PanParser",
-    "form_16"          => "DocumentParsers::Form16Parser",
-    "ais_json"         => "DocumentParsers::AisParser",
-    "trading_pnl_stmt" => "DocumentParsers::BrokerPnlParser"
-  }.freeze
 end

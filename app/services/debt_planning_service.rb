@@ -22,13 +22,13 @@ class DebtPlanningService
     return { error: "No active loans" } if loans.empty?
 
     ordered = case strategy.to_s
-              when "avalanche"
+    when "avalanche"
                 loans.sort_by { |l| [-l.interest_rate.to_f, l.outstanding_principal.to_f] }
-              when "snowball"
+    when "snowball"
                 loans.sort_by { |l| [l.outstanding_principal.to_f, -l.interest_rate.to_f] }
-              else
+    else
                 loans.sort_by { |l| [-l.interest_rate.to_f, l.outstanding_principal.to_f] }
-              end
+    end
 
     monthly_surplus = calculate_surplus + extra_monthly
     balances = {}

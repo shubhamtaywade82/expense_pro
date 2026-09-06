@@ -18,7 +18,7 @@ class User < ApplicationRecord
   has_many :employments, dependent: :destroy
   has_many :debt_plans, dependent: :destroy
   has_many :notifications, dependent: :destroy
-  has_many :unread_notifications, -> { where(read: false) }, class_name: 'Notification'
+  has_many :unread_notifications, -> { where(read: false) }, class_name: "Notification"
   has_many :tax_documents, dependent: :destroy
   has_many :debt_accounts, dependent: :destroy
   has_many :debt_strategies, dependent: :destroy

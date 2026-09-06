@@ -80,7 +80,7 @@ class NetWorthService
   def current_account_balance
     # Use real FinancialAccount balances
     total = @user.financial_accounts.where(account_type: %w[savings checking cash wallet]).sum(:balance).to_f
-    
+
     # Fallback to estimation if no financial accounts are linked
     if total == 0 && @user.financial_accounts.empty?
       total_income = @user.incomes.sum(:amount).to_f
@@ -89,7 +89,7 @@ class NetWorthService
       total_emis_paid = @user.loan_accounts.joins(:emi_schedules).where(emi_schedules: { status: "paid" }).sum(:emi_amount).to_f
       total = [total_income - total_expenses - total_bills_paid - total_emis_paid, 0].max
     end
-    
+
     total
   end
 

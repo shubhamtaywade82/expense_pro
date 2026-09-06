@@ -101,6 +101,11 @@ class DebtAccount < ApplicationRecord
     credit_card? && credit_limit_paise.positive? && current_balance_paise > credit_limit_paise
   end
 
+  def account_number_masked
+    ending = name[/\((?:ending in|\.\.\.)\s*([^\)]+)\)/i, 1]
+    ending ? "XXXX-#{ending}" : "ACC-#{id.to_s.rjust(4, '0')}"
+  end
+
   private
 
   def only_one_loan_link

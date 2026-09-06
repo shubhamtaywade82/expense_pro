@@ -63,6 +63,7 @@ end
 
 
 gem "ollama-client"
+gem "ruby_llm", "~> 1.16.0"
 gem "DhanHQ", "~> 3.3"
 gem "httparty"
 gem "rack-attack"

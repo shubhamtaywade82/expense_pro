@@ -272,7 +272,10 @@ GEM
       dotenv (~> 2.8)
       json-schema (~> 4.0)
     ostruct (0.6.3)
-    pagy (9.4.0)
+    pagy (43.6.2)
+      json
+      uri
+      yaml
     paper_trail (17.0.0)
       activerecord (>= 7.1)
       request_store (~> 1.4)
@@ -434,6 +437,7 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yaml (0.4.0)
     zeitwerk (2.8.2)
 
 PLATFORMS
@@ -462,7 +466,7 @@ DEPENDENCIES
   kamal
   money-rails (~> 3.0)
   ollama-client
-  pagy (~> 9.3)
+  pagy (~> 43.6)
   paper_trail
   pg (~> 1.1)
   propshaft

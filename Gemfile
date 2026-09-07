@@ -66,7 +66,7 @@ gem "ollama-client"
 gem "DhanHQ", "~> 3.3"
 gem "httparty"
 gem "rack-attack"
-gem "pagy", "~> 9.3"
+gem "pagy", "~> 43.6"
 # Money objects with INR as the default currency. Amounts in the debt
 # clearance domain are stored as integer paise (bigint) and exposed as
 # Money objects via the monetize macro.

@@ -63,7 +63,7 @@ end
 
 
 gem "ollama-client"
-gem "DhanHQ", "~> 3.3"
+gem "DhanHQ", "~> 3.4"
 gem "httparty"
 gem "rack-attack"
 gem "pagy", "~> 9.3"
